@@ -1,34 +1,34 @@
 # METIS-CORE
 
-A pure Rust implementation of the [METIS](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview) multilevel graph partitioning algorithm.
+A pure Rust implementation of multilevel graph partitioning.
 
-METIS is George Karypis's multilevel k-way and recursive bisection algorithm — the standard tool for partitioning large irregular graphs used in scientific computing, mesh decomposition, and combinatorial optimization. This crate reimplements the same algorithm from scratch in safe Rust with no C compiler required.
+Multilevel graph partitioning — sometimes called the METIS algorithm after Karypis and Kumar's 1995/1998 papers — is the standard approach for partitioning large irregular graphs in scientific computing, mesh decomposition, and combinatorial optimization. This crate implements the algorithm from scratch in safe Rust with no C compiler required and no dependency on any external METIS library.
 
 ---
 
 ## What it does
 
-Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices into *k* balanced parts while minimizing the edge cut between parts. Mirrors the two public entry points of the original C library:
+Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices into *k* balanced parts while minimizing the edge cut between parts. Two entry points:
 
-- **`part_recursive`** — multilevel recursive bisection (`METIS_PartGraphRecursive`)
-- **`part_kway`** — direct multilevel k-way partitioning (`METIS_PartGraphKway`)
+- **`part_recursive`** — multilevel recursive bisection
+- **`part_kway`** — direct multilevel k-way partitioning
 
-Both entry points run the same unified multilevel pipeline.
+Both run the same unified multilevel pipeline.
 
 ---
 
 ## The algorithm
 
-Three phases, matching the C library:
+Three phases:
 
 1. **Coarsening** — graph is shrunk by successive heavy-edge matching (HEM, SHEM, or TwoHop) until it is small enough to partition directly.
 2. **Initial partitioning** — small coarsened graph is bisected using greedy grow or random partitioning.
 3. **Uncoarsening + refinement** — partition is projected back through the hierarchy and refined at each level using FM (Fiduccia-Mattheyses) boundary refinement with contiguity repair.
 
-Optional extensions beyond the standard algorithm:
+Optional extensions:
 
 - **Multi-cut (`ncuts`)** — run multiple independent trials, return the best cut.
-- **Contiguity enforcement** — partition repair guarantees each output part is connected.
+- **Contiguity enforcement** — repair guarantees each output part is connected.
 - **Minimum-connectivity refinement** — post-processing pass minimizes inter-part adjacency counts.
 
 ---
@@ -68,7 +68,7 @@ let partition = MetisPartitioner::with_params(params, k).split(&g, k, Some(seed)
 
 | Property | Detail |
 |----------|--------|
-| **No C dependency** | Pure Rust; no `cc`, no `libmetis`, no `bindgen` |
+| **No C dependency** | Pure Rust; no `cc`, no external library, no `bindgen` |
 | **Deterministic** | Seeded RNG (`rand_pcg`) — same seed, same partition |
 | **Verified** | Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs in `verify/prusti/` |
 | **Tested** | 97.1% line coverage; proptest invariant suite; golden-file regression (Vermont 2020 census) |
@@ -99,12 +99,6 @@ cargo test --test graph_ops   # CSR, contiguity, coarsening, balance (30 tests)
 cargo test --test contracts   # algorithm contracts
 cargo bench                   # criterion benchmarks
 ```
-
----
-
-## Relationship to the C library
-
-This is an independent Rust reimplementation of the METIS algorithm, not a binding to the C library. The public API mirrors `METIS_PartGraphRecursive` / `METIS_PartGraphKway` for drop-in compatibility where only the partition vector is needed. For the original C implementation see [KarypisLab/METIS](https://github.com/KarypisLab/METIS).
 
 ---
 

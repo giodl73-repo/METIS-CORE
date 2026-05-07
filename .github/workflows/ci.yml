@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo test
+        run: cargo test --all-targets
+
+  kani:
+    name: Kani model checking
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Kani
+        uses: model-checking/kani-github-action@v1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: kani
+      - name: Run Kani harnesses
+        run: cargo kani
+
+  prusti:
+    name: Prusti static verification
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Prusti
+        run: |
+          PRUSTI_VERSION="0.2.2"
+          PRUSTI_URL="https://github.com/viperproject/prusti-dev/releases/download/v-${PRUSTI_VERSION}-2023-07-23/prusti-release-ubuntu.zip"
+          if curl -sSfL "$PRUSTI_URL" -o /tmp/prusti.zip 2>/dev/null; then
+            unzip -q /tmp/prusti.zip -d /tmp/prusti
+            chmod +x /tmp/prusti/cargo-prusti /tmp/prusti/prusti-driver
+            echo "/tmp/prusti" >> "$GITHUB_PATH"
+            echo "PRUSTI_AVAILABLE=true" >> "$GITHUB_ENV"
+          else
+            echo "PRUSTI_AVAILABLE=false" >> "$GITHUB_ENV"
+          fi
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: prusti
+      - name: Run Prusti
+        if: env.PRUSTI_AVAILABLE == 'true'
+        run: cargo prusti

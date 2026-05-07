@@ -1,2 +1,28 @@
 target/
 Cargo.lock
+
+# Local/editor state (not public)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.DS_Store
+.vscode/
+.idea/
+*.swp
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.local
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.synctex.gz
+*.toc

@@ -1,0 +1,13 @@
+{
+  "generated": "2026-05-02",
+  "note": "Criterion p50 on synthetic grid graphs. 1s warmup, 3s measurement, 100 samples, release profile.",
+  "real_data_note": "Benchmarks use synthetic grid graphs for portability. For irregular graph topology, use their METIS sample graphs (4elt, copter2, mdual) via the graph_files integration tests.",
+  "benchmarks": {
+    "vt_bisect_k1_n255":    { "median_ms": 0.057, "k": 1,  "n": 255  },
+    "pa_kway_k17_n5256":    { "median_ms": 3.564, "k": 17, "n": 5256 },
+    "tx_kway_k38_n5256":    { "median_ms": 4.641, "k": 38, "n": 5256 },
+    "ny_kway_k26_n4900":    { "median_ms": 3.511, "k": 26, "n": 4900 },
+    "ca_kway_k53_n9120":    { "median_ms": 9.920, "k": 53, "n": 9120 },
+    "ca_coarsen_only_n9120":{ "median_ms": 1.425, "k": 53, "n": 9120 }
+  }
+}

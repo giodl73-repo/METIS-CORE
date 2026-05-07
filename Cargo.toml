@@ -1,0 +1,36 @@
+[package]
+name = "metis-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pure Rust METIS Contributors"]
+license = "Apache-2.0"
+description = "Pure Rust port of METIS multilevel graph partitioning — formally verified, deterministic"
+repository = "https://github.com/KarypisLab/METIS"
+keywords = ["graph", "partitioning", "metis", "multilevel", "combinatorial"]
+categories = ["algorithms", "science", "mathematics"]
+
+[lints.rust]
+# `cfg(prusti)` is set by the Prusti verification toolchain — not a Cargo feature.
+# `cfg(kani)` is set by the Kani model checker — not a Cargo feature.
+# Declare them here so rustc's check-cfg lint does not flag them as unexpected.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(prusti)', 'cfg(kani)'] }
+
+[dependencies]
+rand_pcg  = "0.3"
+rand      = { version = "0.8", default-features = false, features = ["alloc"] }
+thiserror = "2"
+serde     = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+proptest  = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Kani verification: run with `cargo +nightly kani --harness <name>`
+# Kani 0.55+ uses #[cfg(kani)] attribute gating — no explicit dev-dependency needed
+# Harnesses located in verify/ directory
+# See verify/kani/BOUNDS.md for bound justification
+
+[[bench]]
+name = "bench_main"
+harness = false

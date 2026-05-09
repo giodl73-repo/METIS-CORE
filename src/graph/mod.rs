@@ -92,11 +92,13 @@ impl CsrGraph {
         if self.xadj.len() != n + 1 {
             return Err(PartitionError::InvalidGraph("xadj length must be n + 1"));
         }
-        if n == 0 {
-            return Ok(());
-        }
         if self.xadj[0] != 0 {
             return Err(PartitionError::InvalidGraph("xadj must start at zero"));
+        }
+        if self.xadj[n] as usize != self.adjncy.len() {
+            return Err(PartitionError::InvalidGraph(
+                "xadj terminator must equal adjncy length",
+            ));
         }
         if self.ncon < 1 {
             return Err(PartitionError::InvalidGraph("ncon must be at least one"));
@@ -117,6 +119,14 @@ impl CsrGraph {
                     "adjwgt length must equal adjncy length",
                 ));
             }
+            if aw.iter().any(|&w| w <= 0) {
+                return Err(PartitionError::InvalidGraph(
+                    "edge weights must be positive",
+                ));
+            }
+        }
+        if n == 0 {
+            return Ok(());
         }
         for i in 0..n {
             if self.xadj[i] > self.xadj[i + 1] {
@@ -573,6 +583,20 @@ mod tests {
     fn invalid_adjwgt_wrong_len() {
         let mut g = path_graph(4);
         g.adjwgt = Some(vec![1i32; 3]);
+        assert!(!g.is_valid());
+    }
+
+    #[test]
+    fn invalid_trailing_adjncy() {
+        let result = CsrGraph::new(vec![0, 1, 2], vec![1, 0, 0], 1, vec![1; 2], None);
+        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+    }
+
+    #[test]
+    fn invalid_zero_adjwgt() {
+        let mut g = path_graph(4);
+        g.adjwgt = Some(vec![1i32; g.adjncy.len()]);
+        g.adjwgt.as_mut().unwrap()[0] = 0;
         assert!(!g.is_valid());
     }
 

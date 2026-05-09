@@ -343,7 +343,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             }
         }
 
-        let (mut p, _, _) = best.unwrap();
+        let (mut p, _, _) = best.ok_or(PartitionError::PartitioningFailed)?;
 
         // Final contiguity safety net when requested. METIS leaves this off by
         // default; forcing it after refinement can disrupt the achieved balance.
@@ -451,7 +451,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             }
         }
 
-        let (result, _, _) = best.unwrap();
+        let (result, _, _) = best.ok_or(PartitionError::PartitioningFailed)?;
         Ok(result)
     }
 }

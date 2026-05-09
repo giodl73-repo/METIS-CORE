@@ -12,6 +12,8 @@ pub enum PartitionError {
     TooManyParts { k: u32, n: usize },
     #[error("coarsening stalled: MAX_LEVELS=50 reached")]
     CoarseningStalled,
+    #[error("partitioning failed to produce a candidate")]
+    PartitioningFailed,
     #[error("vertex weight overflow during coarsening")]
     WeightOverflow,
     #[error("empty graph")]

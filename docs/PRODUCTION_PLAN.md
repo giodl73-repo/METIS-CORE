@@ -42,6 +42,9 @@ Status:
 - Done: quality envelopes for synthetic grids, `4elt.graph`, and `test.mgraph`.
 - Done: heavier `copter2.graph` parity smoke test gated behind
   `METIS_CORE_HEAVY_PARITY=1`.
+- Done: heavy `copter2.graph` parity run after Phase 4 improvements:
+  `gpmetis` cut around `13720`, Rust cut around `14299`, Rust imbalance around
+  `1.030`.
 
 ## Phase 3: Balance Semantics
 
@@ -77,10 +80,16 @@ Likely targets:
 - Done: FM destination choice selects the best balance-legal adjacent target,
   instead of picking the best target first and skipping it if illegal.
 - Done: FM gain table updates reuse candidate buffers in hot paths.
-- Initial k-way partition quality.
-- Coarsening stop threshold.
-- SHEM/RM fallback behavior.
-- Best-of-`ncuts` selection under balance constraints.
+- Done: initial grow partitioning uses spread-out graph seeds, capped for high
+  `k` to preserve speed.
+- Done: spread-seed unit tests cover determinism, uniqueness, and path
+  bisection geometry.
+- Done: best-of-`ncuts` selection ranks balance-envelope excess before cut and
+  scores equal-weight trials after final rebalancing.
+- Done: keep the default coarsening threshold at `20 * k`; `10 * k` regressed
+  grid, `4elt.graph`, and `test.mgraph` cut quality.
+- Done: keep SHEM as default; TwoHop remains available but regressed grid and
+  `4elt.graph` cuts in the parity suite.
 
 ## Phase 5: Performance
 

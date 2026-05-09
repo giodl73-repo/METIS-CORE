@@ -56,7 +56,7 @@ impl Refiner for FiducciaMattheyses {
         Partition {
             assignment: state.assignment,
             k: state.k,
-            tpwgts: None,
+            tpwgts: state.tpwgts,
         }
     }
 }

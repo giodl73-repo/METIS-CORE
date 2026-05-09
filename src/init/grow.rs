@@ -111,6 +111,45 @@ mod tests {
     }
 
     #[test]
+    fn spread_seeds_is_deterministic() {
+        let g = path_graph(16);
+        assert_eq!(spread_seeds(&g, 6, 42), spread_seeds(&g, 6, 42));
+    }
+
+    #[test]
+    fn spread_seeds_are_unique_when_k_fits_graph() {
+        let g = path_graph(16);
+        let seeds = spread_seeds(&g, 8, 7);
+        let mut sorted = seeds.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(seeds.len(), 8);
+        assert_eq!(sorted.len(), seeds.len());
+    }
+
+    #[test]
+    fn spread_seeds_bisection_chooses_path_extremes_after_first_seed() {
+        let g = path_graph(9);
+        let seeds = spread_seeds(&g, 2, 0);
+        assert_eq!(seeds.len(), 2);
+
+        let first = seeds[0];
+        let second = seeds[1];
+        let dist_to_left = first;
+        let dist_to_right = g.n() - 1 - first;
+        let expected_second = if dist_to_left >= dist_to_right {
+            0
+        } else {
+            g.n() - 1
+        };
+
+        assert_eq!(
+            second, expected_second,
+            "second seed should be the farthest path endpoint from the first seed"
+        );
+    }
+
+    #[test]
     fn recursive_bisect_grid_k4() {
         use crate::api::{MetisParams, MetisPartitioner, Partitioner};
         let g = grid_4x4();
@@ -375,15 +414,11 @@ fn grow_bisect(g: &CsrGraph, k: u32, seed: u64) -> Partition {
     }
 
     let n = g.n();
-    let mut rng = Pcg64::seed_from_u64(seed);
     let mut assignment = vec![u32::MAX; n];
 
-    // Pick 2 distinct random seeds
-    let seed_a = rng.gen_range(0..n);
-    let mut seed_b = rng.gen_range(0..n);
-    while seed_b == seed_a && n > 1 {
-        seed_b = rng.gen_range(0..n);
-    }
+    let seeds = spread_seeds(g, 2, seed);
+    let seed_a = seeds[0];
+    let seed_b = seeds[1];
 
     assignment[seed_a] = 0;
     assignment[seed_b] = 1;
@@ -433,35 +468,10 @@ fn grow_bisect(g: &CsrGraph, k: u32, seed: u64) -> Partition {
 fn grow_kway(g: &CsrGraph, k: u32, seed: u64) -> Partition {
     let n = g.n();
     let k = k as usize;
-    let mut rng = Pcg64::seed_from_u64(seed);
     let mut assignment = vec![u32::MAX; n];
     let mut queues: Vec<VecDeque<usize>> = (0..k).map(|_| VecDeque::new()).collect();
 
-    // Pick k distinct seed vertices
-    let mut seeds: Vec<usize> = Vec::with_capacity(k);
-    let mut attempts = 0usize;
-    while seeds.len() < k && attempts < n * 10 {
-        let v = rng.gen_range(0..n);
-        if !seeds.contains(&v) {
-            seeds.push(v);
-        }
-        attempts += 1;
-    }
-    // Fallback: if we couldn't find k distinct seeds (k > n), fill with wrap-around
-    while seeds.len() < k {
-        for v in 0..n {
-            if seeds.len() >= k {
-                break;
-            }
-            if !seeds.contains(&v) {
-                seeds.push(v);
-            }
-        }
-        // Last resort: allow duplicates if n < k
-        if seeds.len() < k {
-            seeds.push(seeds.len() % n);
-        }
-    }
+    let seeds = spread_seeds(g, k, seed);
 
     // Seed each part; duplicates will be silently skipped (already assigned)
     let mut initially_assigned = 0usize;
@@ -511,5 +521,136 @@ fn grow_kway(g: &CsrGraph, k: u32, seed: u64) -> Partition {
         assignment,
         k: k as u32,
         tpwgts: None,
+    }
+}
+
+fn spread_seeds(g: &CsrGraph, k: usize, seed: u64) -> Vec<usize> {
+    let n = g.n();
+    let mut rng = Pcg64::seed_from_u64(seed);
+    if n == 0 || k == 0 {
+        return Vec::new();
+    }
+
+    let first_seed = rng.gen_range(0..n);
+    let (mut seeds, mut selected) = spread_seed_prefix(g, k, first_seed);
+
+    let mut attempts = 0usize;
+    while seeds.len() < k && seeds.len() < n && attempts < n * 10 {
+        let v = rng.gen_range(0..n);
+        if !selected[v] {
+            seeds.push(v);
+            selected[v] = true;
+        }
+        attempts += 1;
+    }
+
+    for (v, is_selected) in selected.iter_mut().enumerate().take(n) {
+        if seeds.len() >= k {
+            break;
+        }
+        if !*is_selected {
+            seeds.push(v);
+            *is_selected = true;
+        }
+    }
+
+    while seeds.len() < k {
+        seeds.push(seeds.len() % n);
+    }
+
+    seeds
+}
+
+fn spread_seed_prefix(g: &CsrGraph, k: usize, first_seed: usize) -> (Vec<usize>, Vec<bool>) {
+    let n = g.n();
+    let mut seeds = Vec::with_capacity(k);
+    let mut selected = vec![false; n];
+    if n == 0 || k == 0 {
+        return (seeds, selected);
+    }
+
+    let spread_limit = k.min(40);
+    seeds.push(first_seed.min(n - 1));
+    selected[seeds[0]] = true;
+    let mut min_dist = bfs_distances(g, seeds[0]);
+
+    while seeds.len() < spread_limit && seeds.len() < n {
+        let next = (0..n)
+            .filter(|&v| !selected[v])
+            .max_by_key(|&v| (min_dist[v], std::cmp::Reverse(v)))
+            .expect("unselected vertex must exist while seeds.len() < n");
+        seeds.push(next);
+        selected[next] = true;
+
+        let dist = bfs_distances(g, next);
+        for (current, candidate) in min_dist.iter_mut().zip(dist) {
+            *current = (*current).min(candidate);
+        }
+    }
+
+    (seeds, selected)
+}
+
+fn bfs_distances(g: &CsrGraph, start: usize) -> Vec<usize> {
+    let n = g.n();
+    let mut dist = vec![usize::MAX; n];
+    let mut queue = VecDeque::from([start]);
+    dist[start] = 0;
+
+    while let Some(v) = queue.pop_front() {
+        let next_dist = dist[v] + 1;
+        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+            let u = g.adjncy[j] as usize;
+            if dist[u] == usize::MAX {
+                dist[u] = next_dist;
+                queue.push_back(u);
+            }
+        }
+    }
+
+    dist
+}
+
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+
+    fn kani_path(n: usize) -> CsrGraph {
+        let mut xadj = vec![0u32];
+        let mut adjncy = Vec::new();
+        for i in 0..n {
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
+            xadj.push(adjncy.len() as u32);
+        }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
+    }
+
+    /// Proves: deterministic spread-seed selection never panics or returns an
+    /// out-of-range seed for valid path graphs up to n=16 and k<=8.
+    #[kani::proof]
+    #[kani::unwind(17)]
+    fn verify_spread_seeds_no_oob() {
+        let n: usize = kani::any_where(|&n: &usize| n >= 2 && n <= 16);
+        let k: usize = kani::any_where(|&k: &usize| k >= 1 && k <= 8 && k <= n);
+        let first_seed: usize = kani::any_where(|&seed: &usize| seed < n);
+        let g = kani_path(n);
+        kani::assume(g.is_valid());
+
+        let (seeds, _selected) = spread_seed_prefix(&g, k, first_seed);
+        assert!(seeds.len() == k);
+        for seed in seeds {
+            assert!(seed < n);
+        }
     }
 }

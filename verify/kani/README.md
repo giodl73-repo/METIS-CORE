@@ -10,6 +10,7 @@ Formal verification of redist-metis using Kani bounded model checker (Kani 0.55+
   - `verify_is_valid_no_panic()` — CSR graph validation, no panics for n ≤ 8
   - `verify_shem_no_oob()` — SortedHeavyEdgeMatch, no OOB for n ≤ 16
   - `verify_hem_no_oob()` — HeavyEdgeMatch, no OOB for n ≤ 16
+  - `verify_spread_seeds_no_oob()` — deterministic grow initializer seed spreading, no OOB for n ≤ 16, k ≤ 8
   - `verify_gain_table_no_overflow()` — FM gain table, no overflow for gains ∈ [-128, 128]
   - `verify_fm_no_oob()` — Fiduccia-Mattheyses refinement, no OOB for n ≤ 16, k ≤ 4
   - `verify_hierarchy_no_panic()` — Multilevel hierarchy, no panics for ≤ 8 levels

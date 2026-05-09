@@ -58,6 +58,43 @@ fn compute_cut(g: &CsrGraph, assignment: &[u32]) -> i64 {
     cut / 2
 }
 
+fn balance_excess(g: &CsrGraph, p: &Partition, ufactor: u32, tpwgts: Option<&[f32]>) -> i64 {
+    let k = p.k as usize;
+    let ncon = g.ncon as usize;
+    let mut pwgts = vec![vec![0i64; ncon]; k];
+    let mut total_wgts = vec![0i64; ncon];
+
+    for v in 0..g.n() {
+        let part = p.assignment[v] as usize;
+        for c in 0..ncon {
+            let weight = g.vwgt[v * ncon + c] as i64;
+            pwgts[part][c] += weight;
+            total_wgts[c] += weight;
+        }
+    }
+
+    let mut max_excess = 0i64;
+    for (part, part_wgts) in pwgts.iter().enumerate().take(k) {
+        for c in 0..ncon {
+            let target = if c == 0 {
+                match tpwgts {
+                    Some(weights) if weights.len() == k => {
+                        (total_wgts[0] as f64 * weights[part] as f64).round() as i64
+                    }
+                    _ => total_wgts[0] / k as i64,
+                }
+            } else {
+                total_wgts[c] / k as i64
+            };
+            let epsilon = (target.abs() * ufactor as i64 + 999) / 1000;
+            let deviation = (part_wgts[c] - target).abs();
+            max_excess = max_excess.max((deviation - epsilon).max(0));
+        }
+    }
+
+    max_excess
+}
+
 pub trait Partitioner: Send + Sync {
     fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError>;
     fn split_weighted(
@@ -249,7 +286,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             })),
         };
 
-        let mut best: Option<(Partition, i64)> = None;
+        let mut best: Option<(Partition, i64, i64)> = None;
 
         for trial in 0..ncuts {
             // Derive a distinct seed per trial using a Fibonacci-hashing constant
@@ -262,22 +299,24 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             } else {
                 CoarseningHierarchy::build(g, &self.coarsener)?
             };
-            let p = Pipeline::new(hierarchy)
+            let mut p = Pipeline::new(hierarchy)
                 .with_contiguity_repair(self.params.contig_fm)
                 .initial_partition(&self.init, k, trial_seed)
                 .refine_and_project(&self.refiner)
                 .into_partition();
 
+            crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
             let cut = compute_cut(g, &p.assignment);
-            let is_better = best.as_ref().is_none_or(|&(_, best_cut)| cut < best_cut);
+            let excess = balance_excess(g, &p, self.params.ufactor, None);
+            let is_better = best
+                .as_ref()
+                .is_none_or(|&(_, best_excess, best_cut)| (excess, cut) < (best_excess, best_cut));
             if is_better {
-                best = Some((p, cut));
+                best = Some((p, excess, cut));
             }
         }
 
-        let (mut p, _) = best.unwrap();
-
-        crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
+        let (mut p, _, _) = best.unwrap();
 
         // Final contiguity safety net when requested. METIS leaves this off by
         // default; forcing it after refinement can disrupt the achieved balance.
@@ -350,7 +389,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             .unwrap_or(0xDEAD_BEEF_CAFE_1234u64);
         let ncuts = self.params.ncuts.max(1) as usize;
 
-        let mut best: Option<(Partition, i64)> = None;
+        let mut best: Option<(Partition, i64, i64)> = None;
 
         for trial in 0..ncuts {
             let trial_seed =
@@ -372,18 +411,20 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 repair_contiguity: self.params.contig_fm,
                 _state: std::marker::PhantomData::<crate::multilevel::pipeline::NeedsRefinement>,
             };
-            // tpwgts is cleared on the output partition — callers receive a plain Partition
             let mut result = pipeline.refine_and_project(&self.refiner).into_partition();
-            result.tpwgts = None;
 
             let cut = compute_cut(g, &result.assignment);
-            let is_better = best.as_ref().is_none_or(|&(_, best_cut)| cut < best_cut);
+            let excess = balance_excess(g, &result, self.params.ufactor, Some(&tpwgts));
+            let is_better = best
+                .as_ref()
+                .is_none_or(|&(_, best_excess, best_cut)| (excess, cut) < (best_excess, best_cut));
             if is_better {
-                best = Some((result, cut));
+                result.tpwgts = None;
+                best = Some((result, excess, cut));
             }
         }
 
-        let (result, _) = best.unwrap();
+        let (result, _, _) = best.unwrap();
         Ok(result)
     }
 }
@@ -445,6 +486,26 @@ mod tests {
             Partition {
                 assignment: vec![0; g.n()],
                 k: 1,
+                tpwgts: None,
+            }
+        }
+    }
+
+    struct SeedParityPartitioner;
+    impl InitialPartitioner for SeedParityPartitioner {
+        fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
+            let assignment = if seed.is_multiple_of(2) {
+                let mut assignment = vec![0; g.n()];
+                if let Some(last) = assignment.last_mut() {
+                    *last = 1;
+                }
+                assignment
+            } else {
+                (0..g.n()).map(|v| (v % k as usize) as u32).collect()
+            };
+            Partition {
+                assignment,
+                k,
                 tpwgts: None,
             }
         }
@@ -733,6 +794,35 @@ mod tests {
         assert!(
             cut4 <= cut1,
             "ncuts=4 cut ({cut4}) should be ≤ ncuts=1 cut ({cut1})"
+        );
+    }
+
+    #[test]
+    fn ncuts_prefers_balanced_trial_before_cut_for_weighted_split() {
+        let g = make_path_graph(8);
+        let partitioner = RustMetisPartitioner {
+            coarsener: AlwaysTrivial,
+            init: SeedParityPartitioner,
+            refiner: IdentityRefiner,
+            params: MetisParams {
+                ncuts: 2,
+                seed: Some(0),
+                ufactor: 0,
+                lp_refine: false,
+                ..MetisParams::default()
+            },
+        };
+
+        let p = partitioner
+            .split_weighted(&g, &[1, 1], None)
+            .expect("weighted split should succeed");
+        let part0 = p.assignment.iter().filter(|&&part| part == 0).count();
+        let part1 = p.assignment.iter().filter(|&&part| part == 1).count();
+
+        assert_eq!(
+            (part0, part1),
+            (4, 4),
+            "best-of-ncuts must prefer balance over a lower-cut imbalanced trial"
         );
     }
 

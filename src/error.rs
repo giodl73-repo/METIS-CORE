@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum PartitionError {
     #[error("invalid graph: {0}")]
     InvalidGraph(&'static str),
+    #[error("invalid partition: {0}")]
+    InvalidPartition(&'static str),
     #[error("k must be >= 1")]
     ZeroParts,
     #[error("k ({k}) exceeds vertex count ({n})")]

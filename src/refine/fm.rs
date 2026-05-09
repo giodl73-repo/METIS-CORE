@@ -13,6 +13,8 @@ pub struct FiducciaMattheyses {
     /// Number of label-propagation balance iterations to run before the FM
     /// passes.  0 = disabled (default).  Mirrors METIS `BalanceAndRefineLP`.
     pub lp_iter: u32,
+    /// Allowed imbalance in METIS units: `x` means `1 + x/1000`.
+    pub ufactor: u32,
 }
 
 impl Default for FiducciaMattheyses {
@@ -22,6 +24,7 @@ impl Default for FiducciaMattheyses {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         }
     }
 }
@@ -32,7 +35,7 @@ impl Refiner for FiducciaMattheyses {
         // Runs before FM so that FM starts from a better-balanced state.
         let p = if self.lp_iter > 0 {
             let mut p = p;
-            crate::refine::lp::lp_balance(g, &mut p, 5, self.lp_iter);
+            crate::refine::lp::lp_balance(g, &mut p, self.ufactor, self.lp_iter);
             p
         } else {
             p
@@ -42,7 +45,7 @@ impl Refiner for FiducciaMattheyses {
         let mut best = state.checkpoint();
 
         for _pass in 0..self.niter {
-            let improved = fm_pass(&mut state, &mut best, self.contig_fm);
+            let improved = fm_pass(&mut state, &mut best, self.contig_fm, self.ufactor);
             // Always restore to best after each pass so the next pass
             // starts from the best-known state, not the end-of-pass state.
             state.restore(&best);
@@ -156,7 +159,7 @@ pub fn compute_volume_gain(
     gain
 }
 
-fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool {
+fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool, ufactor: u32) -> bool {
     let ncon = state.graph.ncon as usize;
     let k = state.k as usize;
     let total_wgts: Vec<i64> = (0..ncon).map(|c| state.pwgts[c].iter().sum()).collect();
@@ -183,10 +186,14 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
                 .collect()
         })
         .collect();
-    // INTEGER balance epsilon — ceiling of 0.5% of each part's target — NO FLOATS
+    // INTEGER balance epsilon — METIS ufactor units: x means 1 + x/1000.
     let epsilons_pc: Vec<Vec<i64>> = targets_pc
         .iter()
-        .map(|row| row.iter().map(|&t| (t.abs() * 5 + 999) / 1000).collect())
+        .map(|row| {
+            row.iter()
+                .map(|&t| (t.abs() * ufactor as i64 + 999) / 1000)
+                .collect()
+        })
         .collect();
 
     let start_cut = best.cut;
@@ -195,6 +202,7 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
     // This is the fundamental FM invariant — each vertex moves at most once per pass.
     let n = state.graph.n();
     let mut locked = vec![false; n];
+    let mut candidates: Vec<(u32, i32)> = Vec::new();
 
     while let Some((v, _gain)) = state.gain_table.pop_max() {
         let v = v as usize;
@@ -215,31 +223,22 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
             }
         }
 
-        // Find best destination part
-        let to_part = if state.k == 2 {
-            1 - from_part as u32
-        } else {
-            match state.objective {
-                ObjectiveType::Cut => best_destination(state, v, from_part as u32),
-                ObjectiveType::Volume => best_destination_volume(state, v, from_part as u32),
-            }
-        } as usize;
-
         // Gather per-constraint weights for vertex v
         let vwgt_v: Vec<i64> = (0..ncon)
             .map(|c| state.graph.vwgt[v * ncon + c] as i64)
             .collect();
 
-        // Balance check — ALL constraints must pass for BOTH parts
-        let balanced = (0..ncon).all(|c| {
-            let new_from = state.pwgts[c][from_part] - vwgt_v[c];
-            let new_to = state.pwgts[c][to_part] + vwgt_v[c];
-            new_from >= targets_pc[from_part][c] - epsilons_pc[from_part][c]
-                && new_to <= targets_pc[to_part][c] + epsilons_pc[to_part][c]
-        });
-        if !balanced {
+        let Some(to_part) = best_legal_destination(
+            state,
+            v,
+            from_part,
+            &vwgt_v,
+            &targets_pc,
+            &epsilons_pc,
+            &mut candidates,
+        ) else {
             continue;
-        }
+        };
 
         // Apply move
         state.assignment[v] = to_part as u32;
@@ -275,7 +274,9 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
             } // never re-insert a locked vertex
 
             let new_gain = match state.objective {
-                ObjectiveType::Cut => compute_gain(g, &state.assignment, u),
+                ObjectiveType::Cut => {
+                    compute_cut_gain_with_buffer(g, &state.assignment, u, &mut candidates)
+                }
                 ObjectiveType::Volume => {
                     let u_from = state.assignment[u];
                     best_volume_gain(g, &state.assignment, u, u_from, state.k)
@@ -364,29 +365,42 @@ fn would_disconnect(g: &CsrGraph, assignment: &[u32], v: usize, from_part: usize
     reached < part_size // true = some vertices in from_part unreachable → disconnected
 }
 
-fn best_destination(state: &FmState, v: usize, from: u32) -> u32 {
-    let g = state.graph;
-    (0..state.k)
-        .filter(|&p| p != from)
-        .max_by_key(|&p| {
-            (g.xadj[v] as usize..g.xadj[v + 1] as usize)
-                .filter(|&j| state.assignment[g.adjncy[j] as usize] == p)
-                .map(|j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]))
-                .sum::<i32>()
-        })
-        .unwrap_or(if from == 0 { 1 } else { 0 })
-}
+fn best_legal_destination(
+    state: &FmState,
+    v: usize,
+    from_part: usize,
+    vwgt_v: &[i64],
+    targets_pc: &[Vec<i64>],
+    epsilons_pc: &[Vec<i64>],
+    candidates: &mut Vec<(u32, i32)>,
+) -> Option<usize> {
+    let ncon = state.graph.ncon as usize;
+    let from = from_part as u32;
+    candidates.clear();
 
-/// Best destination part for vertex `v` under the volume objective.
-/// Scans all k-1 candidate parts and picks the one with the highest
-/// `compute_volume_gain`.  Falls back to the part adjacent to `v` with the
-/// most edge-weight if no part yields a positive gain (ties broken by index).
-fn best_destination_volume(state: &FmState, v: usize, from: u32) -> u32 {
-    let g = state.graph;
-    (0..state.k)
-        .filter(|&p| p != from)
-        .max_by_key(|&to| compute_volume_gain(g, &state.assignment, v, from, to))
-        .unwrap_or(if from == 0 { 1 } else { 0 })
+    match state.objective {
+        ObjectiveType::Cut => {
+            fill_cut_candidates(state.graph, &state.assignment, v, from, candidates)
+        }
+        ObjectiveType::Volume => {
+            fill_volume_candidates(state.graph, &state.assignment, v, from, candidates)
+        }
+    }
+
+    candidates
+        .iter()
+        .copied()
+        .map(|(to, gain)| (to as usize, gain))
+        .filter(|&(to, _)| {
+            (0..ncon).all(|c| {
+                let new_from = state.pwgts[c][from_part] - vwgt_v[c];
+                let new_to = state.pwgts[c][to] + vwgt_v[c];
+                new_from >= targets_pc[from_part][c] - epsilons_pc[from_part][c]
+                    && new_to <= targets_pc[to][c] + epsilons_pc[to][c]
+            })
+        })
+        .max_by_key(|&(to, gain)| (gain, std::cmp::Reverse(to as u32)))
+        .map(|(to, _)| to)
 }
 
 pub struct FmState<'g> {
@@ -438,10 +452,13 @@ impl<'g> FmState<'g> {
 
         let boundary = BoundarySet::from_partition(g, &p);
         let mut gain_table = GainTable::new(n, max_gain);
+        let mut candidates = Vec::new();
         for v_u32 in boundary.iter() {
             let v = v_u32 as usize;
             let gain = match objective {
-                ObjectiveType::Cut => compute_gain(g, &p.assignment, v),
+                ObjectiveType::Cut => {
+                    compute_cut_gain_with_buffer(g, &p.assignment, v, &mut candidates)
+                }
                 ObjectiveType::Volume => {
                     let from = p.assignment[v];
                     // Best-gain destination for volume objective (greedy scan)
@@ -506,10 +523,13 @@ impl<'g> FmState<'g> {
         let n = self.graph.n();
         let max_gain = self.gain_table.max_gain;
         self.gain_table = GainTable::new(n, max_gain);
+        let mut candidates = Vec::new();
         for v_u32 in self.boundary.iter() {
             let v = v_u32 as usize;
             let gain = match self.objective {
-                ObjectiveType::Cut => compute_gain(self.graph, &self.assignment, v),
+                ObjectiveType::Cut => {
+                    compute_cut_gain_with_buffer(self.graph, &self.assignment, v, &mut candidates)
+                }
                 ObjectiveType::Volume => {
                     let from = self.assignment[v];
                     best_volume_gain(self.graph, &self.assignment, v, from, self.k)
@@ -536,22 +556,81 @@ impl<'g> FmState<'g> {
     }
 }
 
-/// Gain of moving vertex v to its "other" part (for k=2 bisection).
-/// For k>2, returns gain of moving to the best adjacent part.
-/// Gain = (edges to other parts) - (edges to same part).
+/// Gain of moving vertex v to the best adjacent destination part.
+///
+/// Gain = `external_degree_to_destination - internal_degree`. For k-way
+/// partitioning the destination must be a single part, so using total external
+/// degree across all neighboring parts overstates the true move gain.
 pub fn compute_gain(g: &CsrGraph, assignment: &[u32], v: usize) -> i32 {
-    let part_v = assignment[v];
-    let mut gain = 0i32;
+    compute_cut_gain_with_buffer(g, assignment, v, &mut Vec::new())
+}
+
+fn compute_cut_gain_with_buffer(
+    g: &CsrGraph,
+    assignment: &[u32],
+    v: usize,
+    candidates: &mut Vec<(u32, i32)>,
+) -> i32 {
+    let from = assignment[v];
+    fill_cut_candidates(g, assignment, v, from, candidates);
+    candidates
+        .iter()
+        .map(|&(_, gain)| gain)
+        .max()
+        .unwrap_or_else(|| {
+            let internal: i32 = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
+                .filter(|&j| assignment[g.adjncy[j] as usize] == from)
+                .map(|j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]))
+                .sum();
+            -internal
+        })
+}
+
+fn fill_cut_candidates(
+    g: &CsrGraph,
+    assignment: &[u32],
+    v: usize,
+    from: u32,
+    candidates: &mut Vec<(u32, i32)>,
+) {
+    candidates.clear();
+    let mut internal = 0i32;
     for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-        let u = g.adjncy[j] as usize;
         let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
-        if assignment[u] == part_v {
-            gain -= ew;
+        let part = assignment[g.adjncy[j] as usize];
+        if part == from {
+            internal += ew;
+        } else if let Some((_, external)) = candidates
+            .iter_mut()
+            .find(|(candidate, _)| *candidate == part)
+        {
+            *external += ew;
         } else {
-            gain += ew;
+            candidates.push((part, ew));
         }
     }
-    gain
+
+    for (_, external) in candidates.iter_mut() {
+        *external -= internal;
+    }
+}
+
+fn fill_volume_candidates(
+    g: &CsrGraph,
+    assignment: &[u32],
+    v: usize,
+    from: u32,
+    candidates: &mut Vec<(u32, i32)>,
+) {
+    candidates.clear();
+    for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+        let part = assignment[g.adjncy[j] as usize];
+        if part == from || candidates.iter().any(|(candidate, _)| *candidate == part) {
+            continue;
+        }
+        let gain = compute_volume_gain(g, assignment, v, from, part);
+        candidates.push((part, gain));
+    }
 }
 
 /// Best volume gain for vertex `v` moving away from `from_part` — scans all
@@ -736,6 +815,7 @@ mod tests {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let p = fm.refine(&g, p_init);
         let cut_after = compute_cut_for_test(&g, &p.assignment);
@@ -758,6 +838,7 @@ mod tests {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let p = fm.refine(&g, p_init);
         let cut = compute_cut_for_test(&g, &p.assignment);
@@ -772,13 +853,14 @@ mod tests {
         let g = grid_4x4();
         let total: i64 = g.vwgt.iter().map(|&w| w as i64).sum(); // = 16
         let target = total / 2; // = 8
-        let eps = (total * 5 + 999) / 1000; // ceiling of 0.5% = 1
+        let eps = (target * 5 + 999) / 1000; // ceiling of 0.5% = 1
         let p_init = RandomBisect.partition(&g, 2, 99);
         let fm = FiducciaMattheyses {
             niter: 10,
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let p = fm.refine(&g, p_init);
         for part in 0..2u32 {
@@ -810,13 +892,13 @@ mod tests {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let p = fm.refine(&g, p_init);
         assert_eq!(p.assignment.len(), 16);
-        // Both constraints should be balanced within ε = ceil(0.5% × 16) = 1
-        let total = 16i64;
+        // Both constraints should be balanced within ε = ceil(0.5% × target) = 1
         let target = 8i64;
-        let eps = (total * 5 + 999) / 1000; // = 1
+        let eps = (target * 5 + 999) / 1000; // = 1
         for part in 0..2u32 {
             let wgt0: i64 = (0..16)
                 .filter(|&v| p.assignment[v] == part)
@@ -948,6 +1030,7 @@ mod tests {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let result = fm.refine(&g, p);
 
@@ -1104,6 +1187,7 @@ mod kani_proofs {
             contig_fm: true,
             objective: ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
         let result = fm.refine(&g, p);
 

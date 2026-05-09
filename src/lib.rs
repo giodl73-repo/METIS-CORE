@@ -37,22 +37,7 @@ pub fn part_recursive(
     nparts: u32,
     params: api::MetisParams,
 ) -> Result<Vec<u32>, PartitionError> {
-    let n = xadj.len().saturating_sub(1);
-    let g = graph::CsrGraph {
-        xadj: xadj.to_vec(),
-        adjncy: adjncy.to_vec(),
-        ncon: 1,
-        vwgt: if vwgt.is_empty() {
-            vec![1i32; n]
-        } else {
-            vwgt.to_vec()
-        },
-        adjwgt: if adjwgt.is_empty() {
-            None
-        } else {
-            Some(adjwgt.to_vec())
-        },
-    };
+    let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
     api::MetisPartitioner::with_params(params, nparts)
         .split(&g, nparts, None)
         .map(|p| p.assignment)

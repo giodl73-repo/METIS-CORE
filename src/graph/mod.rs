@@ -1,3 +1,4 @@
+use crate::error::PartitionError;
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
@@ -10,46 +11,111 @@ pub struct CsrGraph {
 }
 
 impl CsrGraph {
+    /// Build a CSR graph and validate its structural invariants.
+    ///
+    /// The public fields remain available for low-level callers and tests, but
+    /// production code should prefer this constructor so malformed CSR input is
+    /// rejected before partitioning starts.
+    pub fn new(
+        xadj: Vec<u32>,
+        adjncy: Vec<u32>,
+        ncon: u32,
+        vwgt: Vec<i32>,
+        adjwgt: Option<Vec<i32>>,
+    ) -> Result<Self, PartitionError> {
+        let graph = Self {
+            xadj,
+            adjncy,
+            ncon,
+            vwgt,
+            adjwgt,
+        };
+        graph.validate()?;
+        Ok(graph)
+    }
+
+    /// Build a single-constraint CSR graph, using unit vertex or edge weights
+    /// when the corresponding slices are empty.
+    pub fn from_csr(
+        xadj: &[u32],
+        adjncy: &[u32],
+        vwgt: &[i32],
+        adjwgt: &[i32],
+    ) -> Result<Self, PartitionError> {
+        let n = xadj.len().saturating_sub(1);
+        Self::new(
+            xadj.to_vec(),
+            adjncy.to_vec(),
+            1,
+            if vwgt.is_empty() {
+                vec![1i32; n]
+            } else {
+                vwgt.to_vec()
+            },
+            if adjwgt.is_empty() {
+                None
+            } else {
+                Some(adjwgt.to_vec())
+            },
+        )
+    }
+
     pub fn n(&self) -> usize {
         self.xadj.len().saturating_sub(1)
     }
 
     pub fn is_valid(&self) -> bool {
+        self.validate().is_ok()
+    }
+
+    pub fn validate(&self) -> Result<(), PartitionError> {
         let n = self.n();
         if self.xadj.len() != n + 1 {
-            return false;
+            return Err(PartitionError::InvalidGraph("xadj length must be n + 1"));
         }
         if n == 0 {
-            return true;
+            return Ok(());
         }
         if self.xadj[0] != 0 {
-            return false;
+            return Err(PartitionError::InvalidGraph("xadj must start at zero"));
         }
         if self.ncon < 1 {
-            return false;
+            return Err(PartitionError::InvalidGraph("ncon must be at least one"));
         }
         if self.vwgt.len() != n * self.ncon as usize {
-            return false;
+            return Err(PartitionError::InvalidGraph(
+                "vwgt length must equal n * ncon",
+            ));
         }
         if self.vwgt.iter().any(|&w| w <= 0) {
-            return false;
+            return Err(PartitionError::InvalidGraph(
+                "vertex weights must be positive",
+            ));
         }
         if let Some(ref aw) = self.adjwgt {
             if aw.len() != self.adjncy.len() {
-                return false;
+                return Err(PartitionError::InvalidGraph(
+                    "adjwgt length must equal adjncy length",
+                ));
             }
         }
         for i in 0..n {
             if self.xadj[i] > self.xadj[i + 1] {
-                return false;
+                return Err(PartitionError::InvalidGraph(
+                    "xadj must be monotonically nondecreasing",
+                ));
             }
             for j in self.xadj[i] as usize..self.xadj[i + 1] as usize {
                 if j >= self.adjncy.len() {
-                    return false;
+                    return Err(PartitionError::InvalidGraph(
+                        "xadj points past adjncy length",
+                    ));
                 }
                 let nb = self.adjncy[j] as usize;
                 if nb >= n || nb == i {
-                    return false;
+                    return Err(PartitionError::InvalidGraph(
+                        "adjncy contains an invalid neighbor",
+                    ));
                 }
             }
         }
@@ -67,7 +133,11 @@ impl CsrGraph {
                 }
             }
         }
-        visited.iter().all(|&v| v)
+        if visited.iter().all(|&v| v) {
+            Ok(())
+        } else {
+            Err(PartitionError::InvalidGraph("graph must be connected"))
+        }
     }
 }
 
@@ -81,14 +151,61 @@ pub struct Partition {
     pub tpwgts: Option<Vec<f32>>,
 }
 
+impl Partition {
+    /// Validate that this partition is compatible with `g`.
+    pub fn validate_for_graph(&self, g: &CsrGraph) -> Result<(), PartitionError> {
+        if self.k == 0 {
+            return Err(PartitionError::InvalidPartition("k must be at least one"));
+        }
+        if self.assignment.len() != g.n() {
+            return Err(PartitionError::InvalidPartition(
+                "assignment length must equal graph vertex count",
+            ));
+        }
+        if self.assignment.iter().any(|&part| part >= self.k) {
+            return Err(PartitionError::InvalidPartition(
+                "assignment contains part id outside 0..k",
+            ));
+        }
+        if let Some(tpwgts) = &self.tpwgts {
+            if tpwgts.len() != self.k as usize {
+                return Err(PartitionError::InvalidPartition(
+                    "tpwgts length must equal k",
+                ));
+            }
+            if tpwgts
+                .iter()
+                .any(|&weight| !weight.is_finite() || weight < 0.0)
+            {
+                return Err(PartitionError::InvalidPartition(
+                    "tpwgts entries must be finite and nonnegative",
+                ));
+            }
+            let sum: f32 = tpwgts.iter().sum();
+            if sum <= 0.0 {
+                return Err(PartitionError::InvalidPartition(
+                    "tpwgts must contain positive total weight",
+                ));
+            }
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CoarseMap {
     pub cmap: Vec<u32>,
 }
 
 /// Check if every part in `partition` is connected within `g`.
-/// Returns `Ok(())` if all parts are contiguous, or the first disconnected part ID.
+/// Returns `Ok(())` if all parts are contiguous, the first disconnected part ID
+/// if a valid partition is non-contiguous, or `u32::MAX` when the partition is
+/// structurally invalid for the graph.
 pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> {
+    if partition.validate_for_graph(g).is_err() {
+        return Err(u32::MAX);
+    }
+
     let n = g.n();
     let k = partition.k as usize;
 
@@ -353,6 +470,29 @@ mod tests {
     }
 
     #[test]
+    fn new_accepts_valid_graph() {
+        let g = path_graph(5);
+        let built = CsrGraph::new(g.xadj, g.adjncy, g.ncon, g.vwgt, g.adjwgt)
+            .expect("valid path graph should construct");
+        assert_eq!(built.n(), 5);
+    }
+
+    #[test]
+    fn new_rejects_invalid_graph() {
+        let result = CsrGraph::new(vec![0, 1, 2], vec![1, 2], 1, vec![1, 1], None);
+        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+    }
+
+    #[test]
+    fn from_csr_defaults_empty_weights_to_unit_weights() {
+        let g = path_graph(4);
+        let built = CsrGraph::from_csr(&g.xadj, &g.adjncy, &[], &[])
+            .expect("valid unweighted path graph should construct");
+        assert_eq!(built.vwgt, vec![1; 4]);
+        assert!(built.adjwgt.is_none());
+    }
+
+    #[test]
     fn invalid_self_loop() {
         let mut g = path_graph(4);
         g.adjncy[0] = 0;
@@ -501,6 +641,56 @@ mod tests {
             0,
             "err value must be the disconnected part ID"
         );
+    }
+
+    #[test]
+    fn partition_validate_for_graph_accepts_valid_partition() {
+        let g = path_graph(4);
+        let p = Partition {
+            assignment: vec![0, 0, 1, 1],
+            k: 2,
+            tpwgts: Some(vec![0.5, 0.5]),
+        };
+        assert!(p.validate_for_graph(&g).is_ok());
+    }
+
+    #[test]
+    fn partition_validate_for_graph_rejects_short_assignment() {
+        let g = path_graph(4);
+        let p = Partition {
+            assignment: vec![0, 1, 1],
+            k: 2,
+            tpwgts: None,
+        };
+        assert!(matches!(
+            p.validate_for_graph(&g),
+            Err(PartitionError::InvalidPartition(_))
+        ));
+    }
+
+    #[test]
+    fn partition_validate_for_graph_rejects_out_of_range_part() {
+        let g = path_graph(4);
+        let p = Partition {
+            assignment: vec![0, 0, 1, 2],
+            k: 2,
+            tpwgts: None,
+        };
+        assert!(matches!(
+            p.validate_for_graph(&g),
+            Err(PartitionError::InvalidPartition(_))
+        ));
+    }
+
+    #[test]
+    fn check_contiguity_rejects_invalid_partition_without_panic() {
+        let g = path_graph(4);
+        let p = Partition {
+            assignment: vec![0, 0, 1, 2],
+            k: 2,
+            tpwgts: None,
+        };
+        assert_eq!(check_contiguity(&g, &p), Err(u32::MAX));
     }
 
     // ── repair_contiguity ──────────────────────────────────────────────────

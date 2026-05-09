@@ -8,7 +8,7 @@ use crate::graph::{CsrGraph, Partition};
 /// keeps both the source and destination within `target ± epsilon`.
 ///
 /// Mirrors METIS `BalanceAndRefineLP` from `kmetis.c`.
-pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_iter: u32) {
+pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, ufactor: u32, max_iter: u32) {
     if max_iter == 0 {
         return;
     }
@@ -19,9 +19,11 @@ pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_it
     }
 
     let total_wgt: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
-    let target = total_wgt / k as i64;
-    // Ceiling of 0.5% of total, matching the FM balance epsilon
-    let epsilon = (total_wgt * 5 + 999) / 1000;
+    let targets = balance_targets(total_wgt, k, partition.tpwgts.as_deref());
+    let epsilons: Vec<i64> = targets
+        .iter()
+        .map(|&target| (target.abs() * ufactor as i64 + 999) / 1000)
+        .collect();
 
     let mut pwgts = vec![0i64; k];
     for v in 0..n {
@@ -42,8 +44,8 @@ pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_it
                 continue;
             }
 
-            // Source part must be overloaded before we consider moving anyone out
-            if pwgts[from] <= target + epsilon {
+            // Source part must be overloaded before we consider moving anyone out.
+            if pwgts[from] <= targets[from] + epsilons[from] {
                 continue;
             }
 
@@ -57,7 +59,9 @@ pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_it
                 // Accept the move only when it keeps both sides in balance
                 let new_from = pwgts[from] - vwgt;
                 let new_to = pwgts[to] + vwgt;
-                if new_from >= target - epsilon && new_to <= target + epsilon {
+                if new_from >= targets[from] - epsilons[from]
+                    && new_to <= targets[to] + epsilons[to]
+                {
                     partition.assignment[v] = to as u32;
                     pwgts[from] = new_from;
                     pwgts[to] = new_to;
@@ -69,6 +73,16 @@ pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_it
         if moved == 0 {
             break;
         }
+    }
+}
+
+fn balance_targets(total_wgt: i64, k: usize, tpwgts: Option<&[f32]>) -> Vec<i64> {
+    match tpwgts {
+        Some(weights) if weights.len() == k => weights
+            .iter()
+            .map(|&weight| (total_wgt as f64 * weight as f64).round() as i64)
+            .collect(),
+        _ => vec![total_wgt / k as i64; k],
     }
 }
 
@@ -256,6 +270,64 @@ mod tests {
         assert_eq!(
             p.assignment, before,
             "perfectly balanced partition must not be changed by LP"
+        );
+    }
+
+    #[test]
+    fn lp_respects_ufactor_tolerance() {
+        let g = path_graph(10);
+        let assignment = vec![0, 0, 0, 0, 0, 0, 1, 1, 1, 1];
+
+        let mut strict = Partition {
+            assignment: assignment.clone(),
+            k: 2,
+            tpwgts: None,
+        };
+        lp_balance(&g, &mut strict, 0, 10);
+
+        let mut loose = Partition {
+            assignment,
+            k: 2,
+            tpwgts: None,
+        };
+        lp_balance(&g, &mut loose, 200, 10);
+
+        assert_ne!(
+            strict.assignment, loose.assignment,
+            "strict ufactor should rebalance where loose ufactor accepts the starting split"
+        );
+        assert_eq!(pwgtss(&g, &strict), vec![5, 5]);
+        assert_eq!(pwgtss(&g, &loose), vec![6, 4]);
+    }
+
+    #[test]
+    fn lp_respects_target_partition_weights() {
+        let g = path_graph(10);
+        let assignment = vec![0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
+
+        let mut weighted = Partition {
+            assignment: assignment.clone(),
+            k: 2,
+            tpwgts: Some(vec![0.7, 0.3]),
+        };
+        lp_balance(&g, &mut weighted, 5, 10);
+
+        let mut equal = Partition {
+            assignment,
+            k: 2,
+            tpwgts: None,
+        };
+        lp_balance(&g, &mut equal, 0, 10);
+
+        assert_eq!(
+            pwgtss(&g, &weighted),
+            vec![7, 3],
+            "weighted targets should preserve the requested 70/30 split"
+        );
+        assert_eq!(
+            pwgtss(&g, &equal),
+            vec![5, 5],
+            "without tpwgts LP should rebalance toward equal parts"
         );
     }
 

@@ -157,6 +157,7 @@ mod tests {
             contig_fm: true,
             objective: crate::api::ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
 
         let p = Pipeline::new(hierarchy)
@@ -185,6 +186,7 @@ mod tests {
             contig_fm: true,
             objective: crate::api::ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
 
         let p = Pipeline::new(hierarchy)
@@ -216,6 +218,7 @@ mod tests {
             contig_fm: true,
             objective: crate::api::ObjectiveType::Cut,
             lp_iter: 0,
+            ufactor: 5,
         };
 
         let p = Pipeline::new(hierarchy)

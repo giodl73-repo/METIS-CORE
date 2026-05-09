@@ -61,9 +61,10 @@ use metis_core::{
     api::{MetisPartitioner, MetisParams, Partitioner, CoarseningMethod},
 };
 
-let g = CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1; n], adjwgt: None };
+let g = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
 let params = MetisParams { coarsen_method: CoarseningMethod::Shem, ncuts: 3, ..Default::default() };
 let partition = MetisPartitioner::with_params(params, k).split(&g, k, Some(seed))?;
+partition.validate_for_graph(&g)?;
 ```
 
 ---
@@ -111,6 +112,9 @@ available. Set `METIS_GPMETIS=C:\path\to\gpmetis.exe` to force a specific
 binary; the test checks structural invariants plus cut and balance quality
 envelopes, not exact vertex labels, because METIS partition labels are
 seed-sensitive and implementation-dependent.
+
+Set `METIS_CORE_HEAVY_PARITY=1` to include the larger `copter2.graph` parity
+smoke test.
 
 ---
 

@@ -158,6 +158,7 @@ impl MetisPartitioner {
                 contig_fm: params.contig_fm,
                 objective: params.objective,
                 lp_iter: if params.lp_refine { params.lp_iter } else { 0 },
+                ufactor: params.ufactor,
             },
             params,
         }
@@ -512,6 +513,7 @@ mod tests {
                 contig_fm: true,
                 objective: ObjectiveType::Cut,
                 lp_iter: 0,
+                ufactor: 5,
             },
             params: MetisParams::default(),
         };
@@ -559,6 +561,16 @@ mod tests {
         let p = partitioner.split(&g, 2, Some(7)).unwrap();
         assert_eq!(p.assignment.len(), 20);
         assert_eq!(p.k, 2);
+    }
+
+    #[test]
+    fn metis_partitioner_threads_ufactor_into_refiner() {
+        let params = MetisParams {
+            ufactor: 30,
+            ..MetisParams::default()
+        };
+        let partitioner = MetisPartitioner::with_params(params, 4);
+        assert_eq!(partitioner.refiner.ufactor, 30);
     }
 
     #[test]

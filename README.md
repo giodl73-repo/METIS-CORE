@@ -13,7 +13,8 @@ Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices 
 - **`part_recursive`** — multilevel recursive bisection
 - **`part_kway`** — direct multilevel k-way partitioning
 
-Both run the same unified multilevel pipeline.
+`part_recursive` uses recursive bisection; `part_kway` uses the direct k-way
+pipeline.
 
 ---
 

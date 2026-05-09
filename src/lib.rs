@@ -35,8 +35,9 @@ pub fn part_recursive(
     vwgt: &[i32],
     adjwgt: &[i32],
     nparts: u32,
-    params: api::MetisParams,
+    mut params: api::MetisParams,
 ) -> Result<Vec<u32>, PartitionError> {
+    params.use_recursive = true;
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
     api::MetisPartitioner::with_params(params, nparts)
         .split(&g, nparts, None)
@@ -46,17 +47,21 @@ pub fn part_recursive(
 /// Partition a graph using direct multilevel k-way partitioning.
 /// Mirrors `METIS_PartGraphKway` from the C library.
 ///
-/// Prefer `part_kway` for nparts > 8; both entry points use the same
-/// algorithm in this implementation (unified multilevel pipeline).
+/// Prefer `part_kway` for larger `nparts` when direct k-way partitioning is
+/// desired.
 pub fn part_kway(
     xadj: &[u32],
     adjncy: &[u32],
     vwgt: &[i32],
     adjwgt: &[i32],
     nparts: u32,
-    params: api::MetisParams,
+    mut params: api::MetisParams,
 ) -> Result<Vec<u32>, PartitionError> {
-    part_recursive(xadj, adjncy, vwgt, adjwgt, nparts, params)
+    params.use_recursive = false;
+    let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
+    api::MetisPartitioner::with_params(params, nparts)
+        .split(&g, nparts, None)
+        .map(|p| p.assignment)
 }
 
 #[cfg(test)]

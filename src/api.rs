@@ -1,12 +1,15 @@
-﻿use crate::{graph::{CsrGraph, Partition, repair_contiguity}, error::PartitionError};
+use crate::coarsen::shem::SortedHeavyEdgeMatchWithParams;
 pub use crate::coarsen::Coarsener;
+use crate::init::grow::GrowBisect;
 pub use crate::init::InitialPartitioner;
-pub use crate::refine::Refiner;
 use crate::multilevel::hierarchy::CoarseningHierarchy;
 use crate::multilevel::pipeline::Pipeline;
-use crate::coarsen::shem::SortedHeavyEdgeMatchWithParams;
-use crate::init::grow::GrowBisect;
 use crate::refine::fm::FiducciaMattheyses;
+pub use crate::refine::Refiner;
+use crate::{
+    error::PartitionError,
+    graph::{repair_contiguity, CsrGraph, Partition},
+};
 
 #[cfg(prusti)]
 extern crate prusti_contracts;
@@ -17,7 +20,7 @@ use prusti_contracts::*;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum CoarseningMethod {
     #[default]
-    Shem,      // Sorted Heavy-Edge Matching — O(n+m) bucket sort (default)
+    Shem, // Sorted Heavy-Edge Matching — O(n+m) bucket sort (default)
     Hem,       // Heavy-Edge Matching — random visit order
     MinDegree, // Minimum-degree matching — lowest-degree vertices first
     TwoHop,    // Two-hop matching — looks 2 hops for unmatched vertices on sparse graphs
@@ -35,7 +38,7 @@ pub enum CoarseningMethod {
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ObjectiveType {
     #[default]
-    Cut,    // minimise edge cut (default, METIS_OBJTYPE_CUT)
+    Cut, // minimise edge cut (default, METIS_OBJTYPE_CUT)
     Volume, // minimise communication volume (METIS_OBJTYPE_VOL)
 }
 
@@ -56,31 +59,34 @@ fn compute_cut(g: &CsrGraph, assignment: &[u32]) -> i64 {
 }
 
 pub trait Partitioner: Send + Sync {
-    fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>)
-        -> Result<Partition, PartitionError>;
-    fn split_weighted(&self, g: &CsrGraph, fracs: &[u32], seed: Option<u64>)
-        -> Result<Partition, PartitionError>;
+    fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError>;
+    fn split_weighted(
+        &self,
+        g: &CsrGraph,
+        fracs: &[u32],
+        seed: Option<u64>,
+    ) -> Result<Partition, PartitionError>;
 }
 
 #[derive(Debug, Clone)]
 pub struct MetisParams {
-    pub ufactor:    u32,
-    pub niter:      u32,
-    pub seed:       Option<u64>,
+    pub ufactor: u32,
+    pub niter: u32,
+    pub seed: Option<u64>,
     pub coarsen_to: u32,
     /// Number of independent partition trials; the one with the lowest edge cut
     /// is returned.  Mirrors the METIS `-ncuts` option (kway default = 1;
     /// pmetis default = 4).  Each trial uses a deterministically derived seed
     /// so results remain reproducible given the same base seed.
-    pub ncuts:      u32,
+    pub ncuts: u32,
     /// Target partition weights (one `f32` per part, summing to 1.0).
     /// `None` = equal weight (each part gets `1/k` of total population).
     /// Set by `split_weighted` from the caller's proportional `fracs` array.
-    pub tpwgts:     Option<Vec<f32>>,
+    pub tpwgts: Option<Vec<f32>>,
     /// Check contiguity before each FM move: skip moves that would disconnect
     /// the source part (IsConnectedSubdomain check). Default: `false`, matching
     /// METIS `METIS_OPTION_CONTIG`.
-    pub contig_fm:  bool,
+    pub contig_fm: bool,
     /// Use multilevel recursive bisection (MlevelRecursiveBisection) for k > 2.
     /// When `true`, the graph is bisected and each half is recursively partitioned
     /// into `k/2` and `k - k/2` parts respectively — mirrors METIS_PartGraphRecursive.
@@ -102,7 +108,7 @@ pub struct MetisParams {
     pub lp_refine: bool,
     /// Maximum number of LP balance iterations (default: 10).
     /// Ignored when `lp_refine` is `false`.
-    pub lp_iter:   u32,
+    pub lp_iter: u32,
     /// Coarsening algorithm (default: `Shem`).
     /// Mirrors the METIS `-ctype` option.
     pub coarsen_method: CoarseningMethod,
@@ -111,18 +117,18 @@ pub struct MetisParams {
 impl Default for MetisParams {
     fn default() -> Self {
         Self {
-            ufactor:       5,
-            niter:         10,
-            seed:          None,
-            coarsen_to:    20,
-            ncuts:         1,  // C METIS default for kway; pmetis uses 4 but 1 is safe default
-            tpwgts:        None,
-            contig_fm:     false,
+            ufactor: 5,
+            niter: 10,
+            seed: None,
+            coarsen_to: 20,
+            ncuts: 1, // C METIS default for kway; pmetis uses 4 but 1 is safe default
+            tpwgts: None,
+            contig_fm: false,
             use_recursive: false,
-            objective:     ObjectiveType::Cut,
-            min_conn:      false,
-            lp_refine:      true,
-            lp_iter:        10,
+            objective: ObjectiveType::Cut,
+            min_conn: false,
+            lp_refine: true,
+            lp_iter: 10,
             coarsen_method: CoarseningMethod::Shem,
         }
     }
@@ -130,17 +136,14 @@ impl Default for MetisParams {
 
 pub struct RustMetisPartitioner<C, I, R> {
     pub coarsener: C,
-    pub init:      I,
-    pub refiner:   R,
-    pub params:    MetisParams,
+    pub init: I,
+    pub refiner: R,
+    pub params: MetisParams,
 }
 
 /// Concrete type alias: SHEM + GrowBisect + FM — the default METIS-like pipeline.
-pub type MetisPartitioner = RustMetisPartitioner<
-    SortedHeavyEdgeMatchWithParams,
-    GrowBisect,
-    FiducciaMattheyses,
->;
+pub type MetisPartitioner =
+    RustMetisPartitioner<SortedHeavyEdgeMatchWithParams, GrowBisect, FiducciaMattheyses>;
 
 impl MetisPartitioner {
     pub fn with_params(params: MetisParams, k: u32) -> Self {
@@ -149,12 +152,12 @@ impl MetisPartitioner {
                 coarsen_to: params.coarsen_to,
                 k,
             },
-            init:    GrowBisect,
+            init: GrowBisect,
             refiner: FiducciaMattheyses {
-                niter:     params.niter,
+                niter: params.niter,
                 contig_fm: params.contig_fm,
                 objective: params.objective,
-                lp_iter:   if params.lp_refine { params.lp_iter } else { 0 },
+                lp_iter: if params.lp_refine { params.lp_iter } else { 0 },
             },
             params,
         }
@@ -180,11 +183,13 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         result.is_ok() ==>
         weight_balanced(result.as_ref().unwrap(), g, k)
     ))]
-    fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>)
-        -> Result<Partition, PartitionError>
-    {
-        if k == 0 { return Err(PartitionError::ZeroParts); }
-        if g.n() == 0 { return Err(PartitionError::EmptyGraph); }
+    fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError> {
+        if k == 0 {
+            return Err(PartitionError::ZeroParts);
+        }
+        if g.n() == 0 {
+            return Err(PartitionError::EmptyGraph);
+        }
         if !g.is_valid() {
             return Err(PartitionError::InvalidGraph("is_valid() failed"));
         }
@@ -192,18 +197,22 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             return Err(PartitionError::TooManyParts { k, n: g.n() });
         }
 
-        let base_seed = self.params.seed.or(seed).unwrap_or(0xDEAD_BEEF_CAFE_1234u64);
+        let base_seed = self
+            .params
+            .seed
+            .or(seed)
+            .unwrap_or(0xDEAD_BEEF_CAFE_1234u64);
 
         // Recursive bisection path: bisect into halves and recurse on each subgraph.
         // Mirrors METIS_PartGraphRecursive / MlevelRecursiveBisection.
         if self.params.use_recursive && k > 2 {
             use crate::init::grow::RecursiveBisect;
             let rb = RecursiveBisect {
-                niter:      self.params.niter,
-                ncuts:      self.params.ncuts,
+                niter: self.params.niter,
+                ncuts: self.params.ncuts,
                 coarsen_to: self.params.coarsen_to,
-                ufactor:    self.params.ufactor,
-                contig_fm:  self.params.contig_fm,
+                ufactor: self.params.ufactor,
+                contig_fm: self.params.contig_fm,
             };
             let mut p = rb.partition_graph(g, k, base_seed)?;
             if self.params.contig_fm {
@@ -224,18 +233,18 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         // Build a boxed coarsener so coarsen_method can override the default SHEM.
         // When method == Shem we use the typed self.coarsener to avoid allocation.
         use crate::coarsen::{
-            hem::HeavyEdgeMatchWithParams,
-            mindegree::MinDegreeMatch,
-            twohop::TwoHopMatchWithParams,
+            hem::HeavyEdgeMatchWithParams, mindegree::MinDegreeMatch, twohop::TwoHopMatchWithParams,
         };
         let alt_coarsener: Option<Box<dyn Coarsener>> = match self.params.coarsen_method {
-            CoarseningMethod::Shem      => None,
-            CoarseningMethod::Hem       => Some(Box::new(HeavyEdgeMatchWithParams {
-                coarsen_to: self.params.coarsen_to, k,
+            CoarseningMethod::Shem => None,
+            CoarseningMethod::Hem => Some(Box::new(HeavyEdgeMatchWithParams {
+                coarsen_to: self.params.coarsen_to,
+                k,
             })),
             CoarseningMethod::MinDegree => Some(Box::new(MinDegreeMatch)),
-            CoarseningMethod::TwoHop    => Some(Box::new(TwoHopMatchWithParams {
-                coarsen_to: self.params.coarsen_to, k,
+            CoarseningMethod::TwoHop => Some(Box::new(TwoHopMatchWithParams {
+                coarsen_to: self.params.coarsen_to,
+                k,
             })),
         };
 
@@ -244,8 +253,8 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         for trial in 0..ncuts {
             // Derive a distinct seed per trial using a Fibonacci-hashing constant
             // so trials are well-spread even for small trial indices.
-            let trial_seed = base_seed
-                .wrapping_add((trial as u64).wrapping_mul(0x9E3779B97F4A7C15));
+            let trial_seed =
+                base_seed.wrapping_add((trial as u64).wrapping_mul(0x9E3779B97F4A7C15));
 
             let hierarchy = if let Some(ref ac) = alt_coarsener {
                 CoarseningHierarchy::build(g, ac.as_ref())?
@@ -302,31 +311,49 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
     ///
     /// * [`PartitionError::ZeroParts`] — `fracs` is empty or all entries are zero.
     /// * Propagates all errors from the coarsening/initial-partition/refinement pipeline.
-    fn split_weighted(&self, g: &CsrGraph, fracs: &[u32], seed: Option<u64>)
-        -> Result<Partition, PartitionError>
-    {
-        if fracs.is_empty() { return Err(PartitionError::ZeroParts); }
+    fn split_weighted(
+        &self,
+        g: &CsrGraph,
+        fracs: &[u32],
+        seed: Option<u64>,
+    ) -> Result<Partition, PartitionError> {
+        if fracs.is_empty() {
+            return Err(PartitionError::ZeroParts);
+        }
         let total_fracs: u32 = fracs.iter().sum();
-        if total_fracs == 0 { return Err(PartitionError::ZeroParts); }
+        if total_fracs == 0 {
+            return Err(PartitionError::ZeroParts);
+        }
         let k = fracs.len() as u32;
 
-        if g.n() == 0 { return Err(PartitionError::EmptyGraph); }
-        if !g.is_valid() { return Err(PartitionError::InvalidGraph("is_valid() failed")); }
-        if k as usize > g.n() { return Err(PartitionError::TooManyParts { k, n: g.n() }); }
+        if g.n() == 0 {
+            return Err(PartitionError::EmptyGraph);
+        }
+        if !g.is_valid() {
+            return Err(PartitionError::InvalidGraph("is_valid() failed"));
+        }
+        if k as usize > g.n() {
+            return Err(PartitionError::TooManyParts { k, n: g.n() });
+        }
 
         // Convert integer proportional weights to float target fractions summing to 1.0
-        let tpwgts: Vec<f32> = fracs.iter()
+        let tpwgts: Vec<f32> = fracs
+            .iter()
             .map(|&f| f as f32 / total_fracs as f32)
             .collect();
 
-        let base_seed = self.params.seed.or(seed).unwrap_or(0xDEAD_BEEF_CAFE_1234u64);
+        let base_seed = self
+            .params
+            .seed
+            .or(seed)
+            .unwrap_or(0xDEAD_BEEF_CAFE_1234u64);
         let ncuts = self.params.ncuts.max(1) as usize;
 
         let mut best: Option<(Partition, i64)> = None;
 
         for trial in 0..ncuts {
-            let trial_seed = base_seed
-                .wrapping_add((trial as u64).wrapping_mul(0x9E3779B97F4A7C15));
+            let trial_seed =
+                base_seed.wrapping_add((trial as u64).wrapping_mul(0x9E3779B97F4A7C15));
 
             let hierarchy = CoarseningHierarchy::build(g, &self.coarsener)?;
 
@@ -385,7 +412,9 @@ pub fn weight_balance_check(p: &Partition, g: &CsrGraph) -> bool {
             .filter(|&v| p.assignment[v] == part)
             .map(|v| g.vwgt[v] as i64)
             .sum();
-        if (wgt - target).abs() > epsilon { return false; }
+        if (wgt - target).abs() > epsilon {
+            return false;
+        }
     }
     true
 }
@@ -393,8 +422,8 @@ pub fn weight_balance_check(p: &Partition, g: &CsrGraph) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::{CsrGraph, Partition, CoarseMap};
     use crate::coarsen::Coarsener;
+    use crate::graph::{CoarseMap, CsrGraph, Partition};
     use crate::init::InitialPartitioner;
     use crate::refine::Refiner;
 
@@ -404,30 +433,48 @@ mod tests {
             let cmap = (0..g.n() as u32).collect();
             (g.clone(), CoarseMap { cmap })
         }
-        fn should_stop(&self, _: &CsrGraph) -> bool { true }
+        fn should_stop(&self, _: &CsrGraph) -> bool {
+            true
+        }
     }
 
     struct AllZeroPartitioner;
     impl InitialPartitioner for AllZeroPartitioner {
         fn partition(&self, g: &CsrGraph, _k: u32, _seed: u64) -> Partition {
-            Partition { assignment: vec![0; g.n()], k: 1, tpwgts: None }
+            Partition {
+                assignment: vec![0; g.n()],
+                k: 1,
+                tpwgts: None,
+            }
         }
     }
 
     struct IdentityRefiner;
     impl Refiner for IdentityRefiner {
-        fn refine(&self, _g: &CsrGraph, p: Partition) -> Partition { p }
+        fn refine(&self, _g: &CsrGraph, p: Partition) -> Partition {
+            p
+        }
     }
 
     fn make_path_graph(n: usize) -> CsrGraph {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i - 1) as u32); }
-            if i < n - 1 { adjncy.push((i + 1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     #[test]
@@ -455,10 +502,18 @@ mod tests {
         use crate::refine::fm::FiducciaMattheyses;
         let g = make_path_graph(10);
         let partitioner = RustMetisPartitioner {
-            coarsener: SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 2 },
-            init:      GrowBisect,
-            refiner:   FiducciaMattheyses { niter: 10, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 },
-            params:    MetisParams::default(),
+            coarsener: SortedHeavyEdgeMatchWithParams {
+                coarsen_to: 20,
+                k: 2,
+            },
+            init: GrowBisect,
+            refiner: FiducciaMattheyses {
+                niter: 10,
+                contig_fm: true,
+                objective: ObjectiveType::Cut,
+                lp_iter: 0,
+            },
+            params: MetisParams::default(),
         };
         let p = partitioner.split(&g, 2, Some(42)).unwrap();
         assert_eq!(p.assignment.len(), 10);
@@ -470,8 +525,11 @@ mod tests {
     #[test]
     fn split_weighted_empty_fracs_errors() {
         let g = make_path_graph(10);
-        let p = MetisPartitioner::with_params(MetisParams::default(), 1)
-            .split_weighted(&g, &[], Some(0));
+        let p = MetisPartitioner::with_params(MetisParams::default(), 1).split_weighted(
+            &g,
+            &[],
+            Some(0),
+        );
         assert!(matches!(p, Err(crate::error::PartitionError::ZeroParts)));
     }
 
@@ -488,7 +546,10 @@ mod tests {
         let g = make_path_graph(3);
         let partitioner = MetisPartitioner::with_params(MetisParams::default(), 10);
         let result = partitioner.split(&g, 10, None);
-        assert!(matches!(result, Err(PartitionError::TooManyParts { k: 10, n: 3 })));
+        assert!(matches!(
+            result,
+            Err(PartitionError::TooManyParts { k: 10, n: 3 })
+        ));
     }
 
     #[test]
@@ -513,8 +574,11 @@ mod tests {
     #[test]
     fn split_weighted_all_zero_fracs_errors() {
         let g = make_path_graph(10);
-        let p = MetisPartitioner::with_params(MetisParams::default(), 2)
-            .split_weighted(&g, &[0u32, 0u32], Some(0));
+        let p = MetisPartitioner::with_params(MetisParams::default(), 2).split_weighted(
+            &g,
+            &[0u32, 0u32],
+            Some(0),
+        );
         assert!(matches!(p, Err(crate::error::PartitionError::ZeroParts)));
     }
 
@@ -524,7 +588,9 @@ mod tests {
     fn split_weighted_asymmetric_fracs() {
         let g = make_path_graph(17);
         let partitioner = MetisPartitioner::with_params(MetisParams::default(), 2);
-        let p = partitioner.split_weighted(&g, &[8u32, 9u32], Some(42)).unwrap();
+        let p = partitioner
+            .split_weighted(&g, &[8u32, 9u32], Some(42))
+            .unwrap();
         // Structural validity — correct length and k
         assert_eq!(p.assignment.len(), 17);
         assert_eq!(p.k, 2);
@@ -547,7 +613,7 @@ mod tests {
         let total = 17i64;
         // round(17 * 8/17) = 8, remainder = 9
         let target0 = (total * 8 + 8) / 17; // = 8
-        let target1 = total - target0;        // = 9
+        let target1 = total - target0; // = 9
         let eps = 2i64; // allow ±2 for small path graphs
 
         let p = MetisPartitioner::with_params(MetisParams::default(), 2)
@@ -559,17 +625,24 @@ mod tests {
 
         let wgt0: i64 = p.assignment.iter().filter(|&&x| x == 0).count() as i64;
         let wgt1: i64 = total - wgt0;
-        assert!((wgt0 - target0).abs() <= eps,
-            "part 0: expected ~{target0}, got {wgt0}");
-        assert!((wgt1 - target1).abs() <= eps,
-            "part 1: expected ~{target1}, got {wgt1}");
+        assert!(
+            (wgt0 - target0).abs() <= eps,
+            "part 0: expected ~{target0}, got {wgt0}"
+        );
+        assert!(
+            (wgt1 - target1).abs() <= eps,
+            "part 1: expected ~{target1}, got {wgt1}"
+        );
     }
 
     /// ncuts=0 is treated as ncuts=1 (max(1) clamp).
     #[test]
     fn ncuts_zero_treated_as_one() {
         let g = make_path_graph(10);
-        let params = MetisParams { ncuts: 0, ..MetisParams::default() };
+        let params = MetisParams {
+            ncuts: 0,
+            ..MetisParams::default()
+        };
         let partitioner = MetisPartitioner::with_params(params, 2);
         let p = partitioner.split(&g, 2, Some(42)).unwrap();
         assert_eq!(p.assignment.len(), 10);
@@ -580,7 +653,10 @@ mod tests {
     #[test]
     fn ncuts_four_produces_valid_partition() {
         let g = make_path_graph(20);
-        let params = MetisParams { ncuts: 4, ..MetisParams::default() };
+        let params = MetisParams {
+            ncuts: 4,
+            ..MetisParams::default()
+        };
         let partitioner = MetisPartitioner::with_params(params, 2);
         let p = partitioner.split(&g, 2, Some(99)).unwrap();
         assert_eq!(p.assignment.len(), 20);
@@ -593,9 +669,14 @@ mod tests {
     #[test]
     fn ncuts_four_split_weighted_valid() {
         let g = make_path_graph(20);
-        let params = MetisParams { ncuts: 4, ..MetisParams::default() };
+        let params = MetisParams {
+            ncuts: 4,
+            ..MetisParams::default()
+        };
         let partitioner = MetisPartitioner::with_params(params, 2);
-        let p = partitioner.split_weighted(&g, &[10u32, 10u32], Some(7)).unwrap();
+        let p = partitioner
+            .split_weighted(&g, &[10u32, 10u32], Some(7))
+            .unwrap();
         assert_eq!(p.assignment.len(), 20);
         assert_eq!(p.k, 2);
         assert!(p.assignment.contains(&0));
@@ -607,7 +688,11 @@ mod tests {
     fn ncuts_deterministic_with_fixed_seed() {
         let g = make_path_graph(20);
         let run = |ncuts: u32| {
-            let params = MetisParams { ncuts, seed: Some(42), ..MetisParams::default() };
+            let params = MetisParams {
+                ncuts,
+                seed: Some(42),
+                ..MetisParams::default()
+            };
             let partitioner = MetisPartitioner::with_params(params, 2);
             partitioner.split(&g, 2, None).unwrap().assignment
         };
@@ -622,31 +707,49 @@ mod tests {
     fn ncuts_four_cut_le_single_trial() {
         let g = make_path_graph(40);
         let cut = |ncuts: u32| {
-            let params = MetisParams { ncuts, seed: Some(0), ..MetisParams::default() };
+            let params = MetisParams {
+                ncuts,
+                seed: Some(0),
+                ..MetisParams::default()
+            };
             let partitioner = MetisPartitioner::with_params(params, 2);
             let p = partitioner.split(&g, 2, None).unwrap();
             compute_cut(&g, &p.assignment)
         };
         let cut1 = cut(1);
         let cut4 = cut(4);
-        assert!(cut4 <= cut1,
-            "ncuts=4 cut ({cut4}) should be ≤ ncuts=1 cut ({cut1})");
+        assert!(
+            cut4 <= cut1,
+            "ncuts=4 cut ({cut4}) should be ≤ ncuts=1 cut ({cut1})"
+        );
     }
 
     #[test]
     fn recursive_bisect_grid_k4_valid() {
         let g = make_path_graph(16);
-        let params = MetisParams { use_recursive: true, ..MetisParams::default() };
-        let p = MetisPartitioner::with_params(params, 4).split(&g, 4, Some(0)).unwrap();
+        let params = MetisParams {
+            use_recursive: true,
+            ..MetisParams::default()
+        };
+        let p = MetisPartitioner::with_params(params, 4)
+            .split(&g, 4, Some(0))
+            .unwrap();
         assert_eq!(p.assignment.len(), 16);
-        for part in 0..4u32 { assert!(p.assignment.contains(&part)); }
+        for part in 0..4u32 {
+            assert!(p.assignment.contains(&part));
+        }
     }
 
     #[test]
     fn recursive_bisect_k2_works() {
         let g = make_path_graph(10);
-        let params = MetisParams { use_recursive: true, ..MetisParams::default() };
-        let p = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(42)).unwrap();
+        let params = MetisParams {
+            use_recursive: true,
+            ..MetisParams::default()
+        };
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(42))
+            .unwrap();
         assert_eq!(p.assignment.len(), 10);
         assert!(p.assignment.contains(&0));
         assert!(p.assignment.contains(&1));
@@ -661,9 +764,18 @@ mod tests {
             coarsen_method: CoarseningMethod::Hem,
             ..MetisParams::default()
         };
-        let p = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(0)).unwrap();
-        assert_eq!(p.assignment.len(), 10, "HEM must produce assignment for all vertices");
-        assert!(p.assignment.iter().all(|&a| a < 2), "all HEM part IDs must be < k");
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(0))
+            .unwrap();
+        assert_eq!(
+            p.assignment.len(),
+            10,
+            "HEM must produce assignment for all vertices"
+        );
+        assert!(
+            p.assignment.iter().all(|&a| a < 2),
+            "all HEM part IDs must be < k"
+        );
     }
 
     #[test]
@@ -673,7 +785,9 @@ mod tests {
             coarsen_method: CoarseningMethod::MinDegree,
             ..MetisParams::default()
         };
-        let p = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(0)).unwrap();
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(0))
+            .unwrap();
         assert_eq!(p.assignment.len(), 10);
         assert!(p.assignment.iter().all(|&a| a < 2));
     }
@@ -685,7 +799,9 @@ mod tests {
             coarsen_method: CoarseningMethod::TwoHop,
             ..MetisParams::default()
         };
-        let p = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(0)).unwrap();
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(0))
+            .unwrap();
         assert_eq!(p.assignment.len(), 10);
         assert!(p.assignment.iter().all(|&a| a < 2));
     }
@@ -700,10 +816,22 @@ mod tests {
             CoarseningMethod::MinDegree,
             CoarseningMethod::TwoHop,
         ] {
-            let params = MetisParams { coarsen_method: method, ..MetisParams::default() };
-            let p = MetisPartitioner::with_params(params, 3).split(&g, 3, Some(0)).unwrap();
-            assert_eq!(p.assignment.len(), 12, "{method:?}: wrong assignment length");
-            assert!(p.assignment.iter().all(|&a| a < 3), "{method:?}: invalid part ID");
+            let params = MetisParams {
+                coarsen_method: method,
+                ..MetisParams::default()
+            };
+            let p = MetisPartitioner::with_params(params, 3)
+                .split(&g, 3, Some(0))
+                .unwrap();
+            assert_eq!(
+                p.assignment.len(),
+                12,
+                "{method:?}: wrong assignment length"
+            );
+            assert!(
+                p.assignment.iter().all(|&a| a < 3),
+                "{method:?}: invalid part ID"
+            );
         }
     }
 }

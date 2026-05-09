@@ -1,5 +1,5 @@
 use crate::graph::{CsrGraph, Partition};
-use crate::init::{InitialPartitioner, grow::GrowKway};
+use crate::init::{grow::GrowKway, InitialPartitioner};
 
 pub struct MultiConstraintInit;
 
@@ -17,11 +17,21 @@ fn path_graph(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
-        if i > 0 { adjncy.push((i - 1) as u32); }
-        if i < n - 1 { adjncy.push((i + 1) as u32); }
+        if i > 0 {
+            adjncy.push((i - 1) as u32);
+        }
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 #[cfg(test)]
@@ -32,15 +42,31 @@ fn grid_4x4() -> CsrGraph {
     for i in 0..4usize {
         for j in 0..4usize {
             let mut nbrs = Vec::new();
-            if i > 0 { nbrs.push((i - 1) * 4 + j); }
-            if i < 3 { nbrs.push((i + 1) * 4 + j); }
-            if j > 0 { nbrs.push(i * 4 + (j - 1)); }
-            if j < 3 { nbrs.push(i * 4 + (j + 1)); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if i > 0 {
+                nbrs.push((i - 1) * 4 + j);
+            }
+            if i < 3 {
+                nbrs.push((i + 1) * 4 + j);
+            }
+            if j > 0 {
+                nbrs.push(i * 4 + (j - 1));
+            }
+            if j < 3 {
+                nbrs.push(i * 4 + (j + 1));
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 #[cfg(test)]

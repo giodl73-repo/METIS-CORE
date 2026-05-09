@@ -1,23 +1,28 @@
-﻿use crate::graph::{CsrGraph, Partition};
-use super::{gain::GainTable, boundary::BoundarySet};
-use crate::refine::Refiner;
+use super::{boundary::BoundarySet, gain::GainTable};
 use crate::api::ObjectiveType;
+use crate::graph::{CsrGraph, Partition};
+use crate::refine::Refiner;
 
 pub struct FiducciaMattheyses {
-    pub niter:      u32,
+    pub niter: u32,
     /// Skip moves that would disconnect the source part (IsConnectedSubdomain).
     /// Default: `true`.
-    pub contig_fm:  bool,
+    pub contig_fm: bool,
     /// Objective function: edge cut (default) or communication volume.
-    pub objective:  ObjectiveType,
+    pub objective: ObjectiveType,
     /// Number of label-propagation balance iterations to run before the FM
     /// passes.  0 = disabled (default).  Mirrors METIS `BalanceAndRefineLP`.
-    pub lp_iter:    u32,
+    pub lp_iter: u32,
 }
 
 impl Default for FiducciaMattheyses {
     fn default() -> Self {
-        Self { niter: 10, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 }
+        Self {
+            niter: 10,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        }
     }
 }
 
@@ -41,9 +46,15 @@ impl Refiner for FiducciaMattheyses {
             // Always restore to best after each pass so the next pass
             // starts from the best-known state, not the end-of-pass state.
             state.restore(&best);
-            if !improved { break; }
+            if !improved {
+                break;
+            }
         }
-        Partition { assignment: state.assignment, k: state.k, tpwgts: None }
+        Partition {
+            assignment: state.assignment,
+            k: state.k,
+            tpwgts: None,
+        }
     }
 }
 
@@ -95,7 +106,6 @@ pub fn compute_volume_gain(
             // For u: u loses v as a same-part neighbour, which has no subdomain
             // effect (same-part adjacencies don't contribute to comm volume).
             // No gain/penalty here.
-
         } else if u_part == to_part {
             // u is in to_part.
             // After the move, v moves to to_part — v is now a same-part neighbour
@@ -120,13 +130,17 @@ pub fn compute_volume_gain(
 
     // Collect distinct parts adjacent to v, excluding from_part and to_part.
     let mut other_parts_set = std::collections::BTreeSet::new();
-    let mut v_has_from_nbr = false;  // v has a neighbour in from_part?
-    let mut v_has_to_nbr   = false;  // v has a neighbour in to_part?
+    let mut v_has_from_nbr = false; // v has a neighbour in from_part?
+    let mut v_has_to_nbr = false; // v has a neighbour in to_part?
     for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
         let u_part = assignment[g.adjncy[j] as usize];
-        if u_part == from_part { v_has_from_nbr = true; }
-        else if u_part == to_part { v_has_to_nbr = true; }
-        else { other_parts_set.insert(u_part); }
+        if u_part == from_part {
+            v_has_from_nbr = true;
+        } else if u_part == to_part {
+            v_has_to_nbr = true;
+        } else {
+            other_parts_set.insert(u_part);
+        }
     }
 
     // Before move: v is in from_part.
@@ -136,7 +150,7 @@ pub fn compute_volume_gain(
 
     // After move: v is in to_part.
     //   subdomain = {from_part if v_has_from_nbr} ∪ other_parts_set
-    let s_after  = other_parts_set.len() as i32 + if v_has_from_nbr { 1 } else { 0 };
+    let s_after = other_parts_set.len() as i32 + if v_has_from_nbr { 1 } else { 0 };
 
     gain += s_before - s_after;
     gain
@@ -144,10 +158,8 @@ pub fn compute_volume_gain(
 
 fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool {
     let ncon = state.graph.ncon as usize;
-    let k    = state.k as usize;
-    let total_wgts: Vec<i64> = (0..ncon)
-        .map(|c| state.pwgts[c].iter().sum())
-        .collect();
+    let k = state.k as usize;
+    let total_wgts: Vec<i64> = (0..ncon).map(|c| state.pwgts[c].iter().sum()).collect();
 
     // Per-part, per-constraint targets and epsilons.
     // Layout: targets_pc[part][constraint], epsilons_pc[part][constraint].
@@ -155,20 +167,25 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
     // When tpwgts is provided: constraint 0 gets proportional targets derived from
     // the float weights; all other constraints (VAP, etc.) keep equal targets.
     // When tpwgts is None: all constraints use equal targets.
-    let targets_pc: Vec<Vec<i64>> = (0..k).map(|part| {
-        (0..ncon).map(|c| {
-            if c == 0 {
-                match &state.tpwgts {
-                    Some(tw) => (total_wgts[0] as f64 * tw[part] as f64).round() as i64,
-                    None     => total_wgts[0] / k as i64,
-                }
-            } else {
-                total_wgts[c] / k as i64
-            }
-        }).collect()
-    }).collect();
+    let targets_pc: Vec<Vec<i64>> = (0..k)
+        .map(|part| {
+            (0..ncon)
+                .map(|c| {
+                    if c == 0 {
+                        match &state.tpwgts {
+                            Some(tw) => (total_wgts[0] as f64 * tw[part] as f64).round() as i64,
+                            None => total_wgts[0] / k as i64,
+                        }
+                    } else {
+                        total_wgts[c] / k as i64
+                    }
+                })
+                .collect()
+        })
+        .collect();
     // INTEGER balance epsilon — ceiling of 0.5% of each part's target — NO FLOATS
-    let epsilons_pc: Vec<Vec<i64>> = targets_pc.iter()
+    let epsilons_pc: Vec<Vec<i64>> = targets_pc
+        .iter()
         .map(|row| row.iter().map(|&t| (t.abs() * 5 + 999) / 1000).collect())
         .collect();
 
@@ -203,7 +220,7 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
             1 - from_part as u32
         } else {
             match state.objective {
-                ObjectiveType::Cut    => best_destination(state, v, from_part as u32),
+                ObjectiveType::Cut => best_destination(state, v, from_part as u32),
                 ObjectiveType::Volume => best_destination_volume(state, v, from_part as u32),
             }
         } as usize;
@@ -216,17 +233,19 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
         // Balance check — ALL constraints must pass for BOTH parts
         let balanced = (0..ncon).all(|c| {
             let new_from = state.pwgts[c][from_part] - vwgt_v[c];
-            let new_to   = state.pwgts[c][to_part]   + vwgt_v[c];
+            let new_to = state.pwgts[c][to_part] + vwgt_v[c];
             new_from >= targets_pc[from_part][c] - epsilons_pc[from_part][c]
                 && new_to <= targets_pc[to_part][c] + epsilons_pc[to_part][c]
         });
-        if !balanced { continue; }
+        if !balanced {
+            continue;
+        }
 
         // Apply move
         state.assignment[v] = to_part as u32;
         for (c, &weight) in vwgt_v.iter().enumerate().take(ncon) {
             state.pwgts[c][from_part] -= weight;
-            state.pwgts[c][to_part]   += weight;
+            state.pwgts[c][to_part] += weight;
         }
         state.boundary.remove(v as u32);
 
@@ -237,8 +256,12 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
             for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                 let u = g.adjncy[j] as usize;
                 let ew = g.adjwgt.as_ref().map_or(1i64, |aw| aw[j] as i64);
-                if state.assignment[u] as usize == from_part { cut_delta += ew; } // was same, now cross
-                if state.assignment[u] as usize == to_part   { cut_delta -= ew; } // was cross, now same
+                if state.assignment[u] as usize == from_part {
+                    cut_delta += ew;
+                } // was same, now cross
+                if state.assignment[u] as usize == to_part {
+                    cut_delta -= ew;
+                } // was cross, now same
             }
             state.current_cut += cut_delta;
         }
@@ -247,10 +270,12 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
         let g = state.graph;
         for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
             let u = g.adjncy[j] as usize;
-            if locked[u] { continue; } // never re-insert a locked vertex
+            if locked[u] {
+                continue;
+            } // never re-insert a locked vertex
 
             let new_gain = match state.objective {
-                ObjectiveType::Cut    => compute_gain(g, &state.assignment, u),
+                ObjectiveType::Cut => compute_gain(g, &state.assignment, u),
                 ObjectiveType::Volume => {
                     let u_from = state.assignment[u];
                     best_volume_gain(g, &state.assignment, u, u_from, state.k)
@@ -278,7 +303,10 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
         // Checkpoint if improved — use incremental cut value, O(1)
         let cur_cut = state.current_cut;
         if cur_cut < best.cut {
-            *best = Checkpoint { assignment: state.assignment.clone(), cut: cur_cut };
+            *best = Checkpoint {
+                assignment: state.assignment.clone(),
+                cut: cur_cut,
+            };
         }
     }
 
@@ -304,12 +332,15 @@ fn would_disconnect(g: &CsrGraph, assignment: &[u32], v: usize, from_part: usize
     };
 
     // Count vertices in from_part excluding v.
-    let part_size: usize = assignment.iter()
+    let part_size: usize = assignment
+        .iter()
         .enumerate()
         .filter(|&(u, &p)| u != v && p as usize == from_part)
         .count();
 
-    if part_size == 0 { return false; }
+    if part_size == 0 {
+        return false;
+    }
 
     // BFS from start, restricted to from_part \ {v}.
     let n = g.n();
@@ -359,26 +390,26 @@ fn best_destination_volume(state: &FmState, v: usize, from: u32) -> u32 {
 }
 
 pub struct FmState<'g> {
-    pub graph:        &'g CsrGraph,
-    pub assignment:   Vec<u32>,
-    pub k:            u32,
-    pub gain_table:   GainTable,
-    pub boundary:     BoundarySet,
+    pub graph: &'g CsrGraph,
+    pub assignment: Vec<u32>,
+    pub k: u32,
+    pub gain_table: GainTable,
+    pub boundary: BoundarySet,
     /// `pwgts[constraint][part]` = weight sum for constraint c in part p.
     /// For ncon=1, `pwgts[0][part]` is equivalent to the old single-constraint `pwgts[part]`.
-    pub pwgts:     Vec<Vec<i64>>,
-    pub current_cut:  i64,
+    pub pwgts: Vec<Vec<i64>>,
+    pub current_cut: i64,
     /// Per-part target weights (one f32 per part, summing to 1.0).
     /// `None` means equal weights: each part targets `total_wgt / k`.
-    pub tpwgts:       Option<Vec<f32>>,
+    pub tpwgts: Option<Vec<f32>>,
     /// Objective function used for gain computation and move selection.
-    pub objective:    ObjectiveType,
+    pub objective: ObjectiveType,
 }
 
 #[derive(Clone)]
 pub struct Checkpoint {
     pub assignment: Vec<u32>,
-    pub cut:        i64,
+    pub cut: i64,
 }
 
 impl<'g> FmState<'g> {
@@ -397,7 +428,9 @@ impl<'g> FmState<'g> {
         // max_gain = max edge weight (or 1 if unweighted) × max degree
         // For volume objective, each move can affect at most deg(v)+1 subdomain
         // entries, so max_gain bound = max_deg is a safe upper bound (≥1).
-        let max_ew = g.adjwgt.as_ref()
+        let max_ew = g
+            .adjwgt
+            .as_ref()
             .and_then(|aw| aw.iter().copied().max())
             .unwrap_or(1);
         let max_deg = (0..n).map(|v| g.xadj[v + 1] - g.xadj[v]).max().unwrap_or(1) as i32;
@@ -408,7 +441,7 @@ impl<'g> FmState<'g> {
         for v_u32 in boundary.iter() {
             let v = v_u32 as usize;
             let gain = match objective {
-                ObjectiveType::Cut    => compute_gain(g, &p.assignment, v),
+                ObjectiveType::Cut => compute_gain(g, &p.assignment, v),
                 ObjectiveType::Volume => {
                     let from = p.assignment[v];
                     // Best-gain destination for volume objective (greedy scan)
@@ -424,7 +457,17 @@ impl<'g> FmState<'g> {
         }
 
         let tpwgts = p.tpwgts.clone();
-        let mut state = FmState { graph: g, assignment: p.assignment, k: p.k, gain_table, boundary, pwgts, current_cut: 0, tpwgts, objective };
+        let mut state = FmState {
+            graph: g,
+            assignment: p.assignment,
+            k: p.k,
+            gain_table,
+            boundary,
+            pwgts,
+            current_cut: 0,
+            tpwgts,
+            objective,
+        };
         state.current_cut = state.cut();
         state
     }
@@ -444,14 +487,21 @@ impl<'g> FmState<'g> {
     }
 
     pub fn checkpoint(&self) -> Checkpoint {
-        Checkpoint { assignment: self.assignment.clone(), cut: self.current_cut }
+        Checkpoint {
+            assignment: self.assignment.clone(),
+            cut: self.current_cut,
+        }
     }
 
     pub fn restore(&mut self, cp: &Checkpoint) {
         self.assignment = cp.assignment.clone();
         // tpwgts is preserved across restore — it is a property of the partition problem,
         // not the current state, and must survive all passes.
-        let p = Partition { assignment: self.assignment.clone(), k: self.k, tpwgts: self.tpwgts.clone() };
+        let p = Partition {
+            assignment: self.assignment.clone(),
+            k: self.k,
+            tpwgts: self.tpwgts.clone(),
+        };
         self.boundary = BoundarySet::from_partition(self.graph, &p);
         let n = self.graph.n();
         let max_gain = self.gain_table.max_gain;
@@ -459,7 +509,7 @@ impl<'g> FmState<'g> {
         for v_u32 in self.boundary.iter() {
             let v = v_u32 as usize;
             let gain = match self.objective {
-                ObjectiveType::Cut    => compute_gain(self.graph, &self.assignment, v),
+                ObjectiveType::Cut => compute_gain(self.graph, &self.assignment, v),
                 ObjectiveType::Volume => {
                     let from = self.assignment[v];
                     best_volume_gain(self.graph, &self.assignment, v, from, self.k)
@@ -495,7 +545,11 @@ pub fn compute_gain(g: &CsrGraph, assignment: &[u32], v: usize) -> i32 {
     for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
         let u = g.adjncy[j] as usize;
         let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
-        if assignment[u] == part_v { gain -= ew; } else { gain += ew; }
+        if assignment[u] == part_v {
+            gain -= ew;
+        } else {
+            gain += ew;
+        }
     }
     gain
 }
@@ -520,7 +574,8 @@ pub fn best_volume_gain(g: &CsrGraph, assignment: &[u32], v: usize, from_part: u
             .max()
             .unwrap_or(0)
     } else {
-        adj_parts.iter()
+        adj_parts
+            .iter()
             .map(|&to| compute_volume_gain(g, assignment, v, from_part, to))
             .max()
             .unwrap_or(0)
@@ -535,11 +590,21 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i - 1) as u32); }
-            if i < n - 1 { adjncy.push((i + 1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     fn grid_4x4() -> CsrGraph {
@@ -549,15 +614,31 @@ mod tests {
         for i in 0..4usize {
             for j in 0..4usize {
                 let mut nbrs = Vec::new();
-                if i > 0 { nbrs.push((i-1)*4+j); }
-                if i < 3 { nbrs.push((i+1)*4+j); }
-                if j > 0 { nbrs.push(i*4+(j-1)); }
-                if j < 3 { nbrs.push(i*4+(j+1)); }
-                for &u in &nbrs { adjncy.push(u as u32); }
+                if i > 0 {
+                    nbrs.push((i - 1) * 4 + j);
+                }
+                if i < 3 {
+                    nbrs.push((i + 1) * 4 + j);
+                }
+                if j > 0 {
+                    nbrs.push(i * 4 + (j - 1));
+                }
+                if j < 3 {
+                    nbrs.push(i * 4 + (j + 1));
+                }
+                for &u in &nbrs {
+                    adjncy.push(u as u32);
+                }
                 xadj.push(adjncy.len() as u32);
             }
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     fn dumbbell_graph() -> CsrGraph {
@@ -570,22 +651,40 @@ mod tests {
         for v in 0..n {
             let mut nbrs: Vec<usize> = Vec::new();
             let clique = if v < 5 { 0..5 } else { 5..10 };
-            for u in clique { if u != v { nbrs.push(u); } }
+            for u in clique {
+                if u != v {
+                    nbrs.push(u);
+                }
+            }
             // bridge
-            if v == 4 { nbrs.push(5); }
-            if v == 5 { nbrs.push(4); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if v == 4 {
+                nbrs.push(5);
+            }
+            if v == 5 {
+                nbrs.push(4);
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     fn compute_cut_for_test(g: &CsrGraph, assignment: &[u32]) -> u32 {
         let mut cut = 0u32;
         for v in 0..g.n() {
-            for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
+            for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                 let u = g.adjncy[j] as usize;
-                if assignment[v] != assignment[u] { cut += 1; }
+                if assignment[v] != assignment[u] {
+                    cut += 1;
+                }
             }
         }
         cut / 2
@@ -596,7 +695,11 @@ mod tests {
         // path 0-1-2, partition [0,0,1]
         // cut edge: 1-2, so cut = 1
         let g = path_graph(3);
-        let p = Partition { assignment: vec![0, 0, 1], k: 2, tpwgts: None };
+        let p = Partition {
+            assignment: vec![0, 0, 1],
+            k: 2,
+            tpwgts: None,
+        };
         let state = FmState::new(&g, p, ObjectiveType::Cut);
         assert_eq!(state.cut(), 1);
     }
@@ -604,7 +707,11 @@ mod tests {
     #[test]
     fn fm_state_checkpoint_restore() {
         let g = path_graph(4);
-        let p = Partition { assignment: vec![0, 0, 1, 1], k: 2, tpwgts: None };
+        let p = Partition {
+            assignment: vec![0, 0, 1, 1],
+            k: 2,
+            tpwgts: None,
+        };
         let mut state = FmState::new(&g, p, ObjectiveType::Cut);
         let cp = state.checkpoint();
         assert_eq!(cp.cut, state.cut());
@@ -618,28 +725,40 @@ mod tests {
 
     #[test]
     fn fm_does_not_increase_cut() {
-        use crate::init::InitialPartitioner;
         use crate::init::random::RandomBisect;
+        use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let g = grid_4x4();
         let p_init = RandomBisect.partition(&g, 2, 0);
         let cut_before = compute_cut_for_test(&g, &p_init.assignment);
-        let fm = FiducciaMattheyses { niter: 10, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let fm = FiducciaMattheyses {
+            niter: 10,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let p = fm.refine(&g, p_init);
         let cut_after = compute_cut_for_test(&g, &p.assignment);
-        assert!(cut_after <= cut_before,
-            "FM must not increase cut: before={cut_before} after={cut_after}");
+        assert!(
+            cut_after <= cut_before,
+            "FM must not increase cut: before={cut_before} after={cut_after}"
+        );
     }
 
     #[test]
     fn fm_oracle_dumbbell_bisect() {
         // Dumbbell: two K5 joined by 1 edge — optimal bisection cut = 1
-        use crate::init::InitialPartitioner;
         use crate::init::random::RandomBisect;
+        use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let g = dumbbell_graph();
         let p_init = RandomBisect.partition(&g, 2, 42);
-        let fm = FiducciaMattheyses { niter: 20, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let fm = FiducciaMattheyses {
+            niter: 20,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let p = fm.refine(&g, p_init);
         let cut = compute_cut_for_test(&g, &p.assignment);
         assert_eq!(cut, 1, "dumbbell bisect optimal cut is 1, got {cut}");
@@ -647,23 +766,30 @@ mod tests {
 
     #[test]
     fn fm_preserves_population_balance() {
-        use crate::init::InitialPartitioner;
         use crate::init::random::RandomBisect;
+        use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let g = grid_4x4();
         let total: i64 = g.vwgt.iter().map(|&w| w as i64).sum(); // = 16
         let target = total / 2; // = 8
         let eps = (total * 5 + 999) / 1000; // ceiling of 0.5% = 1
         let p_init = RandomBisect.partition(&g, 2, 99);
-        let fm = FiducciaMattheyses { niter: 10, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let fm = FiducciaMattheyses {
+            niter: 10,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let p = fm.refine(&g, p_init);
         for part in 0..2u32 {
             let wgt: i64 = (0..g.n())
                 .filter(|&v| p.assignment[v] == part)
                 .map(|v| g.vwgt[v] as i64)
                 .sum();
-            assert!((wgt - target).abs() <= eps,
-                "part {part} wgt {wgt} violates balance (target {target} ± {eps})");
+            assert!(
+                (wgt - target).abs() <= eps,
+                "part {part} wgt {wgt} violates balance (target {target} ± {eps})"
+            );
         }
     }
 
@@ -671,15 +797,20 @@ mod tests {
     fn fm_multi_constraint_balance() {
         // Grid 4x4 with ncon=2: constraint 0 = population, constraint 1 = VAP.
         // Both are uniform (weight 1) so the expected balance is identical for both.
-        use crate::init::InitialPartitioner;
         use crate::init::random::RandomBisect;
+        use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let mut g = grid_4x4();
         g.ncon = 2;
         // vwgt: vertex i has [pop=1, vap=1]; interleaved layout: [1, 1, 1, 1, ...]
         g.vwgt = vec![1i32; 32]; // 16 vertices × 2 constraints
         let p_init = RandomBisect.partition(&g, 2, 42);
-        let fm = FiducciaMattheyses { niter: 10, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let fm = FiducciaMattheyses {
+            niter: 10,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let p = fm.refine(&g, p_init);
         assert_eq!(p.assignment.len(), 16);
         // Both constraints should be balanced within ε = ceil(0.5% × 16) = 1
@@ -695,10 +826,14 @@ mod tests {
                 .filter(|&v| p.assignment[v] == part)
                 .map(|v| g.vwgt[v * 2 + 1] as i64)
                 .sum();
-            assert!((wgt0 - target).abs() <= eps,
-                "part {part} constraint 0 wgt {wgt0} violates balance (target {target} ± {eps})");
-            assert!((wgt1 - target).abs() <= eps,
-                "part {part} constraint 1 wgt {wgt1} violates balance (target {target} ± {eps})");
+            assert!(
+                (wgt0 - target).abs() <= eps,
+                "part {part} constraint 0 wgt {wgt0} violates balance (target {target} ± {eps})"
+            );
+            assert!(
+                (wgt1 - target).abs() <= eps,
+                "part {part} constraint 1 wgt {wgt1} violates balance (target {target} ± {eps})"
+            );
         }
     }
 
@@ -718,8 +853,10 @@ mod tests {
         // Part 1 vertices excluding 2: {3, 4}.  BFS from 3 reaches 4 → reached=2=part_size → connected.
         // Actually path 0-1-2-3-4 part1={2,3,4}: removing 2 leaves {3,4} reachable from each other (3-4 edge).
         // So would_disconnect should return false.
-        assert!(!would_disconnect(&g, &assignment, 2, 1),
-            "path interior: {{3,4}} still connected after removing 2");
+        assert!(
+            !would_disconnect(&g, &assignment, 2, 1),
+            "path interior: {{3,4}} still connected after removing 2"
+        );
     }
 
     /// Path 0-1-2-3-4, bisected [0,0,0,1,1].
@@ -729,8 +866,10 @@ mod tests {
     fn would_disconnect_endpoint_safe() {
         let g = path_graph(5);
         let assignment = vec![0u32, 0, 0, 1, 1];
-        assert!(!would_disconnect(&g, &assignment, 3, 1),
-            "removing endpoint 3 leaves {{4}} which is trivially connected");
+        assert!(
+            !would_disconnect(&g, &assignment, 3, 1),
+            "removing endpoint 3 leaves {{4}} which is trivially connected"
+        );
     }
 
     /// Star graph: center vertex 0 connected to leaves 1,2,3,4,5 all in part 0.
@@ -742,19 +881,29 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         // vertex 0: neighbors 1..5
-        for i in 1..n { adjncy.push(i as u32); }
+        for i in 1..n {
+            adjncy.push(i as u32);
+        }
         xadj.push(adjncy.len() as u32);
         // vertices 1..5: neighbor is 0
         for _ in 1..n {
             adjncy.push(0u32);
             xadj.push(adjncy.len() as u32);
         }
-        let g = CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None };
+        let g = CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        };
         let assignment = vec![0u32; n];
         // Removing center 0 from part 0 leaves {1,2,3,4,5} with no edges among them
         // (only edges are star spokes).  BFS from vertex 1 reaches nothing else.
-        assert!(would_disconnect(&g, &assignment, 0, 0),
-            "removing star center must disconnect leaves");
+        assert!(
+            would_disconnect(&g, &assignment, 0, 0),
+            "removing star center must disconnect leaves"
+        );
     }
 
     /// Triangle (K3) with all vertices in part 0.
@@ -764,11 +913,19 @@ mod tests {
         // Triangle: 0-1-2-0
         let xadj = vec![0u32, 2, 4, 6];
         let adjncy = vec![1u32, 2, 0, 2, 0, 1];
-        let g = CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; 3], adjwgt: None };
+        let g = CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; 3],
+            adjwgt: None,
+        };
         let assignment = vec![0u32, 0, 0];
         for v in 0..3 {
-            assert!(!would_disconnect(&g, &assignment, v, 0),
-                "triangle: removing vertex {v} must not disconnect");
+            assert!(
+                !would_disconnect(&g, &assignment, v, 0),
+                "triangle: removing vertex {v} must not disconnect"
+            );
         }
     }
 
@@ -781,8 +938,17 @@ mod tests {
     fn contig_fm_preserves_contiguity_path() {
         let g = path_graph(5);
         // Hand-craft an assignment that mixes parts so FM has something to do.
-        let p = Partition { assignment: vec![0u32, 0, 1, 1, 0], k: 2, tpwgts: None };
-        let fm = FiducciaMattheyses { niter: 20, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let p = Partition {
+            assignment: vec![0u32, 0, 1, 1, 0],
+            k: 2,
+            tpwgts: None,
+        };
+        let fm = FiducciaMattheyses {
+            niter: 20,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let result = fm.refine(&g, p);
 
         // Verify both parts are contiguous by checking that each part's induced
@@ -791,14 +957,16 @@ mod tests {
             let members: Vec<usize> = (0..g.n())
                 .filter(|&v| result.assignment[v] == part)
                 .collect();
-            if members.is_empty() { continue; }
+            if members.is_empty() {
+                continue;
+            }
             // BFS within part
             let mut visited = vec![false; g.n()];
             let mut queue = std::collections::VecDeque::new();
             visited[members[0]] = true;
             queue.push_back(members[0]);
             while let Some(u) = queue.pop_front() {
-                for j in g.xadj[u] as usize..g.xadj[u+1] as usize {
+                for j in g.xadj[u] as usize..g.xadj[u + 1] as usize {
                     let w = g.adjncy[j] as usize;
                     if !visited[w] && result.assignment[w] == part {
                         visited[w] = true;
@@ -807,8 +975,11 @@ mod tests {
                 }
             }
             let reached = members.iter().filter(|&&v| visited[v]).count();
-            assert_eq!(reached, members.len(),
-                "part {part} is disconnected after contig_fm refinement");
+            assert_eq!(
+                reached,
+                members.len(),
+                "part {part} is disconnected after contig_fm refinement"
+            );
         }
     }
 
@@ -839,10 +1010,15 @@ mod tests {
             objective: ObjectiveType::Volume,
             ..MetisParams::default()
         };
-        let p = MetisPartitioner::with_params(params, 4).split(&g, 4, Some(0)).unwrap();
+        let p = MetisPartitioner::with_params(params, 4)
+            .split(&g, 4, Some(0))
+            .unwrap();
         assert_eq!(p.assignment.len(), 16);
         for part in 0..4u32 {
-            assert!(p.assignment.contains(&part), "part {part} is missing from assignment");
+            assert!(
+                p.assignment.contains(&part),
+                "part {part} is missing from assignment"
+            );
         }
     }
 
@@ -855,7 +1031,9 @@ mod tests {
             objective: ObjectiveType::Volume,
             ..MetisParams::default()
         };
-        let p = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(42)).unwrap();
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(42))
+            .unwrap();
         assert_eq!(p.assignment.len(), 10);
         assert_eq!(p.k, 2);
         assert!(p.assignment.contains(&0), "part 0 missing");
@@ -884,11 +1062,21 @@ mod kani_proofs {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i-1) as u32); }
-            if i < n-1 { adjncy.push((i+1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     /// Proves: FiducciaMattheyses::refine() never panics or goes OOB
@@ -898,7 +1086,7 @@ mod kani_proofs {
     #[kani::unwind(17)]
     fn verify_fm_no_oob() {
         let n: usize = kani::any_where(|&n: &usize| n >= 4 && n <= 16);
-        let k: u32   = kani::any_where(|&k: &u32| k >= 2 && k <= 4);
+        let k: u32 = kani::any_where(|&k: &u32| k >= 2 && k <= 4);
         kani::assume(k as usize <= n);
 
         let g = kani_path(n);
@@ -911,7 +1099,12 @@ mod kani_proofs {
             tpwgts: None,
         };
 
-        let fm = FiducciaMattheyses { niter: 2, contig_fm: true, objective: ObjectiveType::Cut, lp_iter: 0 };
+        let fm = FiducciaMattheyses {
+            niter: 2,
+            contig_fm: true,
+            objective: ObjectiveType::Cut,
+            lp_iter: 0,
+        };
         let result = fm.refine(&g, p);
 
         // Safety postconditions:

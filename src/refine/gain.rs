@@ -3,10 +3,10 @@
 /// Gains ∈ `[-max_gain, +max_gain]`. Uses offset indexing so all array
 /// indices are non-negative: `bucket_idx(gain) = gain + max_gain`.
 pub struct GainTable {
-    buckets:    Vec<Vec<u32>>,
-    position:   Vec<Option<(i32, usize)>>,
+    buckets: Vec<Vec<u32>>,
+    position: Vec<Option<(i32, usize)>>,
     pub max_gain: i32,
-    top_bucket:   i32,
+    top_bucket: i32,
 }
 
 #[cfg(test)]
@@ -26,7 +26,9 @@ mod tests {
     #[test]
     fn gain_table_remove_max() {
         let mut gt = GainTable::new(5, 10);
-        gt.insert(0, 5); gt.insert(1, 3); gt.insert(2, 8);
+        gt.insert(0, 5);
+        gt.insert(1, 3);
+        gt.insert(2, 8);
         let (v, g) = gt.pop_max().unwrap();
         assert_eq!((v, g), (2, 8));
         let (v2, g2) = gt.pop_max().unwrap();
@@ -108,8 +110,8 @@ impl GainTable {
     pub fn new(n_vertices: usize, max_gain: i32) -> Self {
         let size = (2 * max_gain + 1) as usize;
         Self {
-            buckets:    vec![Vec::new(); size],
-            position:   vec![None; n_vertices],
+            buckets: vec![Vec::new(); size],
+            position: vec![None; n_vertices],
             max_gain,
             top_bucket: i32::MIN,
         }
@@ -124,7 +126,9 @@ impl GainTable {
         let pos = self.buckets[bi].len();
         self.buckets[bi].push(vertex);
         self.position[vertex as usize] = Some((gain, pos));
-        if gain > self.top_bucket { self.top_bucket = gain; }
+        if gain > self.top_bucket {
+            self.top_bucket = gain;
+        }
     }
 
     pub fn remove(&mut self, vertex: u32) {
@@ -149,7 +153,9 @@ impl GainTable {
         let mut g = self.top_bucket;
         while g >= -self.max_gain {
             let bi = self.bucket_idx(g);
-            if let Some(&v) = self.buckets[bi].last() { return Some((v, g)); }
+            if let Some(&v) = self.buckets[bi].last() {
+                return Some((v, g));
+            }
             g -= 1;
         }
         None
@@ -162,7 +168,9 @@ impl GainTable {
         Some((v, g))
     }
 
-    pub fn is_empty(&self) -> bool { self.peek_max().is_none() }
+    pub fn is_empty(&self) -> bool {
+        self.peek_max().is_none()
+    }
 
     pub fn contains(&self, vertex: u32) -> bool {
         self.position[vertex as usize].is_some()

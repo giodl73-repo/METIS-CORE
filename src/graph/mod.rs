@@ -2,33 +2,55 @@ use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
 pub struct CsrGraph {
-    pub xadj:   Vec<u32>,
+    pub xadj: Vec<u32>,
     pub adjncy: Vec<u32>,
-    pub ncon:   u32,
-    pub vwgt:   Vec<i32>,
+    pub ncon: u32,
+    pub vwgt: Vec<i32>,
     pub adjwgt: Option<Vec<i32>>,
 }
 
 impl CsrGraph {
-    pub fn n(&self) -> usize { self.xadj.len().saturating_sub(1) }
+    pub fn n(&self) -> usize {
+        self.xadj.len().saturating_sub(1)
+    }
 
     pub fn is_valid(&self) -> bool {
         let n = self.n();
-        if self.xadj.len() != n + 1 { return false; }
-        if n == 0 { return true; }
-        if self.xadj[0] != 0 { return false; }
-        if self.ncon < 1 { return false; }
-        if self.vwgt.len() != n * self.ncon as usize { return false; }
-        if self.vwgt.iter().any(|&w| w <= 0) { return false; }
+        if self.xadj.len() != n + 1 {
+            return false;
+        }
+        if n == 0 {
+            return true;
+        }
+        if self.xadj[0] != 0 {
+            return false;
+        }
+        if self.ncon < 1 {
+            return false;
+        }
+        if self.vwgt.len() != n * self.ncon as usize {
+            return false;
+        }
+        if self.vwgt.iter().any(|&w| w <= 0) {
+            return false;
+        }
         if let Some(ref aw) = self.adjwgt {
-            if aw.len() != self.adjncy.len() { return false; }
+            if aw.len() != self.adjncy.len() {
+                return false;
+            }
         }
         for i in 0..n {
-            if self.xadj[i] > self.xadj[i + 1] { return false; }
+            if self.xadj[i] > self.xadj[i + 1] {
+                return false;
+            }
             for j in self.xadj[i] as usize..self.xadj[i + 1] as usize {
-                if j >= self.adjncy.len() { return false; }
+                if j >= self.adjncy.len() {
+                    return false;
+                }
                 let nb = self.adjncy[j] as usize;
-                if nb >= n || nb == i { return false; }
+                if nb >= n || nb == i {
+                    return false;
+                }
             }
         }
         // Connectivity BFS from vertex 0
@@ -39,7 +61,10 @@ impl CsrGraph {
         while let Some(v) = queue.pop_front() {
             for j in self.xadj[v] as usize..self.xadj[v + 1] as usize {
                 let u = self.adjncy[j] as usize;
-                if !visited[u] { visited[u] = true; queue.push_back(u); }
+                if !visited[u] {
+                    visited[u] = true;
+                    queue.push_back(u);
+                }
             }
         }
         visited.iter().all(|&v| v)
@@ -49,15 +74,17 @@ impl CsrGraph {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Partition {
     pub assignment: Vec<u32>,
-    pub k:          u32,
+    pub k: u32,
     /// Target partition weights (one `f32` per part, summing to 1.0).
     /// `None` means equal weights (each part gets `1/k` of total population).
     /// Set by `split_weighted` and consumed by FM balance checks.
-    pub tpwgts:     Option<Vec<f32>>,
+    pub tpwgts: Option<Vec<f32>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct CoarseMap { pub cmap: Vec<u32> }
+pub struct CoarseMap {
+    pub cmap: Vec<u32>,
+}
 
 /// Check if every part in `partition` is connected within `g`.
 /// Returns `Ok(())` if all parts are contiguous, or the first disconnected part ID.
@@ -69,17 +96,21 @@ pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> 
     let mut rep = vec![usize::MAX; k];
     for v in 0..n {
         let p = partition.assignment[v] as usize;
-        if rep[p] == usize::MAX { rep[p] = v; }
+        if rep[p] == usize::MAX {
+            rep[p] = v;
+        }
     }
 
     // BFS within each part from its representative
     let mut visited = vec![false; n];
     for (part, &start) in rep.iter().enumerate() {
-        if start == usize::MAX { continue; } // empty part
+        if start == usize::MAX {
+            continue;
+        } // empty part
         visited[start] = true;
         let mut queue = std::collections::VecDeque::from([start]);
         while let Some(v) = queue.pop_front() {
-            for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
+            for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                 let u = g.adjncy[j] as usize;
                 if !visited[u] && partition.assignment[u] as usize == part {
                     visited[u] = true;
@@ -95,7 +126,9 @@ pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> 
         }
         // Reset visited for next part (only clear this part's vertices)
         for (v, was_visited) in visited.iter_mut().enumerate() {
-            if partition.assignment[v] as usize == part { *was_visited = false; }
+            if partition.assignment[v] as usize == part {
+                *was_visited = false;
+            }
         }
     }
     Ok(())
@@ -111,9 +144,11 @@ pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> 
 /// Edge weights are preserved when present; vertex weights are copied.
 /// The returned subgraph is not necessarily connected — callers that require
 /// connectivity should ensure the chosen `part` is a contiguous region.
-pub fn extract_subgraph(g: &CsrGraph, assignment: &[u32], part: u32)
-    -> (CsrGraph, Vec<usize>, Vec<usize>)
-{
+pub fn extract_subgraph(
+    g: &CsrGraph,
+    assignment: &[u32],
+    part: u32,
+) -> (CsrGraph, Vec<usize>, Vec<usize>) {
     let n = g.n();
     let ncon = g.ncon as usize;
 
@@ -154,7 +189,11 @@ pub fn extract_subgraph(g: &CsrGraph, assignment: &[u32], part: u32)
         adjncy,
         ncon: g.ncon,
         vwgt,
-        adjwgt: if g.adjwgt.is_some() { Some(adjwgt) } else { None },
+        adjwgt: if g.adjwgt.is_some() {
+            Some(adjwgt)
+        } else {
+            None
+        },
     };
     (sub, global_to_local, local_to_global)
 }
@@ -183,19 +222,25 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
     // component count across all parts by ≥1, so convergence is guaranteed.
     let k = partition.k as usize;
     for _ in 0..n * k {
-        if check_contiguity(g, partition).is_ok() { break; }
+        if check_contiguity(g, partition).is_ok() {
+            break;
+        }
 
         let mut made_progress = false;
 
         'parts: for part in 0..k {
             // Find ALL connected components of this part via BFS, tracking each
             // component's size so we can identify the largest ("main") component.
-            let mut comp_id   = vec![usize::MAX; n]; // comp_id[v] = component index
+            let mut comp_id = vec![usize::MAX; n]; // comp_id[v] = component index
             let mut comp_sizes: Vec<usize> = Vec::new();
 
             for start in 0..n {
-                if partition.assignment[start] as usize != part { continue; }
-                if comp_id[start] != usize::MAX { continue; }
+                if partition.assignment[start] as usize != part {
+                    continue;
+                }
+                if comp_id[start] != usize::MAX {
+                    continue;
+                }
 
                 let cid = comp_sizes.len();
                 let mut size = 0usize;
@@ -203,7 +248,7 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
                 comp_id[start] = cid;
                 while let Some(v) = queue.pop_front() {
                     size += 1;
-                    for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
+                    for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                         let u = g.adjncy[j] as usize;
                         if comp_id[u] == usize::MAX && partition.assignment[u] as usize == part {
                             comp_id[u] = cid;
@@ -214,10 +259,14 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
                 comp_sizes.push(size);
             }
 
-            if comp_sizes.len() <= 1 { continue; } // this part is already contiguous
+            if comp_sizes.len() <= 1 {
+                continue;
+            } // this part is already contiguous
 
             // Identify the largest component — this is the "main" component to keep.
-            let main_cid = comp_sizes.iter().enumerate()
+            let main_cid = comp_sizes
+                .iter()
+                .enumerate()
                 .max_by_key(|&(_, &sz)| sz)
                 .map(|(i, _)| i)
                 .unwrap_or(0);
@@ -226,25 +275,29 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
             // Iterate over secondary component IDs; for each, collect its vertices
             // and count external edges to choose the best target part.
             for sec_cid in 0..comp_sizes.len() {
-                if sec_cid == main_cid { continue; }
+                if sec_cid == main_cid {
+                    continue;
+                }
 
                 // Collect all vertices of this secondary component.
-                let component: Vec<usize> = (0..n)
-                    .filter(|&v| comp_id[v] == sec_cid)
-                    .collect();
+                let component: Vec<usize> = (0..n).filter(|&v| comp_id[v] == sec_cid).collect();
 
                 // Count external edges from this component to each foreign part.
                 let mut adj_counts = vec![0u32; k];
                 for &v in &component {
-                    for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
+                    for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                         let u = g.adjncy[j] as usize;
                         let up = partition.assignment[u] as usize;
-                        if up != part { adj_counts[up] += 1; }
+                        if up != part {
+                            adj_counts[up] += 1;
+                        }
                     }
                 }
 
                 // Pick the foreign part with the most external edges.
-                if let Some((best_part, _)) = adj_counts.iter().enumerate()
+                if let Some((best_part, _)) = adj_counts
+                    .iter()
+                    .enumerate()
                     .filter(|&(p, &c)| p != part && c > 0)
                     .max_by_key(|&(_, &c)| c)
                 {
@@ -262,7 +315,9 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
             }
         }
 
-        if !made_progress { break; } // no further progress possible
+        if !made_progress {
+            break;
+        } // no further progress possible
     }
     reassigned
 }
@@ -275,15 +330,27 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i - 1) as u32); }
-            if i < n - 1 { adjncy.push((i + 1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     #[test]
-    fn valid_path_graph() { assert!(path_graph(5).is_valid()); }
+    fn valid_path_graph() {
+        assert!(path_graph(5).is_valid());
+    }
 
     #[test]
     fn invalid_self_loop() {
@@ -316,7 +383,7 @@ mod tests {
     #[test]
     fn invalid_disconnected() {
         let g = CsrGraph {
-            xadj:   vec![0, 1, 2, 3, 4],
+            xadj: vec![0, 1, 2, 3, 4],
             adjncy: vec![1, 0, 3, 2],
             ncon: 1,
             vwgt: vec![1; 4],
@@ -347,10 +414,18 @@ mod tests {
         let g = path_graph(4);
         let assignment = [0u32, 0, 1, 1];
         let (sub, _g2l, l2g) = extract_subgraph(&g, &assignment, 0);
-        assert_eq!(l2g, vec![0, 1], "left subgraph should contain vertices 0 and 1");
+        assert_eq!(
+            l2g,
+            vec![0, 1],
+            "left subgraph should contain vertices 0 and 1"
+        );
         assert!(sub.is_valid());
         assert_eq!(sub.n(), 2);
-        assert_eq!(sub.adjncy.len(), 2, "one internal edge 0-1 = 2 directed entries");
+        assert_eq!(
+            sub.adjncy.len(),
+            2,
+            "one internal edge 0-1 = 2 directed entries"
+        );
     }
 
     #[test]
@@ -360,8 +435,10 @@ mod tests {
         let assignment = [0u32, 0, 1, 1];
         let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
         assert!(sub.adjwgt.is_some());
-        assert!(sub.adjwgt.as_ref().unwrap().iter().all(|&w| w == 3),
-            "edge weight must survive into subgraph");
+        assert!(
+            sub.adjwgt.as_ref().unwrap().iter().all(|&w| w == 3),
+            "edge weight must survive into subgraph"
+        );
     }
 
     #[test]
@@ -375,7 +452,7 @@ mod tests {
     #[test]
     fn extract_subgraph_single_vertex_no_edges() {
         let g = path_graph(4);
-        let assignment = [0u32, 1, 0, 0];  // vertex 1 is isolated in part 1
+        let assignment = [0u32, 1, 0, 0]; // vertex 1 is isolated in part 1
         let (sub, _, l2g) = extract_subgraph(&g, &assignment, 1);
         assert_eq!(l2g, vec![1]);
         assert_eq!(sub.n(), 1);
@@ -400,7 +477,11 @@ mod tests {
     #[test]
     fn check_contiguity_path_bisect_is_ok() {
         let g = path_graph(4);
-        let p = Partition { assignment: vec![0, 0, 1, 1], k: 2, tpwgts: None };
+        let p = Partition {
+            assignment: vec![0, 0, 1, 1],
+            k: 2,
+            tpwgts: None,
+        };
         assert!(check_contiguity(&g, &p).is_ok());
     }
 
@@ -408,10 +489,18 @@ mod tests {
     fn check_contiguity_disconnected_returns_err_with_part_id() {
         // Path 0-1-2-3-4: part 0 = {0,1,4} — not connected (4 separated from 0,1)
         let g = path_graph(5);
-        let p = Partition { assignment: vec![0, 0, 1, 1, 0], k: 2, tpwgts: None };
+        let p = Partition {
+            assignment: vec![0, 0, 1, 1, 0],
+            k: 2,
+            tpwgts: None,
+        };
         let err = check_contiguity(&g, &p);
         assert!(err.is_err(), "disconnected part must return Err");
-        assert_eq!(err.unwrap_err(), 0, "err value must be the disconnected part ID");
+        assert_eq!(
+            err.unwrap_err(),
+            0,
+            "err value must be the disconnected part ID"
+        );
     }
 
     // ── repair_contiguity ──────────────────────────────────────────────────
@@ -419,27 +508,48 @@ mod tests {
     #[test]
     fn repair_contiguity_fixes_disconnected_part() {
         let g = path_graph(5);
-        let mut p = Partition { assignment: vec![0, 0, 1, 1, 0], k: 2, tpwgts: None };
-        assert!(check_contiguity(&g, &p).is_err(), "pre-condition: must be non-contiguous");
+        let mut p = Partition {
+            assignment: vec![0, 0, 1, 1, 0],
+            k: 2,
+            tpwgts: None,
+        };
+        assert!(
+            check_contiguity(&g, &p).is_err(),
+            "pre-condition: must be non-contiguous"
+        );
         let moved = repair_contiguity(&g, &mut p);
         assert!(moved > 0, "must have moved at least one vertex");
-        assert!(check_contiguity(&g, &p).is_ok(), "must be contiguous after repair");
+        assert!(
+            check_contiguity(&g, &p).is_ok(),
+            "must be contiguous after repair"
+        );
     }
 
     #[test]
     fn repair_contiguity_noop_when_already_contiguous() {
         let g = path_graph(4);
-        let mut p = Partition { assignment: vec![0, 0, 1, 1], k: 2, tpwgts: None };
+        let mut p = Partition {
+            assignment: vec![0, 0, 1, 1],
+            k: 2,
+            tpwgts: None,
+        };
         let orig = p.assignment.clone();
         let moved = repair_contiguity(&g, &mut p);
-        assert_eq!(moved, 0, "no vertices should move when partition is already contiguous");
+        assert_eq!(
+            moved, 0,
+            "no vertices should move when partition is already contiguous"
+        );
         assert_eq!(p.assignment, orig);
     }
 
     #[test]
     fn repair_contiguity_handles_k1() {
         let g = path_graph(6);
-        let mut p = Partition { assignment: vec![0; 6], k: 1, tpwgts: None };
+        let mut p = Partition {
+            assignment: vec![0; 6],
+            k: 1,
+            tpwgts: None,
+        };
         let moved = repair_contiguity(&g, &mut p);
         assert_eq!(moved, 0, "k=1 is trivially contiguous — no repair needed");
     }
@@ -463,7 +573,13 @@ mod kani_proofs {
         let ncon: u32 = kani::any_where(|&c: &u32| c <= 4);
         let vwgt_len = n.saturating_mul(ncon as usize).min(64);
         let vwgt: Vec<i32> = (0..vwgt_len).map(|_| kani::any()).collect();
-        let g = CsrGraph { xadj, adjncy, ncon, vwgt, adjwgt: None };
+        let g = CsrGraph {
+            xadj,
+            adjncy,
+            ncon,
+            vwgt,
+            adjwgt: None,
+        };
         // Must not panic — result is ignored
         let _ = g.is_valid();
     }

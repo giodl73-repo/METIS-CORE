@@ -1,6 +1,6 @@
-use crate::graph::{CsrGraph, CoarseMap};
-use crate::coarsen::Coarsener;
 use crate::coarsen::hem::build_coarse_graph;
+use crate::coarsen::Coarsener;
+use crate::graph::{CoarseMap, CsrGraph};
 
 /// Two-hop heavy-edge matching coarsener.
 ///
@@ -12,13 +12,18 @@ use crate::coarsen::hem::build_coarse_graph;
 ///
 /// Mirrors the `MATCH_2HOPALL` / `MATCH_2HOP` variants in METIS `coarsen.c`.
 pub struct TwoHopMatch;
-pub struct TwoHopMatchWithParams { pub coarsen_to: u32, pub k: u32 }
+pub struct TwoHopMatchWithParams {
+    pub coarsen_to: u32,
+    pub k: u32,
+}
 
 impl Coarsener for TwoHopMatch {
     fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
         twohop_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
-    fn should_stop(&self, g: &CsrGraph) -> bool { g.n() <= 40 }
+    fn should_stop(&self, g: &CsrGraph) -> bool {
+        g.n() <= 40
+    }
 }
 
 impl Coarsener for TwoHopMatchWithParams {
@@ -34,12 +39,14 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
     let n = g.n();
 
     // Bucket-sort vertices by max incident edge weight descending (SHEM order)
-    let max_w: Vec<i32> = (0..n).map(|v| {
-        (g.xadj[v] as usize..g.xadj[v + 1] as usize)
-            .map(|j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]))
-            .max()
-            .unwrap_or(0)
-    }).collect();
+    let max_w: Vec<i32> = (0..n)
+        .map(|v| {
+            (g.xadj[v] as usize..g.xadj[v + 1] as usize)
+                .map(|j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]))
+                .max()
+                .unwrap_or(0)
+        })
+        .collect();
 
     let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
     let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
@@ -47,21 +54,25 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
         buckets[weight.max(0) as usize].push(v);
     }
 
-    let mut matched   = vec![false; n];
-    let mut cmap      = vec![u32::MAX; n];
+    let mut matched = vec![false; n];
+    let mut cmap = vec![u32::MAX; n];
     let mut coarse_id = 0u32;
 
     // Pass 1: direct heavy-edge matching (same as SHEM)
     for bucket in buckets.iter().rev() {
         for &v in bucket {
-            if matched[v] { continue; }
+            if matched[v] {
+                continue;
+            }
             let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
                 .filter(|&j| !matched[g.adjncy[j] as usize])
                 .max_by_key(|&j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]));
             if let Some(j) = best {
                 let u = g.adjncy[j] as usize;
-                cmap[v] = coarse_id; cmap[u] = coarse_id;
-                matched[v] = true;  matched[u] = true;
+                cmap[v] = coarse_id;
+                cmap[u] = coarse_id;
+                matched[v] = true;
+                matched[u] = true;
                 coarse_id += 1;
             }
         }
@@ -72,7 +83,9 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
     // unmatched candidate.  Pick the 2-hop neighbour with the highest edge
     // weight on the path v→w→u (approximated as min(ew_vw, ew_wu)).
     for v in 0..n {
-        if matched[v] { continue; }
+        if matched[v] {
+            continue;
+        }
 
         let mut best_u: Option<usize> = None;
         let mut best_wt = i32::MIN;
@@ -82,19 +95,23 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
             let ew_vw = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j1]);
             for j2 in g.xadj[w] as usize..g.xadj[w + 1] as usize {
                 let u = g.adjncy[j2] as usize; // 2-hop neighbour
-                if matched[u] || u == v { continue; }
+                if matched[u] || u == v {
+                    continue;
+                }
                 let ew_wu = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j2]);
                 let path_wt = ew_vw.min(ew_wu);
                 if path_wt > best_wt {
                     best_wt = path_wt;
-                    best_u  = Some(u);
+                    best_u = Some(u);
                 }
             }
         }
 
         if let Some(u) = best_u {
-            cmap[v] = coarse_id; cmap[u] = coarse_id;
-            matched[v] = true;  matched[u] = true;
+            cmap[v] = coarse_id;
+            cmap[u] = coarse_id;
+            matched[v] = true;
+            matched[u] = true;
         } else {
             // Still unmatched after 2-hop: becomes its own coarse vertex
             cmap[v] = coarse_id;
@@ -114,24 +131,42 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i-1) as u32); }
-            if i < n-1 { adjncy.push((i+1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     /// A star graph has a high-degree hub; leaves can only be matched via 2-hop.
     fn star_graph(n: usize) -> CsrGraph {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
-        for i in 1..n { adjncy.push(i as u32); }
+        for i in 1..n {
+            adjncy.push(i as u32);
+        }
         xadj.push(adjncy.len() as u32);
         for _ in 1..n {
             adjncy.push(0u32);
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     #[test]
@@ -165,7 +200,10 @@ mod tests {
 
     #[test]
     fn twohop_with_params_should_stop() {
-        let c = TwoHopMatchWithParams { coarsen_to: 20, k: 2 };
+        let c = TwoHopMatchWithParams {
+            coarsen_to: 20,
+            k: 2,
+        };
         assert!(c.should_stop(&path_graph(5)));
     }
 
@@ -177,6 +215,10 @@ mod tests {
         let g = star_graph(8);
         let (c, _) = TwoHopMatch.coarsen(&g);
         // 2-hop should do better than leaving all unmatched leaves solo
-        assert!(c.n() <= 5, "2-hop should coarsen star better: got {} coarse vertices", c.n());
+        assert!(
+            c.n() <= 5,
+            "2-hop should coarsen star better: got {} coarse vertices",
+            c.n()
+        );
     }
 }

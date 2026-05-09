@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use metis_core::api::{MetisPartitioner, MetisParams, Partitioner};
+use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::CsrGraph;
 
 /// Build a `rows × cols` grid graph (connected, no self-loops).
@@ -14,16 +14,32 @@ fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
     for r in 0..rows {
         for c in 0..cols {
             let mut nbrs: Vec<usize> = Vec::with_capacity(4);
-            if r > 0         { nbrs.push((r - 1) * cols + c); }
-            if r < rows - 1  { nbrs.push((r + 1) * cols + c); }
-            if c > 0         { nbrs.push(r * cols + (c - 1)); }
-            if c < cols - 1  { nbrs.push(r * cols + (c + 1)); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if r > 0 {
+                nbrs.push((r - 1) * cols + c);
+            }
+            if r < rows - 1 {
+                nbrs.push((r + 1) * cols + c);
+            }
+            if c > 0 {
+                nbrs.push(r * cols + (c - 1));
+            }
+            if c < cols - 1 {
+                nbrs.push(r * cols + (c + 1));
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
     }
 
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 // ── VT ── 255 tracts, k=1 (smoke test / bisection baseline) ─────────────────
@@ -103,11 +119,12 @@ fn bench_ca_coarsen_only(c: &mut Criterion) {
     use metis_core::multilevel::hierarchy::CoarseningHierarchy;
 
     let g = grid_graph(96, 95); // 9120 vertices ≈ CA 9129 tracts
-    let coarsener = SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 53 };
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 53,
+    };
     c.bench_function("ca_coarsen_only_n9120", |b| {
-        b.iter(|| {
-            CoarseningHierarchy::build(&g, &coarsener).unwrap()
-        });
+        b.iter(|| CoarseningHierarchy::build(&g, &coarsener).unwrap());
     });
 }
 

@@ -1,16 +1,18 @@
 #![allow(clippy::items_after_test_module)]
 
+pub mod api;
+pub mod coarsen;
 pub mod error;
 pub mod graph;
-pub mod coarsen;
 pub mod init;
-pub mod refine;
 pub mod multilevel;
-pub mod api;
+pub mod refine;
 
+pub use api::{CoarseningMethod, MetisParams, ObjectiveType, Partitioner};
 pub use error::PartitionError;
-pub use graph::{CsrGraph, Partition, CoarseMap, check_contiguity, repair_contiguity, extract_subgraph};
-pub use api::{Partitioner, MetisParams, ObjectiveType, CoarseningMethod};
+pub use graph::{
+    check_contiguity, extract_subgraph, repair_contiguity, CoarseMap, CsrGraph, Partition,
+};
 
 // ── METIS 5.x compatible entry points ────────────────────────────────────
 
@@ -37,11 +39,19 @@ pub fn part_recursive(
 ) -> Result<Vec<u32>, PartitionError> {
     let n = xadj.len().saturating_sub(1);
     let g = graph::CsrGraph {
-        xadj:   xadj.to_vec(),
+        xadj: xadj.to_vec(),
         adjncy: adjncy.to_vec(),
-        ncon:   1,
-        vwgt:   if vwgt.is_empty() { vec![1i32; n] } else { vwgt.to_vec() },
-        adjwgt: if adjwgt.is_empty() { None } else { Some(adjwgt.to_vec()) },
+        ncon: 1,
+        vwgt: if vwgt.is_empty() {
+            vec![1i32; n]
+        } else {
+            vwgt.to_vec()
+        },
+        adjwgt: if adjwgt.is_empty() {
+            None
+        } else {
+            Some(adjwgt.to_vec())
+        },
     };
     api::MetisPartitioner::with_params(params, nparts)
         .split(&g, nparts, None)
@@ -72,8 +82,12 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i-1) as u32); }
-            if i < n-1 { adjncy.push((i+1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
         (xadj, adjncy)
@@ -84,9 +98,15 @@ mod tests {
         let (xadj, adjncy) = path_xadj_adjncy(10);
         let result = part_recursive(&xadj, &adjncy, &[], &[], 2, api::MetisParams::default());
         let assignment = result.expect("part_recursive must succeed on valid path graph");
-        assert_eq!(assignment.len(), 10, "assignment length must equal vertex count");
-        assert!(assignment.contains(&0) && assignment.contains(&1),
-            "both parts must be present");
+        assert_eq!(
+            assignment.len(),
+            10,
+            "assignment length must equal vertex count"
+        );
+        assert!(
+            assignment.contains(&0) && assignment.contains(&1),
+            "both parts must be present"
+        );
     }
 
     #[test]
@@ -124,6 +144,9 @@ mod tests {
         let (xadj, adjncy) = path_xadj_adjncy(8);
         let assignment = part_recursive(&xadj, &adjncy, &[], &[], 1, api::MetisParams::default())
             .expect("k=1 must succeed");
-        assert!(assignment.iter().all(|&a| a == 0), "k=1 must assign all vertices to part 0");
+        assert!(
+            assignment.iter().all(|&a| a == 0),
+            "k=1 must assign all vertices to part 0"
+        );
     }
 }

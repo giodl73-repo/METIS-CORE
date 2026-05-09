@@ -1,8 +1,8 @@
-use rand_pcg::Pcg64;
-use rand::{Rng, SeedableRng};
-use std::collections::VecDeque;
 use crate::graph::{CsrGraph, Partition};
 use crate::init::InitialPartitioner;
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg64;
+use std::collections::VecDeque;
 
 pub struct GrowBisect;
 pub struct GrowKway;
@@ -18,15 +18,31 @@ fn grid_4x4() -> CsrGraph {
     for i in 0..4usize {
         for j in 0..4usize {
             let mut nbrs = Vec::new();
-            if i > 0 { nbrs.push((i - 1) * 4 + j); }
-            if i < 3 { nbrs.push((i + 1) * 4 + j); }
-            if j > 0 { nbrs.push(i * 4 + (j - 1)); }
-            if j < 3 { nbrs.push(i * 4 + (j + 1)); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if i > 0 {
+                nbrs.push((i - 1) * 4 + j);
+            }
+            if i < 3 {
+                nbrs.push((i + 1) * 4 + j);
+            }
+            if j > 0 {
+                nbrs.push(i * 4 + (j - 1));
+            }
+            if j < 3 {
+                nbrs.push(i * 4 + (j + 1));
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 #[cfg(test)]
@@ -34,11 +50,21 @@ fn path_graph(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
-        if i > 0 { adjncy.push((i - 1) as u32); }
-        if i < n - 1 { adjncy.push((i + 1) as u32); }
+        if i > 0 {
+            adjncy.push((i - 1) as u32);
+        }
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 #[cfg(test)]
@@ -72,7 +98,9 @@ mod tests {
         assert_eq!(p.k, 4);
         assert!(p.assignment.iter().all(|&x| x < 4));
         // All 4 parts must appear
-        for part in 0..4u32 { assert!(p.assignment.contains(&part)); }
+        for part in 0..4u32 {
+            assert!(p.assignment.contains(&part));
+        }
     }
 
     #[test]
@@ -209,21 +237,21 @@ mod tests {
 ///
 /// The recursion bottoms out at k == 1 (trivial) and k == 2 (single bisection).
 pub struct RecursiveBisect {
-    pub niter:      u32,
-    pub ncuts:      u32,
+    pub niter: u32,
+    pub ncuts: u32,
     pub coarsen_to: u32,
-    pub ufactor:    u32,
-    pub contig_fm:  bool,
+    pub ufactor: u32,
+    pub contig_fm: bool,
 }
 
 impl Default for RecursiveBisect {
     fn default() -> Self {
         Self {
-            niter:      10,
-            ncuts:      1,
+            niter: 10,
+            ncuts: 1,
             coarsen_to: 20,
-            ufactor:    5,
-            contig_fm:  true,
+            ufactor: 5,
+            contig_fm: true,
         }
     }
 }
@@ -255,18 +283,18 @@ impl RecursiveBisect {
 
         // Bisect g into two halves (parts 0 and 1).
         let bisect_params = MetisParams {
-            ufactor:       self.ufactor,
-            niter:         self.niter,
-            seed:          Some(seed),
-            coarsen_to:    self.coarsen_to,
-            ncuts:         self.ncuts,
-            tpwgts:        None,
-            contig_fm:     self.contig_fm,
+            ufactor: self.ufactor,
+            niter: self.niter,
+            seed: Some(seed),
+            coarsen_to: self.coarsen_to,
+            ncuts: self.ncuts,
+            tpwgts: None,
+            contig_fm: self.contig_fm,
             use_recursive: false, // always use direct pipeline for the bisection step
-            objective:     crate::api::ObjectiveType::Cut,
-            min_conn:      false,
-            lp_refine:      false,
-            lp_iter:        0,
+            objective: crate::api::ObjectiveType::Cut,
+            min_conn: false,
+            lp_refine: false,
+            lp_iter: 0,
             coarsen_method: crate::api::CoarseningMethod::Shem,
         };
         let bisection = MetisPartitioner::with_params(bisect_params, 2).split(g, 2, Some(seed))?;
@@ -314,7 +342,13 @@ impl RecursiveBisect {
 impl InitialPartitioner for GrowBisect {
     fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
         debug_assert!(g.is_valid(), "requires valid connected graph");
-        if k == 1 { return Partition { assignment: vec![0; g.n()], k: 1, tpwgts: None }; }
+        if k == 1 {
+            return Partition {
+                assignment: vec![0; g.n()],
+                k: 1,
+                tpwgts: None,
+            };
+        }
         grow_bisect(g, k, seed)
     }
 }
@@ -322,7 +356,13 @@ impl InitialPartitioner for GrowBisect {
 impl InitialPartitioner for GrowKway {
     fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
         debug_assert!(g.is_valid(), "requires valid connected graph");
-        if k == 1 { return Partition { assignment: vec![0; g.n()], k: 1, tpwgts: None }; }
+        if k == 1 {
+            return Partition {
+                assignment: vec![0; g.n()],
+                k: 1,
+                tpwgts: None,
+            };
+        }
         grow_kway(g, k, seed)
     }
 }
@@ -330,7 +370,9 @@ impl InitialPartitioner for GrowKway {
 fn grow_bisect(g: &CsrGraph, k: u32, seed: u64) -> Partition {
     // For k=2: BFS from 2 random seeds alternating.
     // For k>2: delegate to grow_kway (full k-way BFS expansion).
-    if k > 2 { return grow_kway(g, k, seed); }
+    if k > 2 {
+        return grow_kway(g, k, seed);
+    }
 
     let n = g.n();
     let mut rng = Pcg64::seed_from_u64(seed);
@@ -362,20 +404,30 @@ fn grow_bisect(g: &CsrGraph, k: u32, seed: u64) -> Partition {
                         queue.push_back(u);
                         unassigned -= 1;
                         progress = true;
-                        if unassigned == 0 { break 'outer; }
+                        if unassigned == 0 {
+                            break 'outer;
+                        }
                     }
                 }
             }
         }
         // If both queues empty but vertices remain (shouldn't happen on valid connected graph)
-        if !progress && queues[0].is_empty() && queues[1].is_empty() { break; }
+        if !progress && queues[0].is_empty() && queues[1].is_empty() {
+            break;
+        }
     }
 
     // Safe fallback: assign any remaining (disconnected) vertices to part 0
     for a in assignment.iter_mut() {
-        if *a == u32::MAX { *a = 0; }
+        if *a == u32::MAX {
+            *a = 0;
+        }
     }
-    Partition { assignment, k: 2, tpwgts: None }
+    Partition {
+        assignment,
+        k: 2,
+        tpwgts: None,
+    }
 }
 
 fn grow_kway(g: &CsrGraph, k: u32, seed: u64) -> Partition {
@@ -398,11 +450,17 @@ fn grow_kway(g: &CsrGraph, k: u32, seed: u64) -> Partition {
     // Fallback: if we couldn't find k distinct seeds (k > n), fill with wrap-around
     while seeds.len() < k {
         for v in 0..n {
-            if seeds.len() >= k { break; }
-            if !seeds.contains(&v) { seeds.push(v); }
+            if seeds.len() >= k {
+                break;
+            }
+            if !seeds.contains(&v) {
+                seeds.push(v);
+            }
         }
         // Last resort: allow duplicates if n < k
-        if seeds.len() < k { seeds.push(seeds.len() % n); }
+        if seeds.len() < k {
+            seeds.push(seeds.len() % n);
+        }
     }
 
     // Seed each part; duplicates will be silently skipped (already assigned)
@@ -430,18 +488,28 @@ fn grow_kway(g: &CsrGraph, k: u32, seed: u64) -> Partition {
                     assignment[u] = part as u32;
                     queues[part].push_back(u);
                     unassigned -= 1;
-                    if unassigned == 0 { break; }
+                    if unassigned == 0 {
+                        break;
+                    }
                 }
             }
         }
 
         // Circuit break: all queues empty but unassigned remains (disconnected graph)
-        if queues.iter().all(|q| q.is_empty()) { break; }
+        if queues.iter().all(|q| q.is_empty()) {
+            break;
+        }
     }
 
     // Safe fallback for any truly unreachable vertices
     for a in assignment.iter_mut() {
-        if *a == u32::MAX { *a = 0; }
+        if *a == u32::MAX {
+            *a = 0;
+        }
     }
-    Partition { assignment, k: k as u32, tpwgts: None }
+    Partition {
+        assignment,
+        k: k as u32,
+        tpwgts: None,
+    }
 }

@@ -1,4 +1,4 @@
-use crate::graph::{CsrGraph, CoarseMap};
+use crate::graph::{CoarseMap, CsrGraph};
 
 pub trait Coarsener: Send + Sync {
     /// Collapse g by one level. Output graph has strictly fewer vertices.
@@ -11,6 +11,6 @@ pub trait Coarsener: Send + Sync {
 }
 
 pub mod hem;
-pub mod shem;
 pub mod mindegree;
+pub mod shem;
 pub mod twohop;

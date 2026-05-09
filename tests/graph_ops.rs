@@ -10,16 +10,15 @@
 //!   - Balance / population checks (3)
 //!   - MetisParams / pure math (3)
 
-use metis_core::graph::{
-    CsrGraph, Partition, check_contiguity, repair_contiguity, extract_subgraph,
-};
 use metis_core::api::{
-    MetisPartitioner, MetisParams, Partitioner,
-    CoarseningMethod, ObjectiveType,
+    CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner,
 };
-use metis_core::coarsen::Coarsener;
-use metis_core::coarsen::hem::{HeavyEdgeMatch, build_coarse_graph};
+use metis_core::coarsen::hem::{build_coarse_graph, HeavyEdgeMatch};
 use metis_core::coarsen::shem::{SortedHeavyEdgeMatch, SortedHeavyEdgeMatchWithParams};
+use metis_core::coarsen::Coarsener;
+use metis_core::graph::{
+    check_contiguity, extract_subgraph, repair_contiguity, CsrGraph, Partition,
+};
 use metis_core::multilevel::hierarchy::CoarseningHierarchy;
 
 // ─── shared graph helpers ───────────────────────────────────────────────────
@@ -28,11 +27,21 @@ fn path_graph(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
-        if i > 0 { adjncy.push((i - 1) as u32); }
-        if i < n - 1 { adjncy.push((i + 1) as u32); }
+        if i > 0 {
+            adjncy.push((i - 1) as u32);
+        }
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
@@ -42,21 +51,37 @@ fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
     for r in 0..rows {
         for c in 0..cols {
             let mut nbrs = Vec::new();
-            if r > 0 { nbrs.push((r-1)*cols+c); }
-            if r < rows-1 { nbrs.push((r+1)*cols+c); }
-            if c > 0 { nbrs.push(r*cols+(c-1)); }
-            if c < cols-1 { nbrs.push(r*cols+(c+1)); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if r > 0 {
+                nbrs.push((r - 1) * cols + c);
+            }
+            if r < rows - 1 {
+                nbrs.push((r + 1) * cols + c);
+            }
+            if c > 0 {
+                nbrs.push(r * cols + (c - 1));
+            }
+            if c < cols - 1 {
+                nbrs.push(r * cols + (c + 1));
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 fn weighted_path_4() -> CsrGraph {
     // 0 --10-- 1 --1-- 2 --10-- 3
     CsrGraph {
-        xadj:   vec![0, 1, 3, 5, 6],
+        xadj: vec![0, 1, 3, 5, 6],
         adjncy: vec![1, 0, 2, 1, 3, 2],
         ncon: 1,
         vwgt: vec![1; 4],
@@ -97,8 +122,13 @@ fn csr_xadj_starts_at_zero() {
 fn csr_xadj_monotone_nondecreasing() {
     let g = grid_graph(4, 4);
     for i in 0..g.n() {
-        assert!(g.xadj[i] <= g.xadj[i + 1],
-            "xadj[{i}]={} > xadj[{}]={}", g.xadj[i], i+1, g.xadj[i+1]);
+        assert!(
+            g.xadj[i] <= g.xadj[i + 1],
+            "xadj[{i}]={} > xadj[{}]={}",
+            g.xadj[i],
+            i + 1,
+            g.xadj[i + 1]
+        );
     }
 }
 
@@ -107,9 +137,9 @@ fn csr_degree_path_endpoints_is_1() {
     // endpoints of a path have exactly 1 neighbour
     let g = path_graph(6);
     let deg_first = (g.xadj[1] - g.xadj[0]) as usize;
-    let deg_last  = (g.xadj[6] - g.xadj[5]) as usize;
+    let deg_last = (g.xadj[6] - g.xadj[5]) as usize;
     assert_eq!(deg_first, 1, "first endpoint degree must be 1");
-    assert_eq!(deg_last,  1, "last endpoint degree must be 1");
+    assert_eq!(deg_last, 1, "last endpoint degree must be 1");
 }
 
 #[test]
@@ -142,15 +172,21 @@ fn csr_adjncy_no_self_loops() {
 #[test]
 fn csr_all_vertex_weights_positive() {
     let g = path_graph(12);
-    assert!(g.vwgt.iter().all(|&w| w > 0), "all vertex weights must be positive");
+    assert!(
+        g.vwgt.iter().all(|&w| w > 0),
+        "all vertex weights must be positive"
+    );
 }
 
 #[test]
 fn csr_adjwgt_length_matches_adjncy() {
     let g = weighted_path_4();
     let aw = g.adjwgt.as_ref().unwrap();
-    assert_eq!(aw.len(), g.adjncy.len(),
-        "adjwgt.len() must equal adjncy.len()");
+    assert_eq!(
+        aw.len(),
+        g.adjncy.len(),
+        "adjwgt.len() must equal adjncy.len()"
+    );
 }
 
 #[test]
@@ -167,8 +203,11 @@ fn extract_subgraph_parts_cover_all_vertices() {
     let assignment: Vec<u32> = (0..6).map(|i| if i < 3 { 0 } else { 1 }).collect();
     let (_, _, l2g0) = extract_subgraph(&g, &assignment, 0);
     let (_, _, l2g1) = extract_subgraph(&g, &assignment, 1);
-    assert_eq!(l2g0.len() + l2g1.len(), 6,
-        "both parts together must cover all 6 vertices");
+    assert_eq!(
+        l2g0.len() + l2g1.len(),
+        6,
+        "both parts together must cover all 6 vertices"
+    );
 }
 
 #[test]
@@ -186,8 +225,12 @@ fn extract_subgraph_adjncy_in_range() {
     let assignment: Vec<u32> = (0..6).map(|i| if i < 3 { 0 } else { 1 }).collect();
     let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
     for j in 0..sub.adjncy.len() {
-        assert!((sub.adjncy[j] as usize) < sub.n(),
-            "sub-graph adjacency index {} out of range for n={}", sub.adjncy[j], sub.n());
+        assert!(
+            (sub.adjncy[j] as usize) < sub.n(),
+            "sub-graph adjacency index {} out of range for n={}",
+            sub.adjncy[j],
+            sub.n()
+        );
     }
 }
 
@@ -196,26 +239,45 @@ fn extract_subgraph_adjncy_in_range() {
 #[test]
 fn check_contiguity_ok_for_contiguous_bisection() {
     let g = path_graph(6);
-    let partition = Partition { assignment: vec![0, 0, 0, 1, 1, 1], k: 2, tpwgts: None };
-    assert!(check_contiguity(&g, &partition).is_ok(),
-        "contiguous bisection on path must pass contiguity check");
+    let partition = Partition {
+        assignment: vec![0, 0, 0, 1, 1, 1],
+        k: 2,
+        tpwgts: None,
+    };
+    assert!(
+        check_contiguity(&g, &partition).is_ok(),
+        "contiguous bisection on path must pass contiguity check"
+    );
 }
 
 #[test]
 fn check_contiguity_err_for_checkerboard_assignment() {
     let g = path_graph(6);
     // Alternating 0,1,0,1,0,1 — every part is disconnected on a path
-    let partition = Partition { assignment: vec![0, 1, 0, 1, 0, 1], k: 2, tpwgts: None };
-    assert!(check_contiguity(&g, &partition).is_err(),
-        "checkerboard assignment must fail contiguity check");
+    let partition = Partition {
+        assignment: vec![0, 1, 0, 1, 0, 1],
+        k: 2,
+        tpwgts: None,
+    };
+    assert!(
+        check_contiguity(&g, &partition).is_err(),
+        "checkerboard assignment must fail contiguity check"
+    );
 }
 
 #[test]
 fn repair_contiguity_leaves_already_contiguous_unchanged() {
     let g = path_graph(8);
-    let mut partition = Partition { assignment: vec![0, 0, 0, 0, 1, 1, 1, 1], k: 2, tpwgts: None };
+    let mut partition = Partition {
+        assignment: vec![0, 0, 0, 0, 1, 1, 1, 1],
+        k: 2,
+        tpwgts: None,
+    };
     let reassigned = repair_contiguity(&g, &mut partition);
-    assert_eq!(reassigned, 0, "no reassignments needed for contiguous partition");
+    assert_eq!(
+        reassigned, 0,
+        "no reassignments needed for contiguous partition"
+    );
     assert!(check_contiguity(&g, &partition).is_ok());
 }
 
@@ -223,10 +285,16 @@ fn repair_contiguity_leaves_already_contiguous_unchanged() {
 fn repair_contiguity_fixes_disconnected_assignment() {
     let g = path_graph(6);
     // Part 0 = {0, 5}, Part 1 = {1,2,3,4} — part 0 is disconnected
-    let mut partition = Partition { assignment: vec![0, 1, 1, 1, 1, 0], k: 2, tpwgts: None };
+    let mut partition = Partition {
+        assignment: vec![0, 1, 1, 1, 1, 0],
+        k: 2,
+        tpwgts: None,
+    };
     let _ = repair_contiguity(&g, &mut partition);
-    assert!(check_contiguity(&g, &partition).is_ok(),
-        "repair_contiguity must restore contiguity");
+    assert!(
+        check_contiguity(&g, &partition).is_ok(),
+        "repair_contiguity must restore contiguity"
+    );
 }
 
 // ─── Coarsening operations (4 tests) ──────────────────────────────────────
@@ -253,8 +321,10 @@ fn coarsening_preserves_total_vertex_weight() {
     let total_original: i32 = g.vwgt.iter().sum();
     let (c, _) = SortedHeavyEdgeMatch.coarsen(&g);
     let total_coarse: i32 = c.vwgt.iter().sum();
-    assert_eq!(total_original, total_coarse,
-        "total vertex weight must be preserved through coarsening");
+    assert_eq!(
+        total_original, total_coarse,
+        "total vertex weight must be preserved through coarsening"
+    );
 }
 
 #[test]
@@ -263,8 +333,16 @@ fn build_coarse_graph_correct_supervertex_count() {
     let g = path_graph(4);
     let cmap = vec![0u32, 0, 1, 1];
     let (c, cmap_out) = build_coarse_graph(&g, &cmap, 2);
-    assert_eq!(c.n(), 2, "build_coarse_graph with 2 supervertices must produce n=2");
-    assert_eq!(cmap_out.cmap.len(), 4, "cmap must retain length of original graph");
+    assert_eq!(
+        c.n(),
+        2,
+        "build_coarse_graph with 2 supervertices must produce n=2"
+    );
+    assert_eq!(
+        cmap_out.cmap.len(),
+        4,
+        "cmap must retain length of original graph"
+    );
 }
 
 // ─── Bisection hierarchy (3 tests) ────────────────────────────────────────
@@ -272,28 +350,46 @@ fn build_coarse_graph_correct_supervertex_count() {
 #[test]
 fn hierarchy_depth_at_least_1_for_large_graph() {
     let g = path_graph(100);
-    let coarsener = SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 2 };
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 2,
+    };
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
-    assert!(h.depth() >= 1, "hierarchy must have at least 1 coarsening level");
+    assert!(
+        h.depth() >= 1,
+        "hierarchy must have at least 1 coarsening level"
+    );
 }
 
 #[test]
 fn hierarchy_coarsest_satisfies_should_stop() {
     let g = path_graph(50);
-    let coarsener = SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 2 };
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 2,
+    };
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     // threshold = max(coarsen_to * k, 40) = max(40, 40) = 40
-    assert!(h.coarsest().n() <= 40,
-        "coarsest level n={} must satisfy stop condition (<=40)", h.coarsest().n());
+    assert!(
+        h.coarsest().n() <= 40,
+        "coarsest level n={} must satisfy stop condition (<=40)",
+        h.coarsest().n()
+    );
 }
 
 #[test]
 fn hierarchy_all_intermediate_levels_valid() {
     let g = path_graph(60);
-    let coarsener = SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 2 };
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 2,
+    };
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     for (i, level) in h.levels.iter().enumerate() {
-        assert!(level.is_valid(), "hierarchy level {i} must be a valid CSR graph");
+        assert!(
+            level.is_valid(),
+            "hierarchy level {i} must be a valid CSR graph"
+        );
     }
 }
 
@@ -307,10 +403,14 @@ fn metis_uniform_bisection_within_ufactor_tolerance() {
     let sz0 = p.assignment.iter().filter(|&&x| x == 0).count();
     let sz1 = p.assignment.iter().filter(|&&x| x == 1).count();
     assert_eq!(sz0 + sz1, 20, "all vertices assigned");
-    assert!((8..=12).contains(&sz0),
-        "part 0 size {sz0} must be within +-2 of target 10");
-    assert!((8..=12).contains(&sz1),
-        "part 1 size {sz1} must be within +-2 of target 10");
+    assert!(
+        (8..=12).contains(&sz0),
+        "part 0 size {sz0} must be within +-2 of target 10"
+    );
+    assert!(
+        (8..=12).contains(&sz1),
+        "part 1 size {sz1} must be within +-2 of target 10"
+    );
 }
 
 #[test]
@@ -319,19 +419,32 @@ fn manual_imbalanced_partition_exceeds_half_percent() {
     // Assign 9 to part 0, 1 to part 1: deviation = |9/10 - 0.5| = 0.4 -> 40%
     let mut assignment = vec![0u32; 10];
     assignment[9] = 1;
-    let p = Partition { assignment, k: 2, tpwgts: None };
+    let p = Partition {
+        assignment,
+        k: 2,
+        tpwgts: None,
+    };
     let dev = max_balance_deviation(&p, &g);
-    assert!(dev > 0.005,
-        "9+1 split deviation {:.4} must exceed 0.5% threshold", dev);
+    assert!(
+        dev > 0.005,
+        "9+1 split deviation {:.4} must exceed 0.5% threshold",
+        dev
+    );
 }
 
 #[test]
 fn trivial_k1_partition_has_zero_deviation() {
     let g = path_graph(8);
-    let p = Partition { assignment: vec![0u32; 8], k: 1, tpwgts: None };
+    let p = Partition {
+        assignment: vec![0u32; 8],
+        k: 1,
+        tpwgts: None,
+    };
     let dev = max_balance_deviation(&p, &g);
-    assert!((dev - 0.0).abs() < 1e-12,
-        "k=1 partition must have zero deviation, got {dev}");
+    assert!(
+        (dev - 0.0).abs() < 1e-12,
+        "k=1 partition must have zero deviation, got {dev}"
+    );
 }
 
 // ─── MetisParams / pure math (3 tests) ────────────────────────────────────
@@ -339,15 +452,19 @@ fn trivial_k1_partition_has_zero_deviation() {
 #[test]
 fn metis_params_coarsening_method_default_is_shem() {
     let p = MetisParams::default();
-    assert!(matches!(p.coarsen_method, CoarseningMethod::Shem),
-        "default coarsening method must be Shem");
+    assert!(
+        matches!(p.coarsen_method, CoarseningMethod::Shem),
+        "default coarsening method must be Shem"
+    );
 }
 
 #[test]
 fn metis_params_objective_default_is_cut() {
     let p = MetisParams::default();
-    assert!(matches!(p.objective, ObjectiveType::Cut),
-        "default objective must be Cut");
+    assert!(
+        matches!(p.objective, ObjectiveType::Cut),
+        "default objective must be Cut"
+    );
 }
 
 #[test]

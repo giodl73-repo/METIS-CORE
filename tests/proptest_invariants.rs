@@ -1,9 +1,9 @@
 //! L0 property-based tests — CsrGraph invariants through coarsening.
 
-use proptest::prelude::*;
-use metis_core::graph::CsrGraph;
-use metis_core::coarsen::Coarsener;
 use metis_core::coarsen::shem::SortedHeavyEdgeMatch;
+use metis_core::coarsen::Coarsener;
+use metis_core::graph::CsrGraph;
+use proptest::prelude::*;
 
 fn arb_grid(max_rows: usize, max_cols: usize) -> impl Strategy<Value = CsrGraph> {
     (2usize..=max_rows, 2usize..=max_cols).prop_map(|(rows, cols)| {
@@ -13,15 +13,31 @@ fn arb_grid(max_rows: usize, max_cols: usize) -> impl Strategy<Value = CsrGraph>
         for r in 0..rows {
             for c in 0..cols {
                 let mut nbrs = Vec::new();
-                if r > 0 { nbrs.push((r-1)*cols+c); }
-                if r < rows-1 { nbrs.push((r+1)*cols+c); }
-                if c > 0 { nbrs.push(r*cols+(c-1)); }
-                if c < cols-1 { nbrs.push(r*cols+(c+1)); }
-                for &u in &nbrs { adjncy.push(u as u32); }
+                if r > 0 {
+                    nbrs.push((r - 1) * cols + c);
+                }
+                if r < rows - 1 {
+                    nbrs.push((r + 1) * cols + c);
+                }
+                if c > 0 {
+                    nbrs.push(r * cols + (c - 1));
+                }
+                if c < cols - 1 {
+                    nbrs.push(r * cols + (c + 1));
+                }
+                for &u in &nbrs {
+                    adjncy.push(u as u32);
+                }
                 xadj.push(adjncy.len() as u32);
             }
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     })
 }
 
@@ -30,11 +46,21 @@ fn arb_path(max_n: usize) -> impl Strategy<Value = CsrGraph> {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i-1) as u32); }
-            if i < n-1 { adjncy.push((i+1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     })
 }
 

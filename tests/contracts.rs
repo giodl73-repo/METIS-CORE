@@ -1,7 +1,7 @@
 //! L1/L0 integration tests — correctness oracle, RNG golden pin, termination.
 
+use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::CsrGraph;
-use metis_core::api::{MetisPartitioner, MetisParams, Partitioner};
 
 // ── graph helpers ──────────────────────────────────────────────────────────
 
@@ -9,11 +9,21 @@ fn make_path(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
-        if i > 0 { adjncy.push((i-1) as u32); }
-        if i < n-1 { adjncy.push((i+1) as u32); }
+        if i > 0 {
+            adjncy.push((i - 1) as u32);
+        }
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 fn make_grid(rows: usize, cols: usize) -> CsrGraph {
@@ -24,16 +34,32 @@ fn make_grid(rows: usize, cols: usize) -> CsrGraph {
         for c in 0..cols {
             let v = r * cols + c;
             let mut nbrs = Vec::new();
-            if r > 0 { nbrs.push((r-1)*cols+c); }
-            if r < rows-1 { nbrs.push((r+1)*cols+c); }
-            if c > 0 { nbrs.push(r*cols+(c-1)); }
-            if c < cols-1 { nbrs.push(r*cols+(c+1)); }
-            for &u in &nbrs { adjncy.push(u as u32); }
+            if r > 0 {
+                nbrs.push((r - 1) * cols + c);
+            }
+            if r < rows - 1 {
+                nbrs.push((r + 1) * cols + c);
+            }
+            if c > 0 {
+                nbrs.push(r * cols + (c - 1));
+            }
+            if c < cols - 1 {
+                nbrs.push(r * cols + (c + 1));
+            }
+            for &u in &nbrs {
+                adjncy.push(u as u32);
+            }
             xadj.push(adjncy.len() as u32);
             let _ = v;
         }
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 fn make_dumbbell() -> CsrGraph {
@@ -44,13 +70,29 @@ fn make_dumbbell() -> CsrGraph {
     for v in 0..n {
         let mut nbrs = Vec::new();
         let range = if v < 5 { 0..5 } else { 5..10 };
-        for u in range { if u != v { nbrs.push(u); } }
-        if v == 4 { nbrs.push(5); }
-        if v == 5 { nbrs.push(4); }
-        for &u in &nbrs { adjncy.push(u as u32); }
+        for u in range {
+            if u != v {
+                nbrs.push(u);
+            }
+        }
+        if v == 4 {
+            nbrs.push(5);
+        }
+        if v == 5 {
+            nbrs.push(4);
+        }
+        for &u in &nbrs {
+            adjncy.push(u as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 fn make_weighted_path(n: usize) -> CsrGraph {
@@ -60,24 +102,32 @@ fn make_weighted_path(n: usize) -> CsrGraph {
     let mut adjwgt = Vec::new();
     for i in 0..n {
         if i > 0 {
-            adjncy.push((i-1) as u32);
-            adjwgt.push(if (i-1) % 2 == 0 { 10i32 } else { 1i32 });
+            adjncy.push((i - 1) as u32);
+            adjwgt.push(if (i - 1) % 2 == 0 { 10i32 } else { 1i32 });
         }
-        if i < n-1 {
-            adjncy.push((i+1) as u32);
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
             adjwgt.push(if i % 2 == 0 { 10i32 } else { 1i32 });
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: Some(adjwgt) }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: Some(adjwgt),
+    }
 }
 
 fn cut(g: &CsrGraph, assignment: &[u32]) -> u32 {
     let mut c = 0u32;
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
+        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
             let u = g.adjncy[j] as usize;
-            if assignment[v] != assignment[u] { c += 1; }
+            if assignment[v] != assignment[u] {
+                c += 1;
+            }
         }
     }
     c / 2
@@ -141,16 +191,21 @@ fn oracle_weighted_path_respects_weights() {
 }
 
 // L1: termination (from earlier task — kept here as part of oracle suite)
-use metis_core::coarsen::Coarsener;
 use metis_core::coarsen::shem::SortedHeavyEdgeMatchWithParams;
+use metis_core::coarsen::Coarsener;
 
 #[test]
 fn coarsening_terminates_path255() {
     let g = make_path(255);
-    let coarsener = SortedHeavyEdgeMatchWithParams { coarsen_to: 20, k: 1 };
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 1,
+    };
     let mut current = g;
     for level in 0..50usize {
-        if coarsener.should_stop(&current) { return; }
+        if coarsener.should_stop(&current) {
+            return;
+        }
         let (next, _) = coarsener.coarsen(&current);
         assert!(next.is_valid(), "invalid at level {level}");
         assert!(next.n() < current.n(), "did not shrink at level {level}");
@@ -166,8 +221,8 @@ fn coarsening_terminates_path255() {
 #[test]
 fn split_weighted_asymmetric_fracs_errors_on_empty() {
     let g = make_path(10);
-    let result = MetisPartitioner::with_params(MetisParams::default(), 1)
-        .split_weighted(&g, &[], Some(0));
+    let result =
+        MetisPartitioner::with_params(MetisParams::default(), 1).split_weighted(&g, &[], Some(0));
     assert!(matches!(result, Err(metis_core::PartitionError::ZeroParts)));
 }
 
@@ -185,8 +240,14 @@ fn split_weighted_produces_valid_partition() {
     // v1 delegates to equal-weight split — both parts should have roughly 8-9 vertices
     let pop0 = p.assignment.iter().filter(|&&x| x == 0).count();
     let pop1 = p.assignment.iter().filter(|&&x| x == 1).count();
-    assert!((5..=12).contains(&pop0), "part 0 should have reasonable size, got {pop0}");
-    assert!((5..=12).contains(&pop1), "part 1 should have reasonable size, got {pop1}");
+    assert!(
+        (5..=12).contains(&pop0),
+        "part 0 should have reasonable size, got {pop0}"
+    );
+    assert!(
+        (5..=12).contains(&pop1),
+        "part 1 should have reasonable size, got {pop1}"
+    );
 }
 
 // ── Golden RNG determinism pin ─────────────────────────────────────────────
@@ -203,19 +264,35 @@ fn make_spider() -> CsrGraph {
         let mut nbrs = Vec::new();
         if v == 0 {
             // Hub connects to 5 leg starts
-            for leg in 0..5usize { nbrs.push(1 + leg * 4); }
+            for leg in 0..5usize {
+                nbrs.push(1 + leg * 4);
+            }
         } else {
             let leg = (v - 1) / 4;
             let pos = (v - 1) % 4;
             let leg_start = 1 + leg * 4;
-            if pos > 0 { nbrs.push(leg_start + pos - 1); }  // prev in chain
-            if pos < 3 { nbrs.push(leg_start + pos + 1); }  // next in chain
-            if pos == 0 { nbrs.push(0); }  // first in chain connects to hub
+            if pos > 0 {
+                nbrs.push(leg_start + pos - 1);
+            } // prev in chain
+            if pos < 3 {
+                nbrs.push(leg_start + pos + 1);
+            } // next in chain
+            if pos == 0 {
+                nbrs.push(0);
+            } // first in chain connects to hub
         }
-        for &u in &nbrs { adjncy.push(u as u32); }
+        for &u in &nbrs {
+            adjncy.push(u as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 #[test]
@@ -232,21 +309,25 @@ fn all_oracle_partitions_are_contiguous() {
 
     for (g, k) in test_cases {
         let p = MetisPartitioner::with_params(
-            MetisParams { contig_fm: true, ..MetisParams::default() },
+            MetisParams {
+                contig_fm: true,
+                ..MetisParams::default()
+            },
             k,
         )
-            .split(&g, k, Some(42))
-            .unwrap();
+        .split(&g, k, Some(42))
+        .unwrap();
         assert!(
             check_contiguity(&g, &p).is_ok(),
-            "partition k={k} n={} is not contiguous", g.n()
+            "partition k={k} n={} is not contiguous",
+            g.n()
         );
     }
 }
 
 #[test]
 fn repair_contiguity_fixes_broken_partition() {
-    use metis_core::graph::{repair_contiguity, check_contiguity};
+    use metis_core::graph::{check_contiguity, repair_contiguity};
 
     // Manually construct a non-contiguous partition on path-6
     // Path: 0-1-2-3-4-5, partition: [0,0,1,1,0,0] -> part 0 is disconnected (0,1 vs 4,5)
@@ -256,10 +337,16 @@ fn repair_contiguity_fixes_broken_partition() {
         k: 2,
         tpwgts: None,
     };
-    assert!(check_contiguity(&g, &p).is_err(), "partition should be non-contiguous before repair");
+    assert!(
+        check_contiguity(&g, &p).is_err(),
+        "partition should be non-contiguous before repair"
+    );
     let reassigned = repair_contiguity(&g, &mut p);
     assert!(reassigned > 0, "repair should have moved vertices");
-    assert!(check_contiguity(&g, &p).is_ok(), "partition should be contiguous after repair");
+    assert!(
+        check_contiguity(&g, &p).is_ok(),
+        "partition should be contiguous after repair"
+    );
 }
 
 /// Run with `cargo test generate_golden -- --ignored` to regenerate.
@@ -283,7 +370,8 @@ fn generate_golden() {
     std::fs::write(
         "tests/golden/vt_seed42.json",
         serde_json::to_string_pretty(&json).unwrap(),
-    ).unwrap();
+    )
+    .unwrap();
     println!("Golden value written — commit tests/golden/vt_seed42.json");
 }
 
@@ -298,6 +386,8 @@ fn golden_rng_determinism() {
     let p2 = MetisPartitioner::with_params(MetisParams::default(), 2)
         .split(&g, 2, Some(42))
         .unwrap();
-    assert_eq!(p1.assignment, p2.assignment,
-        "same seed must produce identical partition (RNG determinism)");
+    assert_eq!(
+        p1.assignment, p2.assignment,
+        "same seed must produce identical partition (RNG determinism)"
+    );
 }

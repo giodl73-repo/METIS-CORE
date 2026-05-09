@@ -5,9 +5,9 @@ pub trait Refiner: Send + Sync {
     fn refine(&self, g: &CsrGraph, p: Partition) -> Partition;
 }
 
-pub mod gain;
 pub mod boundary;
 pub mod fm;
+pub mod gain;
 pub mod kway;
 pub mod lp;
 pub mod minconn;

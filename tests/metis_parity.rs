@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use metis_core::api::{MetisPartitioner, MetisParams, Partitioner};
+use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::CsrGraph;
 
 fn find_gpmetis() -> Option<PathBuf> {
@@ -164,10 +164,8 @@ fn gpmetis_grid_quality_envelope() {
         .duration_since(UNIX_EPOCH)
         .expect("system time")
         .as_nanos();
-    let dir = std::env::temp_dir().join(format!(
-        "metis-core-parity-{}-{stamp}",
-        std::process::id()
-    ));
+    let dir =
+        std::env::temp_dir().join(format!("metis-core-parity-{}-{stamp}", std::process::id()));
     std::fs::create_dir(&dir).expect("create parity temp dir");
     let graph_path = dir.join("grid.graph");
     write_metis_graph(&g, &graph_path);

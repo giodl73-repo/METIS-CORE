@@ -5,5 +5,5 @@ pub trait InitialPartitioner: Send + Sync {
 }
 
 pub mod grow;
-pub mod random;
 pub mod multiconstraint;
+pub mod random;

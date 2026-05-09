@@ -1,5 +1,5 @@
-use std::collections::{HashMap, HashSet};
 use crate::graph::{CsrGraph, Partition};
+use std::collections::{HashMap, HashSet};
 
 /// Minimize subdomain connectivity: reduce the number of distinct adjacent
 /// part pairs. Mirrors METIS minconn.c:MinConnectivity.
@@ -11,7 +11,9 @@ use crate::graph::{CsrGraph, Partition};
 pub fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
     let n = g.n();
     let k = partition.k as usize;
-    if k <= 1 { return; }
+    if k <= 1 {
+        return;
+    }
 
     let total_wgt: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
     let target = total_wgt / k as i64;
@@ -50,11 +52,15 @@ pub fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u
             // Only move boundary vertices.
             let is_boundary = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
                 .any(|j| partition.assignment[g.adjncy[j] as usize] as usize != from);
-            if !is_boundary { continue; }
+            if !is_boundary {
+                continue;
+            }
 
             // Only attempt if this part has non-trivial subdomain connectivity.
             // Threshold: more than k/4 + 1 neighbours (mirrors METIS heuristic).
-            if adj_parts[from].len() <= k / 4 + 1 { continue; }
+            if adj_parts[from].len() <= k / 4 + 1 {
+                continue;
+            }
 
             let vwgt = g.vwgt[v] as i64;
 
@@ -75,8 +81,12 @@ pub fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u
                 let to = to_p as usize;
 
                 // Balance constraints: source must not drop below min, dest must not exceed max.
-                if pwgts[from] - vwgt < min_pop { continue; }
-                if pwgts[to] + vwgt > max_pop { continue; }
+                if pwgts[from] - vwgt < min_pop {
+                    continue;
+                }
+                if pwgts[to] + vwgt > max_pop {
+                    continue;
+                }
 
                 // Would moving v out of `from` reduce `from`'s subdomain degree?
                 // This happens when `to` is the *only* part in adj_parts[from] via v,
@@ -106,22 +116,24 @@ pub fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u
             if let Some(to) = best_to {
                 partition.assignment[v] = to as u32;
                 pwgts[from] -= vwgt;
-                pwgts[to]   += vwgt;
+                pwgts[to] += vwgt;
                 improved = true;
                 // Rebuild adj_parts by breaking and restarting the outer loop.
                 break 'vertex_loop;
             }
         }
 
-        if !improved { break; }
+        if !improved {
+            break;
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::CsrGraph;
     use crate::api::{MetisParams, MetisPartitioner, Partitioner};
+    use crate::graph::CsrGraph;
 
     /// Build a 4×4 grid graph (unit vertex weights, unit edge weights).
     pub fn make_grid_graph(rows: usize, cols: usize) -> CsrGraph {
@@ -131,15 +143,29 @@ mod tests {
         for r in 0..rows {
             for c in 0..cols {
                 let v = r * cols + c;
-                if r > 0           { adjncy.push(((r - 1) * cols + c) as u32); }
-                if r + 1 < rows    { adjncy.push(((r + 1) * cols + c) as u32); }
-                if c > 0           { adjncy.push((r * cols + (c - 1)) as u32); }
-                if c + 1 < cols    { adjncy.push((r * cols + (c + 1)) as u32); }
+                if r > 0 {
+                    adjncy.push(((r - 1) * cols + c) as u32);
+                }
+                if r + 1 < rows {
+                    adjncy.push(((r + 1) * cols + c) as u32);
+                }
+                if c > 0 {
+                    adjncy.push((r * cols + (c - 1)) as u32);
+                }
+                if c + 1 < cols {
+                    adjncy.push((r * cols + (c + 1)) as u32);
+                }
                 let _ = v;
                 xadj.push(adjncy.len() as u32);
             }
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     fn count_subdomain_pairs(g: &CsrGraph, p: &Partition) -> usize {
@@ -163,14 +189,20 @@ mod tests {
         let g = make_grid_graph(4, 4);
 
         // Partition without min_conn.
-        let params_off = MetisParams { min_conn: false, ..MetisParams::default() };
+        let params_off = MetisParams {
+            min_conn: false,
+            ..MetisParams::default()
+        };
         let p_off = MetisPartitioner::with_params(params_off, 4)
             .split(&g, 4, Some(0))
             .unwrap();
         let before = count_subdomain_pairs(&g, &p_off);
 
         // Partition with min_conn (default).
-        let params_on = MetisParams { min_conn: true, ..MetisParams::default() };
+        let params_on = MetisParams {
+            min_conn: true,
+            ..MetisParams::default()
+        };
         let p_on = MetisPartitioner::with_params(params_on, 4)
             .split(&g, 4, Some(0))
             .unwrap();
@@ -188,7 +220,10 @@ mod tests {
     #[test]
     fn min_conn_produces_valid_partition() {
         let g = make_grid_graph(4, 4);
-        let params = MetisParams { min_conn: true, ..MetisParams::default() };
+        let params = MetisParams {
+            min_conn: true,
+            ..MetisParams::default()
+        };
         let p = MetisPartitioner::with_params(params, 4)
             .split(&g, 4, Some(42))
             .unwrap();
@@ -203,7 +238,10 @@ mod tests {
     fn min_conn_false_skips_post_processing() {
         // Smoke test: min_conn=false must still produce a valid partition.
         let g = make_grid_graph(4, 4);
-        let params = MetisParams { min_conn: false, ..MetisParams::default() };
+        let params = MetisParams {
+            min_conn: false,
+            ..MetisParams::default()
+        };
         let p = MetisPartitioner::with_params(params, 4)
             .split(&g, 4, Some(42))
             .unwrap();
@@ -227,6 +265,9 @@ mod tests {
     #[test]
     fn min_conn_default_is_false_matching_metis() {
         let params = MetisParams::default();
-        assert!(!params.min_conn, "min_conn must default to false like METIS_OPTION_MINCONN");
+        assert!(
+            !params.min_conn,
+            "min_conn must default to false like METIS_OPTION_MINCONN"
+        );
     }
 }

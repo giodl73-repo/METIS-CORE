@@ -1,12 +1,20 @@
+use super::fm::FiducciaMattheyses;
 use crate::graph::{CsrGraph, Partition};
 use crate::refine::Refiner;
-use super::fm::FiducciaMattheyses;
 
-pub struct GreedyKWay { pub niter: u32 }
+pub struct GreedyKWay {
+    pub niter: u32,
+}
 
 impl Refiner for GreedyKWay {
     fn refine(&self, g: &CsrGraph, p: Partition) -> Partition {
-        FiducciaMattheyses { niter: self.niter, contig_fm: true, objective: crate::api::ObjectiveType::Cut, lp_iter: 0 }.refine(g, p)
+        FiducciaMattheyses {
+            niter: self.niter,
+            contig_fm: true,
+            objective: crate::api::ObjectiveType::Cut,
+            lp_iter: 0,
+        }
+        .refine(g, p)
     }
 }
 
@@ -19,18 +27,30 @@ mod tests {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i-1) as u32); }
-            if i < n-1 { adjncy.push((i+1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     fn edge_cut(g: &CsrGraph, assignment: &[u32]) -> u32 {
         let mut cut = 0u32;
         for v in 0..g.n() {
-            for j in g.xadj[v] as usize..g.xadj[v+1] as usize {
-                if assignment[g.adjncy[j] as usize] != assignment[v] { cut += 1; }
+            for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+                if assignment[g.adjncy[j] as usize] != assignment[v] {
+                    cut += 1;
+                }
             }
         }
         cut / 2
@@ -47,8 +67,10 @@ mod tests {
         let cut_before = edge_cut(&g, &p_bad.assignment);
         let p_ref = GreedyKWay { niter: 10 }.refine(&g, p_bad);
         let cut_after = edge_cut(&g, &p_ref.assignment);
-        assert!(cut_after <= cut_before,
-            "GreedyKWay must not increase cut: before={cut_before} after={cut_after}");
+        assert!(
+            cut_after <= cut_before,
+            "GreedyKWay must not increase cut: before={cut_before} after={cut_after}"
+        );
     }
 
     #[test]
@@ -61,7 +83,9 @@ mod tests {
         };
         let p = GreedyKWay { niter: 10 }.refine(&g, p_init);
         assert_eq!(p.assignment.len(), 12);
-        assert!(p.assignment.iter().all(|&a| a < 4),
-            "all assignments must be in [0, k)");
+        assert!(
+            p.assignment.iter().all(|&a| a < 4),
+            "all assignments must be in [0, k)"
+        );
     }
 }

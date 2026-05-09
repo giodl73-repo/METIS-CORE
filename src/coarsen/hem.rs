@@ -1,8 +1,8 @@
+use crate::coarsen::Coarsener;
+use crate::graph::{CoarseMap, CsrGraph};
+use rand::Rng;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
-use rand::Rng;
-use crate::graph::{CsrGraph, CoarseMap};
-use crate::coarsen::Coarsener;
 
 // ── test helpers ──────────────────────────────────────────────────────────
 
@@ -10,27 +10,44 @@ pub fn path_graph(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
-        if i > 0 { adjncy.push((i - 1) as u32); }
-        if i < n - 1 { adjncy.push((i + 1) as u32); }
+        if i > 0 {
+            adjncy.push((i - 1) as u32);
+        }
+        if i < n - 1 {
+            adjncy.push((i + 1) as u32);
+        }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+    CsrGraph {
+        xadj,
+        adjncy,
+        ncon: 1,
+        vwgt: vec![1i32; n],
+        adjwgt: None,
+    }
 }
 
 pub fn triangle() -> CsrGraph {
     CsrGraph {
-        xadj:   vec![0, 2, 4, 6],
-        adjncy: vec![1, 2,  0, 2,  0, 1],
-        ncon: 1, vwgt: vec![1; 3], adjwgt: None,
+        xadj: vec![0, 2, 4, 6],
+        adjncy: vec![1, 2, 0, 2, 0, 1],
+        ncon: 1,
+        vwgt: vec![1; 3],
+        adjwgt: None,
     }
 }
 
-pub fn path5() -> CsrGraph { path_graph(5) }
+pub fn path5() -> CsrGraph {
+    path_graph(5)
+}
 
 // ── implementation structs (declared here, defined below tests) ───────────
 
 pub struct HeavyEdgeMatch;
-pub struct HeavyEdgeMatchWithParams { pub coarsen_to: u32, pub k: u32 }
+pub struct HeavyEdgeMatchWithParams {
+    pub coarsen_to: u32,
+    pub k: u32,
+}
 
 #[cfg(test)]
 mod tests {
@@ -59,14 +76,20 @@ mod tests {
 
     #[test]
     fn should_stop_small_graph() {
-        let hem = HeavyEdgeMatchWithParams { coarsen_to: 20, k: 2 };
+        let hem = HeavyEdgeMatchWithParams {
+            coarsen_to: 20,
+            k: 2,
+        };
         // path5 has 5 vertices; threshold = max(20*2, 40) = 40; 5 < 40 → should stop
         assert!(hem.should_stop(&path5()));
     }
 
     #[test]
     fn should_stop_large_graph() {
-        let hem = HeavyEdgeMatchWithParams { coarsen_to: 20, k: 53 };
+        let hem = HeavyEdgeMatchWithParams {
+            coarsen_to: 20,
+            k: 53,
+        };
         // threshold = max(20*53, 40) = 1060; path5 has 5 vertices → should stop
         assert!(hem.should_stop(&path5()));
     }
@@ -81,8 +104,10 @@ mod tests {
     #[test]
     fn unweighted_stays_unweighted() {
         let (c, _) = HeavyEdgeMatch.coarsen(&path5());
-        assert!(c.adjwgt.is_none(),
-            "unweighted input must produce unweighted coarsened graph");
+        assert!(
+            c.adjwgt.is_none(),
+            "unweighted input must produce unweighted coarsened graph"
+        );
     }
 
     #[test]
@@ -90,7 +115,10 @@ mod tests {
         let mut g = path5();
         g.adjwgt = Some(vec![1i32; g.adjncy.len()]);
         let (c, _) = HeavyEdgeMatch.coarsen(&g);
-        assert!(c.adjwgt.is_some(), "weighted input must produce weighted coarsened graph");
+        assert!(
+            c.adjwgt.is_some(),
+            "weighted input must produce weighted coarsened graph"
+        );
     }
 }
 
@@ -103,11 +131,21 @@ mod kani_proofs {
         let mut xadj = vec![0u32];
         let mut adjncy = Vec::new();
         for i in 0..n {
-            if i > 0 { adjncy.push((i - 1) as u32); }
-            if i < n - 1 { adjncy.push((i + 1) as u32); }
+            if i > 0 {
+                adjncy.push((i - 1) as u32);
+            }
+            if i < n - 1 {
+                adjncy.push((i + 1) as u32);
+            }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
+        CsrGraph {
+            xadj,
+            adjncy,
+            ncon: 1,
+            vwgt: vec![1i32; n],
+            adjwgt: None,
+        }
     }
 
     /// Proves: HeavyEdgeMatch::coarsen() never panics or goes OOB
@@ -148,8 +186,8 @@ impl Coarsener for HeavyEdgeMatchWithParams {
 fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
     let n = g.n();
     let mut rng = Pcg64::seed_from_u64(seed);
-    let mut matched  = vec![false; n];
-    let mut cmap     = vec![u32::MAX; n];
+    let mut matched = vec![false; n];
+    let mut cmap = vec![u32::MAX; n];
     let mut coarse_id = 0u32;
 
     // Fisher-Yates shuffle for random visit order
@@ -160,7 +198,9 @@ fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
     }
 
     for &v in &order {
-        if matched[v] { continue; }
+        if matched[v] {
+            continue;
+        }
         // Find heaviest unmatched neighbour
         let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
             .filter(|&j| !matched[g.adjncy[j] as usize])
@@ -168,10 +208,15 @@ fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
         match best {
             Some(j) => {
                 let u = g.adjncy[j] as usize;
-                cmap[v] = coarse_id; cmap[u] = coarse_id;
-                matched[v] = true;  matched[u] = true;
+                cmap[v] = coarse_id;
+                cmap[u] = coarse_id;
+                matched[v] = true;
+                matched[u] = true;
             }
-            None => { cmap[v] = coarse_id; matched[v] = true; }
+            None => {
+                cmap[v] = coarse_id;
+                matched[v] = true;
+            }
         }
         coarse_id += 1;
     }
@@ -225,7 +270,7 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
         neighbors.truncate(write);
     }
 
-    let mut xadj   = vec![0u32];
+    let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     let mut adjwgt = Vec::new();
 
@@ -243,7 +288,16 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
         ncon: g.ncon,
         vwgt: cvwgt_i32,
         // KEY: only preserve adjwgt if input had edge weights (NO || true)
-        adjwgt: if g.adjwgt.is_some() { Some(adjwgt) } else { None },
+        adjwgt: if g.adjwgt.is_some() {
+            Some(adjwgt)
+        } else {
+            None
+        },
     };
-    (coarse, CoarseMap { cmap: cmap.to_vec() })
+    (
+        coarse,
+        CoarseMap {
+            cmap: cmap.to_vec(),
+        },
+    )
 }

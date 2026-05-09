@@ -148,6 +148,25 @@ impl CsrGraph {
                 }
             }
         }
+        for v in 0..n {
+            for j in self.xadj[v] as usize..self.xadj[v + 1] as usize {
+                let u = self.adjncy[j] as usize;
+                let reverse = (self.xadj[u] as usize..self.xadj[u + 1] as usize)
+                    .find(|&idx| self.adjncy[idx] as usize == v);
+                let Some(reverse_idx) = reverse else {
+                    return Err(PartitionError::InvalidGraph(
+                        "adjncy must describe an undirected graph",
+                    ));
+                };
+                if let Some(ref aw) = self.adjwgt {
+                    if aw[j] != aw[reverse_idx] {
+                        return Err(PartitionError::InvalidGraph(
+                            "undirected edge weights must match",
+                        ));
+                    }
+                }
+            }
+        }
         // Connectivity BFS from vertex 0
         let mut visited = vec![false; n];
         let mut queue = VecDeque::new();
@@ -593,11 +612,23 @@ mod tests {
     }
 
     #[test]
+    fn invalid_directed_adjncy() {
+        let result = CsrGraph::new(vec![0, 1, 2, 2], vec![1, 2], 1, vec![1; 3], None);
+        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+    }
+
+    #[test]
     fn invalid_zero_adjwgt() {
         let mut g = path_graph(4);
         g.adjwgt = Some(vec![1i32; g.adjncy.len()]);
         g.adjwgt.as_mut().unwrap()[0] = 0;
         assert!(!g.is_valid());
+    }
+
+    #[test]
+    fn invalid_asymmetric_adjwgt() {
+        let result = CsrGraph::new(vec![0, 1, 2], vec![1, 0], 1, vec![1; 2], Some(vec![1, 2]));
+        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
     }
 
     #[test]

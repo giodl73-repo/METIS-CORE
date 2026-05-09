@@ -108,6 +108,10 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
         pwgts[partition.assignment[v] as usize] += g.vwgt[v] as i64;
     }
 
+    let mut seen_parts = vec![0u32; k];
+    let mut adjacent_parts = Vec::new();
+    let mut visit_mark = 1u32;
+
     for _ in 0..g.n().saturating_mul(k) {
         let Some(from) = pwgts
             .iter()
@@ -127,11 +131,26 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
             }
 
             let v_wgt = g.vwgt[v] as i64;
-            for (to, &to_wgt) in pwgts.iter().enumerate().take(k) {
-                if to == from || to_wgt + v_wgt > max_wgt {
+            adjacent_parts.clear();
+
+            for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+                let to = partition.assignment[g.adjncy[j] as usize] as usize;
+                if to == from || seen_parts[to] == visit_mark {
                     continue;
                 }
+                seen_parts[to] = visit_mark;
+                adjacent_parts.push(to);
+            }
+            visit_mark = visit_mark.wrapping_add(1);
+            if visit_mark == 0 {
+                seen_parts.fill(0);
+                visit_mark = 1;
+            }
 
+            for &to in &adjacent_parts {
+                if pwgts[to] + v_wgt > max_wgt {
+                    continue;
+                }
                 let delta = move_cut_delta(g, &partition.assignment, v, to as u32);
                 let candidate = (delta, v, to);
                 if best.is_none_or(|current| candidate < current) {
@@ -415,5 +434,19 @@ mod tests {
         let before = p.assignment.clone();
         lp_balance(&g, &mut p, 5, 10);
         assert_eq!(p.assignment, before);
+    }
+
+    #[test]
+    fn rebalance_only_moves_to_adjacent_parts() {
+        let g = path_graph(3);
+        let mut p = Partition::new(vec![0, 0, 1], 3).unwrap();
+
+        rebalance_to_ufactor(&g, &mut p, 0);
+
+        assert_eq!(
+            p.assignment(),
+            &[0, 0, 1],
+            "rebalance must not move vertices into non-adjacent empty parts"
+        );
     }
 }

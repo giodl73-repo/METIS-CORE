@@ -40,6 +40,8 @@ Status:
 - Done: optional `gpmetis` discovery through environment variables, known local
   paths, and `PATH`.
 - Done: quality envelopes for synthetic grids, `4elt.graph`, and `test.mgraph`.
+- Done: public CSR validation now requires exact undirected adjacency and
+  symmetric edge weights, matching METIS graph semantics.
 - Done: heavier `copter2.graph` parity smoke test gated behind
   `METIS_CORE_HEAVY_PARITY=1`.
 - Done: heavy `copter2.graph` parity run after Phase 4 improvements:
@@ -123,5 +125,12 @@ Deliverables:
 - Done: API decision: this crate is unreleased, so `CsrGraph` construction now
   goes through validated constructors and read-only accessors instead of public
   fields.
+- Done: `Partition` is now a result object with read-only accessors and
+  `into_assignment()` for callers that need ownership of the assignment vector.
+- Done: `part_recursive` now forces recursive-bisection semantics and promotes
+  default `ncuts` to the METIS pmetis-style value of 4, even when callers set
+  unrelated options such as seed.
 - Done: add `Partition::validate_for_graph` and make contiguity checks reject
   malformed partitions without panicking.
+- Done: CI now gates formatting, debug tests, Linux release tests, clippy, docs,
+  unsafe scan, packaging, Kani, and best-effort Prusti.

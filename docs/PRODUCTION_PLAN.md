@@ -62,6 +62,10 @@ Deliverables:
 - Done: add tests for strict and loose `ufactor` behavior.
 - Done: LP pre-balance respects `tpwgts` instead of pulling asymmetric
   partition requests back toward equal weights.
+- Done: direct k-way `split` now validates and applies `MetisParams::tpwgts`
+  instead of silently ignoring it.
+- Done: recursive bisection rejects `tpwgts` until asymmetric recursive targets
+  are implemented.
 - Ensure post-rebalance does not destroy cut unnecessarily.
 
 ## Phase 4: Cut Quality

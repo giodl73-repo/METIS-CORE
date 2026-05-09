@@ -29,10 +29,13 @@ Three phases:
 Optional extensions:
 
 - **Multi-cut (`ncuts`)** — run multiple independent trials, return the best cut.
+- **Target weights (`tpwgts`)** — direct k-way partitioning can target unequal
+  part weights when the vector has one nonnegative entry per part and sums to
+  `1.0`.
 - **Contiguity enforcement (`contig_fm`)** — skip FM moves that would disconnect a part and repair projected partitions.
 - **Minimum-connectivity refinement** — post-processing pass minimizes inter-part adjacency counts.
 
-Defaults follow METIS k-way behavior: `ncuts = 1`, `niter = 10`, `contig_fm = false`, and `min_conn = false`. `MetisParams::recursive()` switches to recursive-bisection defaults, including `ncuts = 4`. Enable `contig_fm` or `min_conn` explicitly when a downstream workflow needs those stricter guarantees.
+Defaults follow METIS k-way behavior: `ncuts = 1`, `niter = 10`, `contig_fm = false`, and `min_conn = false`. `MetisParams::recursive()` switches to recursive-bisection defaults, including `ncuts = 4`. Direct k-way supports `tpwgts`; recursive bisection currently rejects `tpwgts` rather than silently ignoring target weights. Enable `contig_fm` or `min_conn` explicitly when a downstream workflow needs those stricter guarantees.
 
 SHEM also follows the C implementation's important behavior: when edge weights are absent or all equal, it falls back to randomized heavy-edge matching instead of doing a sorted pass over indistinguishable weights.
 

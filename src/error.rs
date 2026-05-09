@@ -6,6 +6,8 @@ pub enum PartitionError {
     InvalidGraph(&'static str),
     #[error("invalid partition: {0}")]
     InvalidPartition(&'static str),
+    #[error("invalid parameters: {0}")]
+    InvalidParams(&'static str),
     #[error("k must be >= 1")]
     ZeroParts,
     #[error("k ({k}) exceeds vertex count ({n})")]

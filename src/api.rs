@@ -95,6 +95,30 @@ fn balance_excess(g: &CsrGraph, p: &Partition, ufactor: u32, tpwgts: Option<&[f3
     max_excess
 }
 
+fn validate_tpwgts(tpwgts: &[f32], k: u32) -> Result<Vec<f32>, PartitionError> {
+    if tpwgts.len() != k as usize {
+        return Err(PartitionError::InvalidParams("tpwgts length must equal k"));
+    }
+    if tpwgts
+        .iter()
+        .any(|&weight| !weight.is_finite() || weight < 0.0)
+    {
+        return Err(PartitionError::InvalidParams(
+            "tpwgts entries must be finite and nonnegative",
+        ));
+    }
+    let sum: f32 = tpwgts.iter().sum();
+    if sum <= 0.0 {
+        return Err(PartitionError::InvalidParams(
+            "tpwgts must contain positive total weight",
+        ));
+    }
+    if (sum - 1.0).abs() > 1.0e-4 {
+        return Err(PartitionError::InvalidParams("tpwgts must sum to 1.0"));
+    }
+    Ok(tpwgts.to_vec())
+}
+
 pub trait Partitioner: Send + Sync {
     fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError>;
     fn split_weighted(
@@ -261,6 +285,12 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         if k as usize > g.n() {
             return Err(PartitionError::TooManyParts { k, n: g.n() });
         }
+        let tpwgts = self
+            .params
+            .tpwgts
+            .as_deref()
+            .map(|weights| validate_tpwgts(weights, k))
+            .transpose()?;
 
         let base_seed = self
             .params
@@ -271,6 +301,11 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         // Recursive bisection path: bisect into halves and recurse on each subgraph.
         // Mirrors METIS_PartGraphRecursive / MlevelRecursiveBisection.
         if self.params.use_recursive && k > 2 {
+            if tpwgts.is_some() {
+                return Err(PartitionError::InvalidParams(
+                    "tpwgts is not supported with recursive bisection",
+                ));
+            }
             use crate::init::grow::RecursiveBisect;
             let rb = RecursiveBisect {
                 niter: self.params.niter,
@@ -326,19 +361,37 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             } else {
                 CoarseningHierarchy::build(g, &self.coarsener)?
             };
-            let mut p = Pipeline::new(hierarchy)
-                .with_contiguity_repair(self.params.contig_fm)
-                .initial_partition(&self.init, k, trial_seed)
+            let mut p = if let Some(weights) = &tpwgts {
+                let mut init_p = self.init.partition(hierarchy.coarsest(), k, trial_seed);
+                init_p.tpwgts = Some(weights.clone());
+                crate::multilevel::pipeline::Pipeline {
+                    hierarchy,
+                    partition: Some(init_p),
+                    repair_contiguity: self.params.contig_fm,
+                    _state: std::marker::PhantomData::<
+                        crate::multilevel::pipeline::NeedsRefinement,
+                    >,
+                }
                 .refine_and_project(&self.refiner)
-                .into_partition();
+                .into_partition()
+            } else {
+                Pipeline::new(hierarchy)
+                    .with_contiguity_repair(self.params.contig_fm)
+                    .initial_partition(&self.init, k, trial_seed)
+                    .refine_and_project(&self.refiner)
+                    .into_partition()
+            };
 
-            crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
+            if tpwgts.is_none() {
+                crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
+            }
             let cut = compute_cut(g, &p.assignment);
-            let excess = balance_excess(g, &p, self.params.ufactor, None);
+            let excess = balance_excess(g, &p, self.params.ufactor, tpwgts.as_deref());
             let is_better = best
                 .as_ref()
                 .is_none_or(|&(_, best_excess, best_cut)| (excess, cut) < (best_excess, best_cut));
             if is_better {
+                p.tpwgts = None;
                 best = Some((p, excess, cut));
             }
         }
@@ -665,6 +718,48 @@ mod tests {
         };
         let partitioner = MetisPartitioner::with_params(params, 4);
         assert_eq!(partitioner.refiner.ufactor, 30);
+    }
+
+    #[test]
+    fn direct_split_respects_params_tpwgts() {
+        let g = make_path_graph(10);
+        let params = MetisParams {
+            tpwgts: Some(vec![0.8, 0.2]),
+            ufactor: 250,
+            ..MetisParams::default()
+        };
+        let p = MetisPartitioner::with_params(params, 2)
+            .split(&g, 2, Some(0))
+            .unwrap();
+        let part0 = p.assignment.iter().filter(|&&part| part == 0).count();
+        let part1 = p.assignment.iter().filter(|&&part| part == 1).count();
+        assert!(
+            part0 >= part1,
+            "tpwgts should prefer a larger first part, got {part0}:{part1}"
+        );
+    }
+
+    #[test]
+    fn direct_split_rejects_invalid_tpwgts() {
+        let g = make_path_graph(10);
+        let params = MetisParams {
+            tpwgts: Some(vec![0.8, 0.1]),
+            ..MetisParams::default()
+        };
+        let result = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(0));
+        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+    }
+
+    #[test]
+    fn recursive_split_rejects_tpwgts_for_now() {
+        let g = make_path_graph(10);
+        let params = MetisParams {
+            use_recursive: true,
+            tpwgts: Some(vec![0.5, 0.25, 0.25]),
+            ..MetisParams::default()
+        };
+        let result = MetisPartitioner::with_params(params, 3).split(&g, 3, Some(0));
+        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
     }
 
     #[test]

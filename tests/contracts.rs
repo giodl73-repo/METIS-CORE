@@ -120,24 +120,27 @@ fn metis(k: u32, _seed: u64) -> MetisPartitioner {
 fn oracle_k1_trivial() {
     let g = make_path(10);
     let p = metis(1, 0).split(&g, 1, Some(0)).unwrap();
-    assert!(p.assignment.iter().all(|&x| x == 0));
-    assert_eq!(cut(&g, &p.assignment), 0);
+    assert!(p.assignment().iter().all(|&x| x == 0));
+    assert_eq!(cut(&g, p.assignment()), 0);
 }
 
 #[test]
 fn oracle_path_bisect_cut_1() {
     let g = make_path(10);
     let p = metis(2, 42).split(&g, 2, Some(42)).unwrap();
-    assert_eq!(cut(&g, &p.assignment), 1, "path bisect optimal cut is 1");
+    assert_eq!(cut(&g, p.assignment()), 1, "path bisect optimal cut is 1");
 }
 
 #[test]
 fn oracle_grid_4x4_k4_coverage() {
     let g = make_grid(4, 4);
     let p = metis(4, 0).split(&g, 4, Some(0)).unwrap();
-    assert_eq!(p.assignment.len(), 16);
+    assert_eq!(p.assignment().len(), 16);
     for part in 0..4u32 {
-        assert!(p.assignment.contains(&part), "part {part} must be present");
+        assert!(
+            p.assignment().contains(&part),
+            "part {part} must be present"
+        );
     }
 }
 
@@ -145,7 +148,7 @@ fn oracle_grid_4x4_k4_coverage() {
 fn oracle_dumbbell_cut_1() {
     let g = make_dumbbell();
     let p = metis(2, 0).split(&g, 2, Some(0)).unwrap();
-    assert_eq!(cut(&g, &p.assignment), 1, "dumbbell optimal cut is 1");
+    assert_eq!(cut(&g, p.assignment()), 1, "dumbbell optimal cut is 1");
 }
 
 #[test]
@@ -153,8 +156,8 @@ fn oracle_full_coverage_all_vertices() {
     let g = make_grid(4, 4);
     for k in [1u32, 2, 4] {
         let p = metis(k, 0).split(&g, k, Some(0)).unwrap();
-        assert_eq!(p.assignment.len(), g.n());
-        assert!(p.assignment.iter().all(|&a| a < k));
+        assert_eq!(p.assignment().len(), g.n());
+        assert!(p.assignment().iter().all(|&a| a < k));
     }
 }
 
@@ -163,8 +166,8 @@ fn oracle_weighted_path_respects_weights() {
     let g = make_weighted_path(10);
     let p = metis(2, 0).split(&g, 2, Some(0)).unwrap();
     // Just verify: valid output, cut is reasonable
-    assert_eq!(p.assignment.len(), 10);
-    assert!(p.assignment.iter().all(|&a| a < 2));
+    assert_eq!(p.assignment().len(), 10);
+    assert!(p.assignment().iter().all(|&a| a < 2));
 }
 
 // L1: termination (from earlier task — kept here as part of oracle suite)
@@ -210,13 +213,13 @@ fn split_weighted_produces_valid_partition() {
     let p = MetisPartitioner::with_params(MetisParams::default(), 2)
         .split_weighted(&g, &[8u32, 9u32], Some(42))
         .unwrap();
-    assert_eq!(p.assignment.len(), 17);
-    assert_eq!(p.k, 2);
-    assert!(p.assignment.contains(&0));
-    assert!(p.assignment.contains(&1));
+    assert_eq!(p.assignment().len(), 17);
+    assert_eq!(p.k(), 2);
+    assert!(p.assignment().contains(&0));
+    assert!(p.assignment().contains(&1));
     // v1 delegates to equal-weight split — both parts should have roughly 8-9 vertices
-    let pop0 = p.assignment.iter().filter(|&&x| x == 0).count();
-    let pop1 = p.assignment.iter().filter(|&&x| x == 1).count();
+    let pop0 = p.assignment().iter().filter(|&&x| x == 0).count();
+    let pop1 = p.assignment().iter().filter(|&&x| x == 1).count();
     assert!(
         (5..=12).contains(&pop0),
         "part 0 should have reasonable size, got {pop0}"
@@ -331,7 +334,7 @@ fn generate_golden() {
         "n": 255,
         "k": 1,
         "note": "Regenerate only when rand_pcg crate version changes",
-        "assignment": p.assignment,
+        "assignment": p.assignment(),
     });
     std::fs::create_dir_all("tests/golden").unwrap();
     std::fs::write(
@@ -354,7 +357,8 @@ fn golden_rng_determinism() {
         .split(&g, 2, Some(42))
         .unwrap();
     assert_eq!(
-        p1.assignment, p2.assignment,
+        p1.assignment(),
+        p2.assignment(),
         "same seed must produce identical partition (RNG determinism)"
     );
 }

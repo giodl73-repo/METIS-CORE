@@ -277,10 +277,10 @@ fn test_4elt_k4() {
         .split(&g, 4, Some(0))
         .expect("4elt k=4 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 4, "4elt k=4");
+    assert_structural_invariants(&g, p.assignment(), 4, "4elt k=4");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 4);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 4);
     eprintln!(
         "4elt k=4   n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -302,10 +302,10 @@ fn test_4elt_k8() {
         .split(&g, 8, Some(42))
         .expect("4elt k=8 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 8, "4elt k=8");
+    assert_structural_invariants(&g, p.assignment(), 8, "4elt k=8");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 8);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 8);
     eprintln!(
         "4elt k=8   n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -344,13 +344,13 @@ fn test_4elt_k8_contig_fm_comparison() {
     .split(&g, 8, Some(42))
     .expect("contig_fm=false k=8 should succeed");
 
-    assert_structural_invariants(&g, &p_on.assignment, 8, "4elt k=8 contig_fm=true");
-    assert_structural_invariants(&g, &p_off.assignment, 8, "4elt k=8 contig_fm=false");
+    assert_structural_invariants(&g, p_on.assignment(), 8, "4elt k=8 contig_fm=true");
+    assert_structural_invariants(&g, p_off.assignment(), 8, "4elt k=8 contig_fm=false");
 
-    let cut_on = edge_cut(&g, &p_on.assignment);
-    let cut_off = edge_cut(&g, &p_off.assignment);
-    let imb_on = max_imbalance_ratio(&p_on.assignment, 8);
-    let imb_off = max_imbalance_ratio(&p_off.assignment, 8);
+    let cut_on = edge_cut(&g, p_on.assignment());
+    let cut_off = edge_cut(&g, p_off.assignment());
+    let imb_on = max_imbalance_ratio(p_on.assignment(), 8);
+    let imb_off = max_imbalance_ratio(p_off.assignment(), 8);
     eprintln!("4elt k=8 contig_fm=true   cut={cut_on:7}  max_imbal={imb_on:.3}");
     eprintln!("4elt k=8 contig_fm=false  cut={cut_off:7}  max_imbal={imb_off:.3}");
 }
@@ -370,10 +370,10 @@ fn test_4elt_k16() {
         .split(&g, 16, Some(7))
         .expect("4elt k=16 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 16, "4elt k=16");
+    assert_structural_invariants(&g, p.assignment(), 16, "4elt k=16");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 16);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 16);
     eprintln!(
         "4elt k=16  n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -403,7 +403,7 @@ fn test_4elt_k8_ncuts4() {
     )
     .split(&g, 8, Some(42))
     .expect("4elt k=8 ncuts=1 should succeed");
-    let cut1 = edge_cut(&g, &p1.assignment);
+    let cut1 = edge_cut(&g, p1.assignment());
 
     // best-of-4 trials
     let p4 = MetisPartitioner::with_params(
@@ -415,9 +415,9 @@ fn test_4elt_k8_ncuts4() {
     )
     .split(&g, 8, Some(42))
     .expect("4elt k=8 ncuts=4 should succeed");
-    assert_structural_invariants(&g, &p4.assignment, 8, "4elt k=8 ncuts=4");
-    let cut4 = edge_cut(&g, &p4.assignment);
-    let imbal4 = max_imbalance_ratio(&p4.assignment, 8);
+    assert_structural_invariants(&g, p4.assignment(), 8, "4elt k=8 ncuts=4");
+    let cut4 = edge_cut(&g, p4.assignment());
+    let imbal4 = max_imbalance_ratio(p4.assignment(), 8);
 
     eprintln!("4elt k=8 ncuts=1  cut={cut1:7}  (baseline)");
     eprintln!(
@@ -451,7 +451,8 @@ fn test_4elt_k4_determinism() {
         .unwrap();
 
     assert_eq!(
-        p1.assignment, p2.assignment,
+        p1.assignment(),
+        p2.assignment(),
         "4elt k=4: identical seed must produce identical assignment"
     );
 }
@@ -474,10 +475,10 @@ fn test_copter2_k4() {
         .split(&g, 4, Some(0))
         .expect("copter2 k=4 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 4, "copter2 k=4");
+    assert_structural_invariants(&g, p.assignment(), 4, "copter2 k=4");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 4);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 4);
     eprintln!(
         "copter2 k=4  n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -499,10 +500,10 @@ fn test_copter2_k8() {
         .split(&g, 8, Some(13))
         .expect("copter2 k=8 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 8, "copter2 k=8");
+    assert_structural_invariants(&g, p.assignment(), 8, "copter2 k=8");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 8);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 8);
     eprintln!(
         "copter2 k=8  n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -527,10 +528,10 @@ fn test_mdual_k4() {
         .split(&g, 4, Some(0))
         .expect("mdual k=4 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 4, "mdual k=4");
+    assert_structural_invariants(&g, p.assignment(), 4, "mdual k=4");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 4);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 4);
     eprintln!(
         "mdual k=4    n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()
@@ -555,10 +556,10 @@ fn test_mgraph_k4() {
         .split(&g, 4, Some(0))
         .expect("test.mgraph k=4 should succeed");
 
-    assert_structural_invariants(&g, &p.assignment, 4, "test.mgraph k=4");
+    assert_structural_invariants(&g, p.assignment(), 4, "test.mgraph k=4");
 
-    let cut = edge_cut(&g, &p.assignment);
-    let imbal = max_imbalance_ratio(&p.assignment, 4);
+    let cut = edge_cut(&g, p.assignment());
+    let imbal = max_imbalance_ratio(p.assignment(), 4);
     eprintln!(
         "test.mgraph k=4  n={:6}  cut={cut:7}  max_imbal={imbal:.3}",
         g.n()

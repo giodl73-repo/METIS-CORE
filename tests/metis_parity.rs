@@ -280,7 +280,7 @@ fn gpmetis_grid_quality_envelope() {
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust partition")
-        .assignment;
+        .into_assignment();
 
     assert_basic_partition(&g, &c_assignment, k, "gpmetis");
     assert_basic_partition(&g, &rust_assignment, k, "rust");
@@ -339,7 +339,7 @@ fn gpmetis_4elt_quality_envelope() {
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust 4elt partition")
-        .assignment;
+        .into_assignment();
 
     assert_basic_partition(&g, &c_assignment, k, "gpmetis 4elt");
     assert_basic_partition(&g, &rust_assignment, k, "rust 4elt");
@@ -398,7 +398,7 @@ fn gpmetis_test_mgraph_structural_reference() {
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust test.mgraph partition")
-        .assignment;
+        .into_assignment();
 
     assert_basic_partition(&g, &c_assignment, k, "gpmetis test.mgraph");
     assert_basic_partition(&g, &rust_assignment, k, "rust test.mgraph");
@@ -467,7 +467,7 @@ fn gpmetis_copter2_quality_smoke() {
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust copter2 partition")
-        .assignment;
+        .into_assignment();
 
     assert_basic_partition(&g, &c_assignment, k, "gpmetis copter2");
     assert_basic_partition(&g, &rust_assignment, k, "rust copter2");

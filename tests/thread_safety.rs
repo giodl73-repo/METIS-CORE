@@ -46,7 +46,7 @@ fn partitioner_can_be_shared_across_threads() {
     let expected = partitioner
         .split(&graph, 4, None)
         .expect("baseline partition")
-        .assignment;
+        .into_assignment();
 
     let handles: Vec<_> = (0..8)
         .map(|_| {
@@ -56,7 +56,7 @@ fn partitioner_can_be_shared_across_threads() {
                 partitioner
                     .split(&graph, 4, None)
                     .expect("threaded partition")
-                    .assignment
+                    .into_assignment()
             })
         })
         .collect();

@@ -81,11 +81,11 @@ fn weighted_path_4() -> CsrGraph {
 /// Compute population balance: max absolute deviation from target as a fraction.
 fn max_balance_deviation(p: &Partition, g: &CsrGraph) -> f64 {
     let total: i64 = g.vwgt().iter().map(|&w| w as i64).sum();
-    let target = total as f64 / p.k as f64;
-    (0..p.k)
+    let target = total as f64 / p.k() as f64;
+    (0..p.k())
         .map(|part| {
             let wgt: i64 = (0..g.n())
-                .filter(|&v| p.assignment[v] == part)
+                .filter(|&v| p.assignment()[v] == part)
                 .map(|v| g.vwgt()[v] as i64)
                 .sum();
             (wgt as f64 - target).abs() / total as f64
@@ -377,8 +377,8 @@ fn metis_uniform_bisection_within_ufactor_tolerance() {
     let g = path_graph(20);
     let partitioner = MetisPartitioner::with_params(MetisParams::default(), 2);
     let p = partitioner.split(&g, 2, Some(0)).unwrap();
-    let sz0 = p.assignment.iter().filter(|&&x| x == 0).count();
-    let sz1 = p.assignment.iter().filter(|&&x| x == 1).count();
+    let sz0 = p.assignment().iter().filter(|&&x| x == 0).count();
+    let sz1 = p.assignment().iter().filter(|&&x| x == 1).count();
     assert_eq!(sz0 + sz1, 20, "all vertices assigned");
     assert!(
         (8..=12).contains(&sz0),

@@ -199,8 +199,8 @@ impl CsrGraph {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Partition {
-    pub assignment: Vec<u32>,
-    pub k: u32,
+    pub(crate) assignment: Vec<u32>,
+    pub(crate) k: u32,
     /// Target partition weights (one `f32` per part, summing to 1.0).
     /// `None` means equal weights (each part gets `1/k` of total population).
     /// Set by `split_weighted` and consumed by FM balance checks.
@@ -224,6 +224,18 @@ impl Partition {
             ));
         }
         Ok(partition)
+    }
+
+    pub fn assignment(&self) -> &[u32] {
+        &self.assignment
+    }
+
+    pub fn k(&self) -> u32 {
+        self.k
+    }
+
+    pub fn into_assignment(self) -> Vec<u32> {
+        self.assignment
     }
 
     /// Validate that this partition is compatible with `g`.

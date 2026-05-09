@@ -44,7 +44,7 @@ pub fn part_recursive(
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
     api::MetisPartitioner::with_params(params, nparts)
         .split(&g, nparts, None)
-        .map(|p| p.assignment)
+        .map(|p| p.into_assignment())
 }
 
 /// Partition a graph using direct multilevel k-way partitioning.
@@ -64,7 +64,7 @@ pub fn part_kway(
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
     api::MetisPartitioner::with_params(params, nparts)
         .split(&g, nparts, None)
-        .map(|p| p.assignment)
+        .map(|p| p.into_assignment())
 }
 
 #[cfg(test)]

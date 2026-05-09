@@ -179,8 +179,7 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
     let n = state.graph.n();
     let mut locked = vec![false; n];
 
-    loop {
-        let Some((v, _gain)) = state.gain_table.pop_max() else { break };
+    while let Some((v, _gain)) = state.gain_table.pop_max() {
         let v = v as usize;
         locked[v] = true;
 
@@ -225,9 +224,9 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool) -> bool 
 
         // Apply move
         state.assignment[v] = to_part as u32;
-        for c in 0..ncon {
-            state.pwgts[c][from_part] -= vwgt_v[c];
-            state.pwgts[c][to_part]   += vwgt_v[c];
+        for (c, &weight) in vwgt_v.iter().enumerate().take(ncon) {
+            state.pwgts[c][from_part] -= weight;
+            state.pwgts[c][to_part]   += weight;
         }
         state.boundary.remove(v as u32);
 
@@ -390,8 +389,8 @@ impl<'g> FmState<'g> {
         let mut pwgts = vec![vec![0i64; k]; ncon];
         for v in 0..n {
             let part = p.assignment[v] as usize;
-            for c in 0..ncon {
-                pwgts[c][part] += g.vwgt[v * ncon + c] as i64;
+            for (c, part_weights) in pwgts.iter_mut().enumerate().take(ncon) {
+                part_weights[part] += g.vwgt[v * ncon + c] as i64;
             }
         }
 
@@ -479,8 +478,8 @@ impl<'g> FmState<'g> {
         self.pwgts = vec![vec![0i64; k]; ncon];
         for v in 0..n {
             let part = self.assignment[v] as usize;
-            for c in 0..ncon {
-                self.pwgts[c][part] += self.graph.vwgt[v * ncon + c] as i64;
+            for (c, part_weights) in self.pwgts.iter_mut().enumerate().take(ncon) {
+                part_weights[part] += self.graph.vwgt[v * ncon + c] as i64;
             }
         }
         self.current_cut = self.cut(); // recompute once after restore

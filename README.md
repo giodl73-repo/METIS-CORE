@@ -23,13 +23,17 @@ Three phases:
 
 1. **Coarsening** — graph is shrunk by successive heavy-edge matching (HEM, SHEM, or TwoHop) until it is small enough to partition directly.
 2. **Initial partitioning** — small coarsened graph is bisected using greedy grow or random partitioning.
-3. **Uncoarsening + refinement** — partition is projected back through the hierarchy and refined at each level using FM (Fiduccia-Mattheyses) boundary refinement with contiguity repair.
+3. **Uncoarsening + refinement** — partition is projected back through the hierarchy and refined at each level using FM (Fiduccia-Mattheyses) boundary refinement.
 
 Optional extensions:
 
 - **Multi-cut (`ncuts`)** — run multiple independent trials, return the best cut.
-- **Contiguity enforcement** — repair guarantees each output part is connected.
+- **Contiguity enforcement (`contig_fm`)** — skip FM moves that would disconnect a part and repair projected partitions.
 - **Minimum-connectivity refinement** — post-processing pass minimizes inter-part adjacency counts.
+
+Defaults follow METIS k-way behavior: `ncuts = 1`, `niter = 10`, `contig_fm = false`, and `min_conn = false`. Enable `contig_fm` or `min_conn` explicitly when a downstream workflow needs those stricter guarantees.
+
+SHEM also follows the C implementation's important behavior: when edge weights are absent or all equal, it falls back to randomized heavy-edge matching instead of doing a sorted pass over indistinguishable weights.
 
 ---
 
@@ -71,7 +75,7 @@ let partition = MetisPartitioner::with_params(params, k).split(&g, k, Some(seed)
 | **No C dependency** | Pure Rust; no `cc`, no external library, no `bindgen` |
 | **Deterministic** | Seeded RNG (`rand_pcg`) — same seed, same partition |
 | **Verified** | Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs in `verify/prusti/` |
-| **Tested** | 97.1% line coverage; proptest invariant suite; golden-file regression (Vermont 2020 census) |
+| **Tested** | Unit, integration, proptest invariant, graph-file, and benchmark smoke suites |
 | **No unsafe** | All partitioning code is safe Rust |
 
 ---
@@ -95,10 +99,18 @@ src/
 
 ```bash
 cargo test                    # unit + integration tests
+cargo clippy --all-targets -- -D warnings
+cargo doc --no-deps
 cargo test --test graph_ops   # CSR, contiguity, coarsening, balance (30 tests)
 cargo test --test contracts   # algorithm contracts
 cargo bench                   # criterion benchmarks
 ```
+
+The optional `tests/metis_parity.rs` harness compares against `gpmetis` when
+available. Set `METIS_GPMETIS=C:\path\to\gpmetis.exe` to force a specific
+binary; the test checks structural invariants plus cut and balance quality
+envelopes, not exact vertex labels, because METIS partition labels are
+seed-sensitive and implementation-dependent.
 
 ---
 

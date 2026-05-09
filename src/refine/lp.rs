@@ -62,6 +62,88 @@ pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, _ufactor: u32, max_it
     }
 }
 
+/// Deterministically repair equal-weight balance after k-way refinement.
+///
+/// This is intentionally conservative: it only moves boundary vertices from
+/// parts above the METIS `ufactor` limit into adjacent parts that can accept the
+/// vertex without exceeding their own limit. Among legal moves it chooses the
+/// smallest edge-cut penalty, with vertex id as the tie-breaker.
+pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
+    let k = partition.k as usize;
+    if k <= 1 || g.n() == 0 {
+        return;
+    }
+
+    let total_wgt: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
+    let avg = (total_wgt + k as i64 - 1) / k as i64;
+    let epsilon = (avg * ufactor as i64 + 999) / 1000;
+    let max_wgt = avg + epsilon;
+
+    let mut pwgts = vec![0i64; k];
+    for v in 0..g.n() {
+        pwgts[partition.assignment[v] as usize] += g.vwgt[v] as i64;
+    }
+
+    for _ in 0..g.n().saturating_mul(k) {
+        let Some(from) = pwgts
+            .iter()
+            .enumerate()
+            .filter(|&(_, &wgt)| wgt > max_wgt)
+            .max_by_key(|&(_, &wgt)| wgt)
+            .map(|(part, _)| part)
+        else {
+            break;
+        };
+
+        let mut best: Option<(i64, usize, usize)> = None;
+
+        for v in 0..g.n() {
+            if partition.assignment[v] as usize != from {
+                continue;
+            }
+
+            let v_wgt = g.vwgt[v] as i64;
+            for (to, &to_wgt) in pwgts.iter().enumerate().take(k) {
+                if to == from || to_wgt + v_wgt > max_wgt {
+                    continue;
+                }
+
+                let delta = move_cut_delta(g, &partition.assignment, v, to as u32);
+                let candidate = (delta, v, to);
+                if best.is_none_or(|current| candidate < current) {
+                    best = Some(candidate);
+                }
+            }
+        }
+
+        let Some((_delta, v, to)) = best else {
+            break;
+        };
+
+        let v_wgt = g.vwgt[v] as i64;
+        partition.assignment[v] = to as u32;
+        pwgts[from] -= v_wgt;
+        pwgts[to] += v_wgt;
+    }
+}
+
+fn move_cut_delta(g: &CsrGraph, assignment: &[u32], v: usize, to_part: u32) -> i64 {
+    let from_part = assignment[v];
+    let mut delta = 0i64;
+
+    for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+        let u_part = assignment[g.adjncy[j] as usize];
+        let edge_wgt = g.adjwgt.as_ref().map_or(1i64, |weights| weights[j] as i64);
+        if u_part == from_part {
+            delta += edge_wgt;
+        } else if u_part == to_part {
+            delta -= edge_wgt;
+        }
+    }
+
+    delta
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,3 +1,5 @@
+#![allow(clippy::items_after_test_module)]
+
 pub mod error;
 pub mod graph;
 pub mod coarsen;
@@ -17,7 +19,7 @@ pub use api::{Partitioner, MetisParams, ObjectiveType, CoarseningMethod};
 ///
 /// # Arguments
 /// - `xadj`: CSR row pointer array (length n+1)
-/// - `adjncy`: CSR column indices (length xadj[n])
+/// - `adjncy`: CSR column indices (length `xadj[n]`)
 /// - `vwgt`: vertex weights (length n); pass `&[]` for unit weights
 /// - `adjwgt`: edge weights (length adjncy.len()); pass `&[]` for unit weights
 /// - `nparts`: number of parts k

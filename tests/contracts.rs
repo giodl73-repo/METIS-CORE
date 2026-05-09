@@ -185,8 +185,8 @@ fn split_weighted_produces_valid_partition() {
     // v1 delegates to equal-weight split — both parts should have roughly 8-9 vertices
     let pop0 = p.assignment.iter().filter(|&&x| x == 0).count();
     let pop1 = p.assignment.iter().filter(|&&x| x == 1).count();
-    assert!(pop0 >= 5 && pop0 <= 12, "part 0 should have reasonable size, got {pop0}");
-    assert!(pop1 >= 5 && pop1 <= 12, "part 1 should have reasonable size, got {pop1}");
+    assert!((5..=12).contains(&pop0), "part 0 should have reasonable size, got {pop0}");
+    assert!((5..=12).contains(&pop1), "part 1 should have reasonable size, got {pop1}");
 }
 
 // ── Golden RNG determinism pin ─────────────────────────────────────────────
@@ -231,7 +231,10 @@ fn all_oracle_partitions_are_contiguous() {
     ];
 
     for (g, k) in test_cases {
-        let p = MetisPartitioner::with_params(MetisParams::default(), k)
+        let p = MetisPartitioner::with_params(
+            MetisParams { contig_fm: true, ..MetisParams::default() },
+            k,
+        )
             .split(&g, k, Some(42))
             .unwrap();
         assert!(

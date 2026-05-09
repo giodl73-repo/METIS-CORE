@@ -1,5 +1,3 @@
-use rand_pcg::Pcg64;
-use rand::{Rng, SeedableRng};
 use crate::graph::{CsrGraph, CoarseMap};
 use crate::coarsen::Coarsener;
 use crate::coarsen::hem::build_coarse_graph;
@@ -32,9 +30,8 @@ impl Coarsener for TwoHopMatchWithParams {
     }
 }
 
-fn twohop_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
+fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
     let n = g.n();
-    let mut rng = Pcg64::seed_from_u64(seed);
 
     // Bucket-sort vertices by max incident edge weight descending (SHEM order)
     let max_w: Vec<i32> = (0..n).map(|v| {
@@ -46,7 +43,9 @@ fn twohop_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
 
     let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
     let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
-    for v in 0..n { buckets[max_w[v].max(0) as usize].push(v); }
+    for (v, &weight) in max_w.iter().enumerate() {
+        buckets[weight.max(0) as usize].push(v);
+    }
 
     let mut matched   = vec![false; n];
     let mut cmap      = vec![u32::MAX; n];

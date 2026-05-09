@@ -353,13 +353,13 @@ fn grow_bisect(g: &CsrGraph, k: u32, seed: u64) -> Partition {
 
     'outer: while unassigned > 0 {
         let mut progress = false;
-        for part in 0..2usize {
-            if let Some(v) = queues[part].pop_front() {
+        for (part, queue) in queues.iter_mut().enumerate() {
+            if let Some(v) = queue.pop_front() {
                 for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                     let u = g.adjncy[j] as usize;
                     if assignment[u] == u32::MAX {
                         assignment[u] = part as u32;
-                        queues[part].push_back(u);
+                        queue.push_back(u);
                         unassigned -= 1;
                         progress = true;
                         if unassigned == 0 { break 'outer; }

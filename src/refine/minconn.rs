@@ -225,8 +225,8 @@ mod tests {
     }
 
     #[test]
-    fn min_conn_default_is_true() {
+    fn min_conn_default_is_false_matching_metis() {
         let params = MetisParams::default();
-        assert!(params.min_conn, "min_conn must default to true");
+        assert!(!params.min_conn, "min_conn must default to false like METIS_OPTION_MINCONN");
     }
 }

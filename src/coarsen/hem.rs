@@ -188,8 +188,8 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
 
     // Accumulate in i64 to prevent overflow when summing many large vertex weights
     let mut cvwgt = vec![0i64; cn * ncon];
-    for v in 0..n {
-        let cv = cmap[v] as usize;
+    for (v, &cv) in cmap.iter().enumerate().take(n) {
+        let cv = cv as usize;
         for c in 0..ncon {
             cvwgt[cv * ncon + c] += g.vwgt[v * ncon + c] as i64;
         }

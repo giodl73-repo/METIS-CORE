@@ -9,11 +9,19 @@ repository = "https://github.com/giodl73-repo/METIS-CORE"
 keywords = ["graph", "partitioning", "metis", "multilevel", "combinatorial"]
 categories = ["algorithms", "science", "mathematics"]
 
+[workspace]
+
 [lints.rust]
 # `cfg(prusti)` is set by the Prusti verification toolchain — not a Cargo feature.
 # `cfg(kani)` is set by the Kani model checker — not a Cargo feature.
 # Declare them here so rustc's check-cfg lint does not flag them as unexpected.
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(prusti)', 'cfg(kani)'] }
+
+[lints.clippy]
+all = "warn"
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
 
 [dependencies]
 rand_pcg  = "0.3"

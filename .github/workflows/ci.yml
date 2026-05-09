@@ -21,6 +21,19 @@ jobs:
       - name: cargo test
         run: cargo test --all-targets
 
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo doc
+        run: cargo doc --no-deps
+
+      - name: unsafe audit
+        shell: bash
+        run: if grep -R "unsafe" src; then exit 1; fi
+
+      - name: cargo package
+        run: cargo package --no-verify
+
   kani:
     name: Kani model checking
     if: github.event_name == 'push'

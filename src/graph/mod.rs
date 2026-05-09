@@ -74,9 +74,8 @@ pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> 
 
     // BFS within each part from its representative
     let mut visited = vec![false; n];
-    for part in 0..k {
-        if rep[part] == usize::MAX { continue; } // empty part
-        let start = rep[part];
+    for (part, &start) in rep.iter().enumerate() {
+        if start == usize::MAX { continue; } // empty part
         visited[start] = true;
         let mut queue = std::collections::VecDeque::from([start]);
         while let Some(v) = queue.pop_front() {
@@ -89,14 +88,14 @@ pub fn check_contiguity(g: &CsrGraph, partition: &Partition) -> Result<(), u32> 
             }
         }
         // Check all vertices of this part were reached
-        for v in 0..n {
-            if partition.assignment[v] as usize == part && !visited[v] {
+        for (v, &was_visited) in visited.iter().enumerate() {
+            if partition.assignment[v] as usize == part && !was_visited {
                 return Err(part as u32);
             }
         }
         // Reset visited for next part (only clear this part's vertices)
-        for v in 0..n {
-            if partition.assignment[v] as usize == part { visited[v] = false; }
+        for (v, was_visited) in visited.iter_mut().enumerate() {
+            if partition.assignment[v] as usize == part { *was_visited = false; }
         }
     }
     Ok(())
@@ -281,28 +280,6 @@ mod tests {
             xadj.push(adjncy.len() as u32);
         }
         CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; n], adjwgt: None }
-    }
-
-    fn weighted_path(n: usize) -> CsrGraph {
-        let mut g = path_graph(n);
-        g.adjwgt = Some(vec![2i32; g.adjncy.len()]);
-        g
-    }
-
-    fn grid_2x3() -> CsrGraph {
-        // 0-1-2
-        // | | |
-        // 3-4-5
-        let xadj   = vec![0u32, 2, 4, 6, 8, 11, 13];
-        let adjncy = vec![
-            1, 3,       // 0: right, down
-            0, 2, 4,    // 1: left, right, down
-            1, 5,       // 2: left, down
-            0, 4,       // 3: up, right
-            1, 3, 5,    // 4: up, left, right
-            2, 4,       // 5: up, left
-        ];
-        CsrGraph { xadj, adjncy, ncon: 1, vwgt: vec![1i32; 6], adjwgt: None }
     }
 
     #[test]

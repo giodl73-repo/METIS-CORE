@@ -11,11 +11,11 @@ impl BoundarySet {
     pub fn from_partition(g: &CsrGraph, p: &Partition) -> Self {
         let n = g.n();
         let mut inner = vec![false; n];
-        for v in 0..n {
+        for (v, is_boundary) in inner.iter_mut().enumerate().take(n) {
             for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                 let u = g.adjncy[j] as usize;
                 if p.assignment[v] != p.assignment[u] {
-                    inner[v] = true;
+                    *is_boundary = true;
                     break;
                 }
             }

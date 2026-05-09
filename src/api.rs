@@ -25,13 +25,13 @@ pub enum CoarseningMethod {
 
 /// Which objective function to minimise during FM refinement.
 ///
-/// * `Cut`    — minimise edge cut: Σ edge_weight for cut edges.
-///              Matches `METIS_OBJTYPE_CUT` (default in METIS 5.x).
+/// * `Cut` — minimise edge cut: Σ edge_weight for cut edges.
+///   Matches `METIS_OBJTYPE_CUT` (default in METIS 5.x).
 /// * `Volume` — minimise communication volume: for each vertex v, count
-///              the number of distinct parts adjacent to v (including v's
-///              own part for border vertices).  Matches `METIS_OBJTYPE_VOL`.
-///              Relevant for parallel computing where the cost model is
-///              the number of distinct messages sent, not edge count.
+///   the number of distinct parts adjacent to v (including v's own part for
+///   border vertices).  Matches `METIS_OBJTYPE_VOL`. Relevant for parallel
+///   computing where the cost model is the number of distinct messages sent,
+///   not edge count.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ObjectiveType {
     #[default]
@@ -78,7 +78,8 @@ pub struct MetisParams {
     /// Set by `split_weighted` from the caller's proportional `fracs` array.
     pub tpwgts:     Option<Vec<f32>>,
     /// Check contiguity before each FM move: skip moves that would disconnect
-    /// the source part (IsConnectedSubdomain check).  Default: `true`.
+    /// the source part (IsConnectedSubdomain check). Default: `false`, matching
+    /// METIS `METIS_OPTION_CONTIG`.
     pub contig_fm:  bool,
     /// Use multilevel recursive bisection (MlevelRecursiveBisection) for k > 2.
     /// When `true`, the graph is bisected and each half is recursively partitioned
@@ -90,8 +91,8 @@ pub struct MetisParams {
     /// `ObjectiveType::Volume` minimises communication volume (number of distinct
     /// adjacent parts per vertex), matching `METIS_OBJTYPE_VOL`.
     pub objective: ObjectiveType,
-    /// Minimize subdomain connectivity after partitioning (default: `true`).
-    /// Mirrors the C METIS `METIS_OPTION_MINCONN` option (enabled by default).
+    /// Minimize subdomain connectivity after partitioning (default: `false`).
+    /// Mirrors the C METIS `METIS_OPTION_MINCONN` option.
     /// When enabled, iteratively moves boundary vertices to reduce the number of
     /// distinct communication partners each part has (subdomain degree).
     pub min_conn: bool,
@@ -116,10 +117,10 @@ impl Default for MetisParams {
             coarsen_to:    20,
             ncuts:         1,  // C METIS default for kway; pmetis uses 4 but 1 is safe default
             tpwgts:        None,
-            contig_fm:     true,
+            contig_fm:     false,
             use_recursive: false,
             objective:     ObjectiveType::Cut,
-            min_conn:      true,
+            min_conn:      false,
             lp_refine:      true,
             lp_iter:        10,
             coarsen_method: CoarseningMethod::Shem,
@@ -205,11 +206,15 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 contig_fm:  self.params.contig_fm,
             };
             let mut p = rb.partition_graph(g, k, base_seed)?;
-            repair_contiguity(g, &mut p);
+            if self.params.contig_fm {
+                repair_contiguity(g, &mut p);
+            }
             if self.params.min_conn {
                 use crate::refine::minconn::minimize_connectivity;
                 minimize_connectivity(g, &mut p, self.params.ufactor);
-                repair_contiguity(g, &mut p);
+                if self.params.contig_fm {
+                    repair_contiguity(g, &mut p);
+                }
             }
             return Ok(p);
         }
@@ -248,12 +253,13 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 CoarseningHierarchy::build(g, &self.coarsener)?
             };
             let p = Pipeline::new(hierarchy)
+                .with_contiguity_repair(self.params.contig_fm)
                 .initial_partition(&self.init, k, trial_seed)
                 .refine_and_project(&self.refiner)
                 .into_partition();
 
             let cut = compute_cut(g, &p.assignment);
-            let is_better = best.as_ref().map_or(true, |&(_, best_cut)| cut < best_cut);
+            let is_better = best.as_ref().is_none_or(|&(_, best_cut)| cut < best_cut);
             if is_better {
                 best = Some((p, cut));
             }
@@ -261,20 +267,24 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
 
         let (mut p, _) = best.unwrap();
 
-        // Final contiguity safety net: repair any remaining issues after the
-        // full pipeline. Repair now runs before each FM pass in the pipeline,
-        // so this rarely does work — but keeps the guarantee unconditional.
-        repair_contiguity(g, &mut p);
+        crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
+
+        // Final contiguity safety net when requested. METIS leaves this off by
+        // default; forcing it after refinement can disrupt the achieved balance.
+        if self.params.contig_fm {
+            repair_contiguity(g, &mut p);
+        }
 
         // MinConn post-processing: reduce subdomain connectivity by iteratively
         // moving boundary vertices to lower-degree parts (mirrors METIS minconn.c).
         if self.params.min_conn {
             use crate::refine::minconn::minimize_connectivity;
             minimize_connectivity(g, &mut p, self.params.ufactor);
-            // MinConn may break contiguity by moving boundary vertices without
-            // checking whether the source part remains connected.  Re-run the
-            // safety repair to restore the contiguity guarantee.
-            repair_contiguity(g, &mut p);
+            if self.params.contig_fm {
+                // MinConn may break contiguity by moving boundary vertices without
+                // checking whether the source part remains connected.
+                repair_contiguity(g, &mut p);
+            }
         }
 
         Ok(p)
@@ -331,6 +341,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             let pipeline = crate::multilevel::pipeline::Pipeline {
                 hierarchy,
                 partition: Some(init_p),
+                repair_contiguity: self.params.contig_fm,
                 _state: std::marker::PhantomData::<crate::multilevel::pipeline::NeedsRefinement>,
             };
             // tpwgts is cleared on the output partition — callers receive a plain Partition
@@ -338,7 +349,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             result.tpwgts = None;
 
             let cut = compute_cut(g, &result.assignment);
-            let is_better = best.as_ref().map_or(true, |&(_, best_cut)| cut < best_cut);
+            let is_better = best.as_ref().is_none_or(|&(_, best_cut)| cut < best_cut);
             if is_better {
                 best = Some((result, cut));
             }
@@ -523,8 +534,8 @@ mod tests {
         // Proportional balance: accept any split in [3, 14] as structurally sound.
         let sz0 = p.assignment.iter().filter(|&&x| x == 0).count();
         let sz1 = p.assignment.iter().filter(|&&x| x == 1).count();
-        assert!(sz0 >= 3 && sz0 <= 14, "part 0 size unreasonable: {sz0}");
-        assert!(sz1 >= 3 && sz1 <= 14, "part 1 size unreasonable: {sz1}");
+        assert!((3..=14).contains(&sz0), "part 0 size unreasonable: {sz0}");
+        assert!((3..=14).contains(&sz1), "part 1 size unreasonable: {sz1}");
     }
 
     /// fracs [8, 9]: part 0 should receive ~8/17 of population, part 1 ~9/17.

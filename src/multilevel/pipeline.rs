@@ -15,6 +15,7 @@ pub struct Complete;
 pub struct Pipeline<S> {
     pub hierarchy: CoarseningHierarchy,
     pub partition: Option<Partition>,
+    pub repair_contiguity: bool,
     pub _state:    PhantomData<S>,
 }
 
@@ -24,7 +25,12 @@ impl Pipeline<NeedsPartition> {
             h.cmaps.len() == h.levels.len().saturating_sub(1),
             "CoarseningHierarchy invariant violated: cmaps.len() != levels.len()-1"
         );
-        Self { hierarchy: h, partition: None, _state: PhantomData }
+        Self { hierarchy: h, partition: None, repair_contiguity: true, _state: PhantomData }
+    }
+
+    pub fn with_contiguity_repair(mut self, enabled: bool) -> Self {
+        self.repair_contiguity = enabled;
+        self
     }
 
     pub fn initial_partition(
@@ -42,6 +48,7 @@ impl Pipeline<NeedsPartition> {
         Pipeline {
             hierarchy: self.hierarchy,
             partition: Some(p),
+            repair_contiguity: self.repair_contiguity,
             _state: PhantomData,
         }
     }
@@ -57,7 +64,9 @@ impl Pipeline<NeedsRefinement> {
 
         // Repair contiguity of initial partition BEFORE first FM pass.
         // Mirrors METIS contig.c: EnsureConnectivity after initial partition.
-        repair_contiguity(self.hierarchy.coarsest(), &mut current_p);
+        if self.repair_contiguity {
+            repair_contiguity(self.hierarchy.coarsest(), &mut current_p);
+        }
 
         // Uncoarsen: refine at each coarser level, then project to finer.
         // levels[depth] = coarsest (where initial partition was computed).
@@ -70,7 +79,9 @@ impl Pipeline<NeedsRefinement> {
             current_p = Partition { assignment: fine_assign, k: current_p.k, tpwgts: current_p.tpwgts.clone() };
             // Repair contiguity after projection, BEFORE next FM pass.
             // FM operates on an already-connected partition at every level.
-            repair_contiguity(&self.hierarchy.levels[lev], &mut current_p);
+            if self.repair_contiguity {
+                repair_contiguity(&self.hierarchy.levels[lev], &mut current_p);
+            }
         }
         // Final refinement at original level (level 0)
         current_p = refiner.refine(&self.hierarchy.levels[0], current_p);
@@ -78,6 +89,7 @@ impl Pipeline<NeedsRefinement> {
         Pipeline {
             hierarchy: self.hierarchy,
             partition: Some(current_p),
+            repair_contiguity: self.repair_contiguity,
             _state: PhantomData,
         }
     }

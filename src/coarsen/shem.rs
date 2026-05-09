@@ -1,6 +1,6 @@
 use crate::graph::{CsrGraph, CoarseMap};
 use crate::coarsen::Coarsener;
-use crate::coarsen::hem::build_coarse_graph;
+use crate::coarsen::hem::{HeavyEdgeMatch, build_coarse_graph};
 
 // ── structs ────────────────────────────────────────────────────────────────
 
@@ -161,6 +161,16 @@ impl Coarsener for SortedHeavyEdgeMatchWithParams {
 fn shem_coarsen(g: &CsrGraph) -> (CsrGraph, CoarseMap) {
     let n = g.n();
 
+    // C METIS falls back from SHEM to random matching when edge weights are
+    // absent or all equal; sorting equal weights only adds work and changes
+    // the intended visit order.
+    if g.adjwgt
+        .as_ref()
+        .is_none_or(|weights| weights.windows(2).all(|pair| pair[0] == pair[1]))
+    {
+        return HeavyEdgeMatch.coarsen(g);
+    }
+
     // Step 1: max incident edge weight per vertex (unweighted → treat as 1)
     let max_w: Vec<i32> = (0..n).map(|v| {
         (g.xadj[v] as usize..g.xadj[v + 1] as usize)
@@ -173,8 +183,8 @@ fn shem_coarsen(g: &CsrGraph) -> (CsrGraph, CoarseMap) {
     // Buckets indexed by weight value; we iterate them in reverse (highest first).
     let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
     let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
-    for v in 0..n {
-        let w = (max_w[v].max(0) as usize).min(max_bucket);
+    for (v, &weight) in max_w.iter().enumerate() {
+        let w = (weight.max(0) as usize).min(max_bucket);
         buckets[w].push(v);
     }
 

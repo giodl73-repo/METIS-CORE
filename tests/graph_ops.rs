@@ -307,9 +307,9 @@ fn metis_uniform_bisection_within_ufactor_tolerance() {
     let sz0 = p.assignment.iter().filter(|&&x| x == 0).count();
     let sz1 = p.assignment.iter().filter(|&&x| x == 1).count();
     assert_eq!(sz0 + sz1, 20, "all vertices assigned");
-    assert!(sz0 >= 8 && sz0 <= 12,
+    assert!((8..=12).contains(&sz0),
         "part 0 size {sz0} must be within +-2 of target 10");
-    assert!(sz1 >= 8 && sz1 <= 12,
+    assert!((8..=12).contains(&sz1),
         "part 1 size {sz1} must be within +-2 of target 10");
 }
 

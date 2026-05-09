@@ -37,8 +37,9 @@ pub fn part_recursive(
     nparts: u32,
     mut params: api::MetisParams,
 ) -> Result<Vec<u32>, PartitionError> {
-    if params == api::MetisParams::default() {
-        params = api::MetisParams::recursive();
+    let defaults = api::MetisParams::default();
+    if params.ncuts == defaults.ncuts {
+        params.ncuts = api::MetisParams::recursive().ncuts;
     }
     params.use_recursive = true;
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
@@ -148,6 +149,21 @@ mod tests {
         let params = api::MetisParams::recursive();
         assert!(params.use_recursive);
         assert_eq!(params.ncuts, 4);
+    }
+
+    #[test]
+    fn part_recursive_promotes_default_ncuts_even_with_seed() {
+        let params = api::MetisParams {
+            seed: Some(7),
+            ..api::MetisParams::default()
+        };
+        let defaults = api::MetisParams::default();
+        assert_eq!(params.ncuts, defaults.ncuts);
+
+        let (xadj, adjncy) = path_xadj_adjncy(10);
+        let assignment = part_recursive(&xadj, &adjncy, &[], &[], 2, params)
+            .expect("recursive partition should succeed");
+        assert_eq!(assignment.len(), 10);
     }
 
     #[test]

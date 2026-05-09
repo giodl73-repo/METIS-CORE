@@ -128,17 +128,13 @@ fn load_graph(path: &str) -> Option<CsrGraph> {
         vwgt.into_iter().map(|w| w.max(1)).collect()
     };
 
-    Some(CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vwgt_primary,
-        adjwgt: if adjwgt.is_empty() {
-            None
-        } else {
-            Some(adjwgt)
-        },
-    })
+    let adjwgt = if adjwgt.is_empty() {
+        None
+    } else {
+        Some(adjwgt)
+    };
+
+    CsrGraph::new(xadj, adjncy, 1, vwgt_primary, adjwgt).ok()
 }
 
 /// Graphs directory path: sibling of the rust/ crate directory.
@@ -160,8 +156,8 @@ fn graphs_dir() -> String {
 fn edge_cut(g: &CsrGraph, assignment: &[u32]) -> u64 {
     let mut c = 0u64;
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-            let u = g.adjncy[j] as usize;
+        for j in g.xadj()[v] as usize..g.xadj()[v + 1] as usize {
+            let u = g.adjncy()[j] as usize;
             if assignment[v] != assignment[u] {
                 c += 1;
             }
@@ -205,11 +201,7 @@ fn assert_structural_invariants(g: &CsrGraph, assignment: &[u32], k: u32, label:
             "{label}: part {part} is missing (empty part)"
         );
     }
-    let p = metis_core::Partition {
-        assignment: assignment.to_vec(),
-        k,
-        tpwgts: None,
-    };
+    let p = metis_core::Partition::new(assignment.to_vec(), k).expect("partition is valid");
     assert!(
         check_contiguity(g, &p).is_ok(),
         "{label}: partition is not contiguous"
@@ -234,9 +226,9 @@ fn loader_4elt_dimensions() {
         }
     };
     assert_eq!(g.n(), 15_606, "4elt: vertex count");
-    assert_eq!(g.xadj.len(), 15_607, "4elt: xadj length = n+1");
+    assert_eq!(g.xadj().len(), 15_607, "4elt: xadj length = n+1");
     // Each undirected edge appears twice in the adjacency list.
-    let total_adj = g.xadj[g.n()] as usize;
+    let total_adj = g.xadj()[g.n()] as usize;
     assert_eq!(total_adj / 2, 45_878, "4elt: 45 878 undirected edges");
     assert!(g.is_valid(), "4elt: CsrGraph::is_valid()");
 }
@@ -254,11 +246,11 @@ fn loader_mgraph_ncon2_dropped_to_ncon1() {
         }
     };
     assert_eq!(g.n(), 766, "test.mgraph: vertex count");
-    assert_eq!(g.ncon, 1, "loader normalises ncon=2 → ncon=1");
-    assert_eq!(g.vwgt.len(), 766, "one weight per vertex");
+    assert_eq!(g.ncon(), 1, "loader normalises ncon=2 → ncon=1");
+    assert_eq!(g.vwgt().len(), 766, "one weight per vertex");
     // After clamping, all weights must be >= 1.
     assert!(
-        g.vwgt.iter().all(|&w| w >= 1),
+        g.vwgt().iter().all(|&w| w >= 1),
         "weights must be >= 1 after clamping"
     );
     assert!(

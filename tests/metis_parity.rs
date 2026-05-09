@@ -61,13 +61,7 @@ fn grid_graph(width: usize, height: usize) -> CsrGraph {
         }
     }
 
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1; n], None).expect("grid graph is valid")
 }
 
 fn find_graph_fixture(name: &str) -> Option<PathBuf> {
@@ -143,17 +137,13 @@ fn load_metis_graph(path: &Path) -> Option<CsrGraph> {
         vwgt.into_iter().map(|weight| weight.max(1)).collect()
     };
 
-    Some(CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt,
-        adjwgt: if adjwgt.is_empty() {
-            None
-        } else {
-            Some(adjwgt)
-        },
-    })
+    let adjwgt = if adjwgt.is_empty() {
+        None
+    } else {
+        Some(adjwgt)
+    };
+
+    CsrGraph::new(xadj, adjncy, 1, vwgt, adjwgt).ok()
 }
 
 fn parity_temp_dir(label: &str) -> PathBuf {
@@ -171,13 +161,13 @@ fn parity_temp_dir(label: &str) -> PathBuf {
 
 fn write_metis_graph(g: &CsrGraph, path: &Path) {
     let mut out = String::new();
-    out.push_str(&format!("{} {}\n", g.n(), g.adjncy.len() / 2));
+    out.push_str(&format!("{} {}\n", g.n(), g.adjncy().len() / 2));
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-            if j > g.xadj[v] as usize {
+        for j in g.xadj()[v] as usize..g.xadj()[v + 1] as usize {
+            if j > g.xadj()[v] as usize {
                 out.push(' ');
             }
-            out.push_str(&(g.adjncy[j] + 1).to_string());
+            out.push_str(&(g.adjncy()[j] + 1).to_string());
         }
         out.push('\n');
     }
@@ -222,8 +212,8 @@ fn gpmetis_part_path(graph_path: &Path, k: u32) -> PathBuf {
 fn edge_cut(g: &CsrGraph, assignment: &[u32]) -> u64 {
     let mut cut = 0u64;
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-            let u = g.adjncy[j] as usize;
+        for j in g.xadj()[v] as usize..g.xadj()[v + 1] as usize {
+            let u = g.adjncy()[j] as usize;
             if assignment[v] != assignment[u] {
                 cut += 1;
             }
@@ -242,11 +232,11 @@ fn max_imbalance(assignment: &[u32], k: u32) -> f64 {
 }
 
 fn max_weight_imbalance(g: &CsrGraph, assignment: &[u32], k: u32) -> f64 {
-    let total: i64 = g.vwgt.iter().map(|&weight| weight as i64).sum();
+    let total: i64 = g.vwgt().iter().map(|&weight| weight as i64).sum();
     let target = total as f64 / k as f64;
     let mut counts = vec![0i64; k as usize];
     for (v, &part) in assignment.iter().enumerate() {
-        counts[part as usize] += g.vwgt[v] as i64;
+        counts[part as usize] += g.vwgt()[v] as i64;
     }
     *counts.iter().max().unwrap_or(&0) as f64 / target
 }

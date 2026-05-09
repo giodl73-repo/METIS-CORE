@@ -45,7 +45,7 @@ metis-core = { git = "https://github.com/giodl73-repo/METIS-CORE.git" }
 ```
 
 ```rust
-use metis_core::{part_recursive, api::MetisParams};
+use metis_core::{part_recursive, MetisParams};
 
 let xadj   = vec![0u32, 2, 4, 6, 8];    // 4-vertex cycle
 let adjncy = vec![1, 3, 0, 2, 1, 3, 0, 2];
@@ -58,7 +58,7 @@ For full control use `MetisPartitioner` directly:
 ```rust
 use metis_core::{
     graph::CsrGraph,
-    api::{MetisPartitioner, MetisParams, Partitioner, CoarseningMethod},
+    CoarseningMethod, MetisParams, MetisPartitioner, Partitioner,
 };
 
 let g = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;

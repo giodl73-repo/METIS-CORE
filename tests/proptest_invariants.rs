@@ -31,13 +31,7 @@ fn arb_grid(max_rows: usize, max_cols: usize) -> impl Strategy<Value = CsrGraph>
                 xadj.push(adjncy.len() as u32);
             }
         }
-        CsrGraph {
-            xadj,
-            adjncy,
-            ncon: 1,
-            vwgt: vec![1i32; n],
-            adjwgt: None,
-        }
+        CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("grid graph is valid")
     })
 }
 
@@ -54,13 +48,7 @@ fn arb_path(max_n: usize) -> impl Strategy<Value = CsrGraph> {
             }
             xadj.push(adjncy.len() as u32);
         }
-        CsrGraph {
-            xadj,
-            adjncy,
-            ncon: 1,
-            vwgt: vec![1i32; n],
-            adjwgt: None,
-        }
+        CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("path graph is valid")
     })
 }
 

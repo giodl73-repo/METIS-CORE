@@ -3,19 +3,18 @@ use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
 pub struct CsrGraph {
-    pub xadj: Vec<u32>,
-    pub adjncy: Vec<u32>,
-    pub ncon: u32,
-    pub vwgt: Vec<i32>,
-    pub adjwgt: Option<Vec<i32>>,
+    pub(crate) xadj: Vec<u32>,
+    pub(crate) adjncy: Vec<u32>,
+    pub(crate) ncon: u32,
+    pub(crate) vwgt: Vec<i32>,
+    pub(crate) adjwgt: Option<Vec<i32>>,
 }
 
 impl CsrGraph {
     /// Build a CSR graph and validate its structural invariants.
     ///
-    /// The public fields remain available for low-level callers and tests, but
-    /// production code should prefer this constructor so malformed CSR input is
-    /// rejected before partitioning starts.
+    /// Callers outside this crate construct graphs through this method so
+    /// malformed CSR input is rejected before partitioning starts.
     pub fn new(
         xadj: Vec<u32>,
         adjncy: Vec<u32>,
@@ -62,6 +61,26 @@ impl CsrGraph {
 
     pub fn n(&self) -> usize {
         self.xadj.len().saturating_sub(1)
+    }
+
+    pub fn xadj(&self) -> &[u32] {
+        &self.xadj
+    }
+
+    pub fn adjncy(&self) -> &[u32] {
+        &self.adjncy
+    }
+
+    pub fn ncon(&self) -> u32 {
+        self.ncon
+    }
+
+    pub fn vwgt(&self) -> &[i32] {
+        &self.vwgt
+    }
+
+    pub fn adjwgt(&self) -> Option<&[i32]> {
+        self.adjwgt.as_deref()
     }
 
     pub fn is_valid(&self) -> bool {
@@ -148,10 +167,28 @@ pub struct Partition {
     /// Target partition weights (one `f32` per part, summing to 1.0).
     /// `None` means equal weights (each part gets `1/k` of total population).
     /// Set by `split_weighted` and consumed by FM balance checks.
-    pub tpwgts: Option<Vec<f32>>,
+    pub(crate) tpwgts: Option<Vec<f32>>,
 }
 
 impl Partition {
+    /// Build a partition from a part assignment.
+    pub fn new(assignment: Vec<u32>, k: u32) -> Result<Self, PartitionError> {
+        let partition = Self {
+            assignment,
+            k,
+            tpwgts: None,
+        };
+        if partition.k == 0 {
+            return Err(PartitionError::InvalidPartition("k must be at least one"));
+        }
+        if partition.assignment.iter().any(|&part| part >= partition.k) {
+            return Err(PartitionError::InvalidPartition(
+                "assignment contains part id outside 0..k",
+            ));
+        }
+        Ok(partition)
+    }
+
     /// Validate that this partition is compatible with `g`.
     pub fn validate_for_graph(&self, g: &CsrGraph) -> Result<(), PartitionError> {
         if self.k == 0 {

@@ -35,13 +35,7 @@ fn path_graph(n: usize) -> CsrGraph {
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("path graph is valid")
 }
 
 fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
@@ -69,35 +63,30 @@ fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
             xadj.push(adjncy.len() as u32);
         }
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("grid graph is valid")
 }
 
 fn weighted_path_4() -> CsrGraph {
     // 0 --10-- 1 --1-- 2 --10-- 3
-    CsrGraph {
-        xadj: vec![0, 1, 3, 5, 6],
-        adjncy: vec![1, 0, 2, 1, 3, 2],
-        ncon: 1,
-        vwgt: vec![1; 4],
-        adjwgt: Some(vec![10, 10, 1, 1, 10, 10]),
-    }
+    CsrGraph::new(
+        vec![0, 1, 3, 5, 6],
+        vec![1, 0, 2, 1, 3, 2],
+        1,
+        vec![1; 4],
+        Some(vec![10, 10, 1, 1, 10, 10]),
+    )
+    .expect("weighted path graph is valid")
 }
 
 /// Compute population balance: max absolute deviation from target as a fraction.
 fn max_balance_deviation(p: &Partition, g: &CsrGraph) -> f64 {
-    let total: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
+    let total: i64 = g.vwgt().iter().map(|&w| w as i64).sum();
     let target = total as f64 / p.k as f64;
     (0..p.k)
         .map(|part| {
             let wgt: i64 = (0..g.n())
                 .filter(|&v| p.assignment[v] == part)
-                .map(|v| g.vwgt[v] as i64)
+                .map(|v| g.vwgt()[v] as i64)
                 .sum();
             (wgt as f64 - target).abs() / total as f64
         })
@@ -109,13 +98,13 @@ fn max_balance_deviation(p: &Partition, g: &CsrGraph) -> f64 {
 #[test]
 fn csr_xadj_length_is_n_plus_1() {
     let g = path_graph(8);
-    assert_eq!(g.xadj.len(), g.n() + 1);
+    assert_eq!(g.xadj().len(), g.n() + 1);
 }
 
 #[test]
 fn csr_xadj_starts_at_zero() {
     let g = path_graph(5);
-    assert_eq!(g.xadj[0], 0);
+    assert_eq!(g.xadj()[0], 0);
 }
 
 #[test]
@@ -123,11 +112,11 @@ fn csr_xadj_monotone_nondecreasing() {
     let g = grid_graph(4, 4);
     for i in 0..g.n() {
         assert!(
-            g.xadj[i] <= g.xadj[i + 1],
+            g.xadj()[i] <= g.xadj()[i + 1],
             "xadj[{i}]={} > xadj[{}]={}",
-            g.xadj[i],
+            g.xadj()[i],
             i + 1,
-            g.xadj[i + 1]
+            g.xadj()[i + 1]
         );
     }
 }
@@ -136,8 +125,8 @@ fn csr_xadj_monotone_nondecreasing() {
 fn csr_degree_path_endpoints_is_1() {
     // endpoints of a path have exactly 1 neighbour
     let g = path_graph(6);
-    let deg_first = (g.xadj[1] - g.xadj[0]) as usize;
-    let deg_last = (g.xadj[6] - g.xadj[5]) as usize;
+    let deg_first = (g.xadj()[1] - g.xadj()[0]) as usize;
+    let deg_last = (g.xadj()[6] - g.xadj()[5]) as usize;
     assert_eq!(deg_first, 1, "first endpoint degree must be 1");
     assert_eq!(deg_last, 1, "last endpoint degree must be 1");
 }
@@ -147,7 +136,7 @@ fn csr_degree_grid_interior_is_4() {
     // Interior vertex (1,1) of 4×4 grid → degree 4
     let g = grid_graph(4, 4);
     let v = 5usize; // row=1, col=1
-    let deg = (g.xadj[v + 1] - g.xadj[v]) as usize;
+    let deg = (g.xadj()[v + 1] - g.xadj()[v]) as usize;
     assert_eq!(deg, 4, "interior grid vertex must have degree 4");
 }
 
@@ -156,15 +145,15 @@ fn csr_total_edges_path_undirected() {
     let n = 10usize;
     let g = path_graph(n);
     // undirected: n-1 edges, each stored in both directions
-    assert_eq!(g.adjncy.len(), 2 * (n - 1));
+    assert_eq!(g.adjncy().len(), 2 * (n - 1));
 }
 
 #[test]
 fn csr_adjncy_no_self_loops() {
     let g = grid_graph(3, 3);
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-            assert_ne!(g.adjncy[j] as usize, v, "self loop at vertex {v}");
+        for j in g.xadj()[v] as usize..g.xadj()[v + 1] as usize {
+            assert_ne!(g.adjncy()[j] as usize, v, "self loop at vertex {v}");
         }
     }
 }
@@ -173,7 +162,7 @@ fn csr_adjncy_no_self_loops() {
 fn csr_all_vertex_weights_positive() {
     let g = path_graph(12);
     assert!(
-        g.vwgt.iter().all(|&w| w > 0),
+        g.vwgt().iter().all(|&w| w > 0),
         "all vertex weights must be positive"
     );
 }
@@ -181,10 +170,10 @@ fn csr_all_vertex_weights_positive() {
 #[test]
 fn csr_adjwgt_length_matches_adjncy() {
     let g = weighted_path_4();
-    let aw = g.adjwgt.as_ref().unwrap();
+    let aw = g.adjwgt().unwrap();
     assert_eq!(
         aw.len(),
-        g.adjncy.len(),
+        g.adjncy().len(),
         "adjwgt.len() must equal adjncy.len()"
     );
 }
@@ -224,11 +213,11 @@ fn extract_subgraph_adjncy_in_range() {
     let g = path_graph(6);
     let assignment: Vec<u32> = (0..6).map(|i| if i < 3 { 0 } else { 1 }).collect();
     let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
-    for j in 0..sub.adjncy.len() {
+    for j in 0..sub.adjncy().len() {
         assert!(
-            (sub.adjncy[j] as usize) < sub.n(),
+            (sub.adjncy()[j] as usize) < sub.n(),
             "sub-graph adjacency index {} out of range for n={}",
-            sub.adjncy[j],
+            sub.adjncy()[j],
             sub.n()
         );
     }
@@ -239,11 +228,7 @@ fn extract_subgraph_adjncy_in_range() {
 #[test]
 fn check_contiguity_ok_for_contiguous_bisection() {
     let g = path_graph(6);
-    let partition = Partition {
-        assignment: vec![0, 0, 0, 1, 1, 1],
-        k: 2,
-        tpwgts: None,
-    };
+    let partition = Partition::new(vec![0, 0, 0, 1, 1, 1], 2).expect("partition is valid");
     assert!(
         check_contiguity(&g, &partition).is_ok(),
         "contiguous bisection on path must pass contiguity check"
@@ -254,11 +239,7 @@ fn check_contiguity_ok_for_contiguous_bisection() {
 fn check_contiguity_err_for_checkerboard_assignment() {
     let g = path_graph(6);
     // Alternating 0,1,0,1,0,1 — every part is disconnected on a path
-    let partition = Partition {
-        assignment: vec![0, 1, 0, 1, 0, 1],
-        k: 2,
-        tpwgts: None,
-    };
+    let partition = Partition::new(vec![0, 1, 0, 1, 0, 1], 2).expect("partition is valid");
     assert!(
         check_contiguity(&g, &partition).is_err(),
         "checkerboard assignment must fail contiguity check"
@@ -268,11 +249,8 @@ fn check_contiguity_err_for_checkerboard_assignment() {
 #[test]
 fn repair_contiguity_leaves_already_contiguous_unchanged() {
     let g = path_graph(8);
-    let mut partition = Partition {
-        assignment: vec![0, 0, 0, 0, 1, 1, 1, 1],
-        k: 2,
-        tpwgts: None,
-    };
+    let mut partition =
+        Partition::new(vec![0, 0, 0, 0, 1, 1, 1, 1], 2).expect("partition is valid");
     let reassigned = repair_contiguity(&g, &mut partition);
     assert_eq!(
         reassigned, 0,
@@ -285,11 +263,7 @@ fn repair_contiguity_leaves_already_contiguous_unchanged() {
 fn repair_contiguity_fixes_disconnected_assignment() {
     let g = path_graph(6);
     // Part 0 = {0, 5}, Part 1 = {1,2,3,4} — part 0 is disconnected
-    let mut partition = Partition {
-        assignment: vec![0, 1, 1, 1, 1, 0],
-        k: 2,
-        tpwgts: None,
-    };
+    let mut partition = Partition::new(vec![0, 1, 1, 1, 1, 0], 2).expect("partition is valid");
     let _ = repair_contiguity(&g, &mut partition);
     assert!(
         check_contiguity(&g, &partition).is_ok(),
@@ -302,9 +276,12 @@ fn repair_contiguity_fixes_disconnected_assignment() {
 #[test]
 fn hem_preserves_adjwgt_none_invariant() {
     let g = path_graph(8);
-    assert!(g.adjwgt.is_none());
+    assert!(g.adjwgt().is_none());
     let (c, _) = HeavyEdgeMatch.coarsen(&g);
-    assert!(c.adjwgt.is_none(), "unweighted in -> unweighted out (HEM)");
+    assert!(
+        c.adjwgt().is_none(),
+        "unweighted in -> unweighted out (HEM)"
+    );
 }
 
 #[test]
@@ -318,9 +295,9 @@ fn shem_coarsens_weighted_graph_to_fewer_vertices() {
 #[test]
 fn coarsening_preserves_total_vertex_weight() {
     let g = path_graph(6);
-    let total_original: i32 = g.vwgt.iter().sum();
+    let total_original: i32 = g.vwgt().iter().sum();
     let (c, _) = SortedHeavyEdgeMatch.coarsen(&g);
-    let total_coarse: i32 = c.vwgt.iter().sum();
+    let total_coarse: i32 = c.vwgt().iter().sum();
     assert_eq!(
         total_original, total_coarse,
         "total vertex weight must be preserved through coarsening"
@@ -419,11 +396,7 @@ fn manual_imbalanced_partition_exceeds_half_percent() {
     // Assign 9 to part 0, 1 to part 1: deviation = |9/10 - 0.5| = 0.4 -> 40%
     let mut assignment = vec![0u32; 10];
     assignment[9] = 1;
-    let p = Partition {
-        assignment,
-        k: 2,
-        tpwgts: None,
-    };
+    let p = Partition::new(assignment, 2).expect("partition is valid");
     let dev = max_balance_deviation(&p, &g);
     assert!(
         dev > 0.005,
@@ -435,11 +408,7 @@ fn manual_imbalanced_partition_exceeds_half_percent() {
 #[test]
 fn trivial_k1_partition_has_zero_deviation() {
     let g = path_graph(8);
-    let p = Partition {
-        assignment: vec![0u32; 8],
-        k: 1,
-        tpwgts: None,
-    };
+    let p = Partition::new(vec![0u32; 8], 1).expect("partition is valid");
     let dev = max_balance_deviation(&p, &g);
     assert!(
         (dev - 0.0).abs() < 1e-12,

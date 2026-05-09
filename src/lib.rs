@@ -8,7 +8,7 @@ pub mod init;
 pub mod multilevel;
 pub mod refine;
 
-pub use api::{CoarseningMethod, MetisParams, ObjectiveType, Partitioner};
+pub use api::{CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
 pub use error::PartitionError;
 pub use graph::{
     check_contiguity, extract_subgraph, repair_contiguity, CoarseMap, CsrGraph, Partition,

@@ -17,13 +17,7 @@ fn make_path(n: usize) -> CsrGraph {
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("path graph is valid")
 }
 
 fn make_grid(rows: usize, cols: usize) -> CsrGraph {
@@ -53,13 +47,7 @@ fn make_grid(rows: usize, cols: usize) -> CsrGraph {
             let _ = v;
         }
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("grid graph is valid")
 }
 
 fn make_dumbbell() -> CsrGraph {
@@ -86,13 +74,7 @@ fn make_dumbbell() -> CsrGraph {
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("dumbbell graph is valid")
 }
 
 fn make_weighted_path(n: usize) -> CsrGraph {
@@ -111,20 +93,15 @@ fn make_weighted_path(n: usize) -> CsrGraph {
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: Some(adjwgt),
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], Some(adjwgt))
+        .expect("weighted path graph is valid")
 }
 
 fn cut(g: &CsrGraph, assignment: &[u32]) -> u32 {
     let mut c = 0u32;
     for v in 0..g.n() {
-        for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
-            let u = g.adjncy[j] as usize;
+        for j in g.xadj()[v] as usize..g.xadj()[v + 1] as usize {
+            let u = g.adjncy()[j] as usize;
             if assignment[v] != assignment[u] {
                 c += 1;
             }
@@ -286,13 +263,7 @@ fn make_spider() -> CsrGraph {
         }
         xadj.push(adjncy.len() as u32);
     }
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("spider graph is valid")
 }
 
 #[test]
@@ -332,11 +303,7 @@ fn repair_contiguity_fixes_broken_partition() {
     // Manually construct a non-contiguous partition on path-6
     // Path: 0-1-2-3-4-5, partition: [0,0,1,1,0,0] -> part 0 is disconnected (0,1 vs 4,5)
     let g = make_path(6);
-    let mut p = metis_core::Partition {
-        assignment: vec![0, 0, 1, 1, 0, 0],
-        k: 2,
-        tpwgts: None,
-    };
+    let mut p = metis_core::Partition::new(vec![0, 0, 1, 1, 0, 0], 2).expect("partition is valid");
     assert!(
         check_contiguity(&g, &p).is_err(),
         "partition should be non-contiguous before repair"

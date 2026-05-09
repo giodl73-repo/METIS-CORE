@@ -33,13 +33,7 @@ fn grid_graph(rows: usize, cols: usize) -> CsrGraph {
         }
     }
 
-    CsrGraph {
-        xadj,
-        adjncy,
-        ncon: 1,
-        vwgt: vec![1i32; n],
-        adjwgt: None,
-    }
+    CsrGraph::new(xadj, adjncy, 1, vec![1i32; n], None).expect("grid graph is valid")
 }
 
 // ── VT ── 255 tracts, k=1 (smoke test / bisection baseline) ─────────────────

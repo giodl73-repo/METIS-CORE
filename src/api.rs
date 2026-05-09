@@ -105,7 +105,7 @@ pub trait Partitioner: Send + Sync {
     ) -> Result<Partition, PartitionError>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MetisParams {
     pub ufactor: u32,
     pub niter: u32,
@@ -172,10 +172,10 @@ impl Default for MetisParams {
 }
 
 pub struct RustMetisPartitioner<C, I, R> {
-    pub coarsener: C,
-    pub init: I,
-    pub refiner: R,
-    pub params: MetisParams,
+    coarsener: C,
+    init: I,
+    refiner: R,
+    params: MetisParams,
 }
 
 /// Concrete type alias: SHEM + GrowBisect + FM — the default METIS-like pipeline.
@@ -183,6 +183,10 @@ pub type MetisPartitioner =
     RustMetisPartitioner<SortedHeavyEdgeMatchWithParams, GrowBisect, FiducciaMattheyses>;
 
 impl MetisPartitioner {
+    pub fn new(k: u32) -> Self {
+        Self::with_params(MetisParams::default(), k)
+    }
+
     pub fn with_params(params: MetisParams, k: u32) -> Self {
         RustMetisPartitioner {
             coarsener: SortedHeavyEdgeMatchWithParams {
@@ -199,6 +203,10 @@ impl MetisPartitioner {
             },
             params,
         }
+    }
+
+    pub fn params(&self) -> &MetisParams {
+        &self.params
     }
 }
 
@@ -622,6 +630,12 @@ mod tests {
         let p = partitioner.split(&g, 2, Some(7)).unwrap();
         assert_eq!(p.assignment.len(), 20);
         assert_eq!(p.k, 2);
+    }
+
+    #[test]
+    fn metis_partitioner_new_uses_default_params() {
+        let partitioner = MetisPartitioner::new(2);
+        assert_eq!(partitioner.params(), &MetisParams::default());
     }
 
     #[test]

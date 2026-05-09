@@ -37,6 +37,9 @@ pub fn part_recursive(
     nparts: u32,
     mut params: api::MetisParams,
 ) -> Result<Vec<u32>, PartitionError> {
+    if params == api::MetisParams::default() {
+        params = api::MetisParams::recursive();
+    }
     params.use_recursive = true;
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
     api::MetisPartitioner::with_params(params, nparts)
@@ -138,5 +141,19 @@ mod tests {
             assignment.iter().all(|&a| a == 0),
             "k=1 must assign all vertices to part 0"
         );
+    }
+
+    #[test]
+    fn metis_params_recursive_defaults_match_pmetis() {
+        let params = api::MetisParams::recursive();
+        assert!(params.use_recursive);
+        assert_eq!(params.ncuts, 4);
+    }
+
+    #[test]
+    fn metis_params_kway_defaults_match_kmetis() {
+        let params = api::MetisParams::kway();
+        assert!(!params.use_recursive);
+        assert_eq!(params.ncuts, 1);
     }
 }

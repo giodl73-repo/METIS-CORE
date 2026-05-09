@@ -120,7 +120,8 @@ Deliverables:
 - Done: unsafe scan
 - Done: package check
 - Done: README examples
-- Done: API decision: keep public `CsrGraph` fields for compatibility and add
-  validated constructors for production callers.
+- Done: API decision: this crate is unreleased, so `CsrGraph` construction now
+  goes through validated constructors and read-only accessors instead of public
+  fields.
 - Done: add `Partition::validate_for_graph` and make contiguity checks reject
   malformed partitions without panicking.

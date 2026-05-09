@@ -171,6 +171,25 @@ impl Default for MetisParams {
     }
 }
 
+impl MetisParams {
+    /// Defaults for `METIS_PartGraphKway`-style direct k-way partitioning.
+    pub fn kway() -> Self {
+        Self::default()
+    }
+
+    /// Defaults for `METIS_PartGraphRecursive`-style recursive bisection.
+    ///
+    /// C METIS uses multiple independent cuts for pmetis by default, while
+    /// k-way defaults to a single cut.
+    pub fn recursive() -> Self {
+        Self {
+            use_recursive: true,
+            ncuts: 4,
+            ..Self::default()
+        }
+    }
+}
+
 pub struct RustMetisPartitioner<C, I, R> {
     coarsener: C,
     init: I,

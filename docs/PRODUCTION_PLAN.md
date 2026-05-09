@@ -106,7 +106,8 @@ Goal: make speed regressions visible.
 Checks:
 
 - Benchmark before and after each algorithmic change.
-- Separate coarsening, init, refinement, projection, and rebalance timing.
+- Done: separate CA benchmark coverage for coarsening, init, projection,
+  refinement/projection, and final rebalance timing.
 - Track allocations where practical.
 - Keep full k-way benchmarks for realistic sizes.
 

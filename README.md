@@ -115,7 +115,7 @@ cargo clippy --all-targets -- -D warnings
 cargo doc --no-deps
 cargo test --test graph_ops   # CSR, contiguity, coarsening, balance (30 tests)
 cargo test --test contracts   # algorithm contracts
-cargo bench                   # criterion benchmarks
+cargo bench                   # criterion benchmarks, including pipeline phase timings
 ```
 
 The optional `tests/metis_parity.rs` harness compares against `gpmetis` when

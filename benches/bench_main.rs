@@ -1,6 +1,10 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
-use metis_core::graph::CsrGraph;
+use metis_core::coarsen::shem::SortedHeavyEdgeMatchWithParams;
+use metis_core::graph::{CsrGraph, Partition};
+use metis_core::init::{grow::GrowBisect, InitialPartitioner};
+use metis_core::multilevel::hierarchy::CoarseningHierarchy;
+use metis_core::refine::{fm::FiducciaMattheyses, Refiner};
 
 /// Build a `rows × cols` grid graph (connected, no self-loops).
 ///
@@ -109,9 +113,6 @@ fn bench_ca_kway(c: &mut Criterion) {
 // ── CA coarsening only — isolates the coarsen phase ─────────────────────────
 
 fn bench_ca_coarsen_only(c: &mut Criterion) {
-    use metis_core::coarsen::shem::SortedHeavyEdgeMatchWithParams;
-    use metis_core::multilevel::hierarchy::CoarseningHierarchy;
-
     let g = grid_graph(96, 95); // 9120 vertices ≈ CA 9129 tracts
     let coarsener = SortedHeavyEdgeMatchWithParams {
         coarsen_to: 20,
@@ -122,6 +123,110 @@ fn bench_ca_coarsen_only(c: &mut Criterion) {
     });
 }
 
+// ── CA initial partition only — isolates seeding/grow on the coarsest graph ─
+
+fn bench_ca_init_only(c: &mut Criterion) {
+    let g = grid_graph(96, 95);
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 53,
+    };
+    let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
+    let init = GrowBisect;
+
+    c.bench_function("ca_init_only_k53_n9120", |b| {
+        b.iter(|| init.partition(hierarchy.coarsest(), 53, 42));
+    });
+}
+
+// ── CA projection only — isolates cmap projection through the hierarchy ─────
+
+fn bench_ca_projection_only(c: &mut Criterion) {
+    let g = grid_graph(96, 95);
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 53,
+    };
+    let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
+    let init = GrowBisect;
+    let coarse = init.partition(hierarchy.coarsest(), 53, 42);
+
+    c.bench_function("ca_projection_only_k53_n9120", |b| {
+        b.iter(|| {
+            let mut assignment = coarse.assignment().to_vec();
+            for lev in (0..hierarchy.depth()).rev() {
+                assignment = hierarchy.project_up(lev, &assignment);
+            }
+            assignment
+        });
+    });
+}
+
+// ── CA refine+project only — isolates uncoarsening/refinement after coarsen ─
+
+fn bench_ca_refine_project_only(c: &mut Criterion) {
+    let g = grid_graph(96, 95);
+    let coarsener = SortedHeavyEdgeMatchWithParams {
+        coarsen_to: 20,
+        k: 53,
+    };
+    let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
+    let init = GrowBisect;
+    let coarse = init.partition(hierarchy.coarsest(), 53, 42);
+    let refiner = FiducciaMattheyses {
+        niter: 10,
+        contig_fm: false,
+        objective: metis_core::api::ObjectiveType::Cut,
+        lp_iter: 10,
+        ufactor: 5,
+    };
+
+    c.bench_function("ca_refine_project_only_k53_n9120", |b| {
+        b.iter(|| refine_and_project(&hierarchy, coarse.clone(), &refiner));
+    });
+}
+
+// ── CA rebalance only — isolates the final equal-weight balance repair ─────
+
+fn bench_ca_rebalance_only(c: &mut Criterion) {
+    let g = grid_graph(96, 95);
+    let params = MetisParams::default();
+    let assignment = MetisPartitioner::with_params(params, 53)
+        .split(&g, 53, Some(42))
+        .unwrap()
+        .into_assignment();
+    let mut imbalanced = assignment;
+    for part in imbalanced.iter_mut().take(200) {
+        *part = 0;
+    }
+    let partition = Partition::new(imbalanced, 53).unwrap();
+
+    c.bench_function("ca_rebalance_only_k53_n9120", |b| {
+        b.iter(|| {
+            let mut trial = partition.clone();
+            metis_core::refine::lp::rebalance_to_ufactor(&g, &mut trial, 5);
+            trial
+        });
+    });
+}
+
+fn refine_and_project(
+    hierarchy: &CoarseningHierarchy,
+    initial: Partition,
+    refiner: &dyn Refiner,
+) -> Partition {
+    let depth = hierarchy.depth();
+    let mut current = initial;
+
+    for lev in (0..depth).rev() {
+        current = refiner.refine(&hierarchy.levels[lev + 1], current);
+        current = Partition::new(hierarchy.project_up(lev, current.assignment()), current.k())
+            .expect("projected partition remains structurally valid");
+    }
+
+    refiner.refine(&hierarchy.levels[0], current)
+}
+
 criterion_group!(
     benches,
     bench_vt_bisect,
@@ -130,5 +235,9 @@ criterion_group!(
     bench_ny_kway,
     bench_ca_kway,
     bench_ca_coarsen_only,
+    bench_ca_init_only,
+    bench_ca_projection_only,
+    bench_ca_refine_project_only,
+    bench_ca_rebalance_only,
 );
 criterion_main!(benches);

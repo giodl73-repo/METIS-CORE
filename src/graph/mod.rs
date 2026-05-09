@@ -15,6 +15,14 @@ impl CsrGraph {
     ///
     /// Callers outside this crate construct graphs through this method so
     /// malformed CSR input is rejected before partitioning starts.
+    ///
+    /// Required CSR contract:
+    ///
+    /// - `xadj.len() == n + 1` and `xadj[0] == 0`
+    /// - `xadj[n] == adjncy.len()`
+    /// - adjacency is undirected: every `v -> u` entry has a matching `u -> v`
+    /// - vertex and edge weights are positive
+    /// - the graph is connected
     pub fn new(
         xadj: Vec<u32>,
         adjncy: Vec<u32>,

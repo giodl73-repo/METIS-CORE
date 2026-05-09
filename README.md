@@ -54,6 +54,10 @@ let assignment = part_recursive(&xadj, &adjncy, &[], &[], 2, MetisParams::defaul
 // assignment: each vertex labeled 0 or 1
 ```
 
+CSR input must be exact and undirected: `xadj[n]` must equal `adjncy.len()`,
+each adjacency entry must have its reciprocal entry, weights must be positive,
+and the graph must be connected. Empty weight slices mean unit weights.
+
 For full control use `MetisPartitioner` directly:
 
 ```rust

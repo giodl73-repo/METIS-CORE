@@ -70,7 +70,10 @@ use metis_core::{
 };
 
 let g = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
-let params = MetisParams { coarsen_method: CoarseningMethod::Shem, ncuts: 3, ..Default::default() };
+let params = MetisParams::kway()
+    .with_coarsening_method(CoarseningMethod::Shem)
+    .with_ncuts(3);
+params.validate_for_k(k)?;
 let partition = MetisPartitioner::with_params(params, k).split(&g, k, Some(seed))?;
 partition.validate_for_graph(&g)?;
 ```

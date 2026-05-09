@@ -131,6 +131,9 @@ Deliverables:
   fields.
 - Done: `Partition` is now a result object with read-only accessors and
   `into_assignment()` for callers that need ownership of the assignment vector.
+- Done: `MetisParams` now has builder-style helpers and `validate_for_k`, so
+  callers can construct and preflight mode-specific options without relying on
+  ad hoc struct literals.
 - Done: `part_recursive` now forces recursive-bisection semantics and promotes
   default `ncuts` to the METIS pmetis-style value of 4, even when callers set
   unrelated options such as seed.

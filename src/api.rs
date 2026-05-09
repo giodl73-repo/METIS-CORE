@@ -212,6 +212,82 @@ impl MetisParams {
             ..Self::default()
         }
     }
+
+    /// Set the deterministic base seed used by partitioning trials.
+    pub fn with_seed(mut self, seed: u64) -> Self {
+        self.seed = Some(seed);
+        self
+    }
+
+    /// Clear the deterministic base seed so the call-site seed, or the crate
+    /// fallback seed, controls the run.
+    pub fn without_seed(mut self) -> Self {
+        self.seed = None;
+        self
+    }
+
+    /// Set the METIS-style imbalance tolerance in parts per thousand.
+    pub fn with_ufactor(mut self, ufactor: u32) -> Self {
+        self.ufactor = ufactor;
+        self
+    }
+
+    /// Set the number of independent trials. `0` is accepted and treated as
+    /// one trial during partitioning, matching the historical crate behavior.
+    pub fn with_ncuts(mut self, ncuts: u32) -> Self {
+        self.ncuts = ncuts;
+        self
+    }
+
+    /// Select the coarsening method.
+    pub fn with_coarsening_method(mut self, method: CoarseningMethod) -> Self {
+        self.coarsen_method = method;
+        self
+    }
+
+    /// Enable or disable FM contiguity checks and final contiguity repair.
+    pub fn with_contiguity(mut self, enabled: bool) -> Self {
+        self.contig_fm = enabled;
+        self
+    }
+
+    /// Enable or disable minimum-connectivity post-processing.
+    pub fn with_min_connectivity(mut self, enabled: bool) -> Self {
+        self.min_conn = enabled;
+        self
+    }
+
+    /// Set direct k-way target weights for exactly `k` parts.
+    ///
+    /// The vector must contain one finite, nonnegative entry per part and sum to
+    /// `1.0` within a small floating-point tolerance. Recursive bisection still
+    /// rejects target weights for `k > 2`; call [`Self::validate_for_k`] to check
+    /// that complete mode-specific contract before partitioning.
+    pub fn with_target_weights(
+        mut self,
+        k: u32,
+        tpwgts: impl Into<Vec<f32>>,
+    ) -> Result<Self, PartitionError> {
+        let tpwgts = tpwgts.into();
+        self.tpwgts = Some(validate_tpwgts(&tpwgts, k)?);
+        Ok(self)
+    }
+
+    /// Validate parameters that depend on the requested number of parts.
+    pub fn validate_for_k(&self, k: u32) -> Result<(), PartitionError> {
+        if k == 0 {
+            return Err(PartitionError::ZeroParts);
+        }
+        if let Some(tpwgts) = &self.tpwgts {
+            validate_tpwgts(tpwgts, k)?;
+            if self.use_recursive && k > 2 {
+                return Err(PartitionError::InvalidParams(
+                    "tpwgts is not supported with recursive bisection",
+                ));
+            }
+        }
+        Ok(())
+    }
 }
 
 pub struct RustMetisPartitioner<C, I, R> {
@@ -273,9 +349,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         weight_balanced(result.as_ref().unwrap(), g, k)
     ))]
     fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError> {
-        if k == 0 {
-            return Err(PartitionError::ZeroParts);
-        }
+        self.params.validate_for_k(k)?;
         if g.n() == 0 {
             return Err(PartitionError::EmptyGraph);
         }
@@ -285,12 +359,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         if k as usize > g.n() {
             return Err(PartitionError::TooManyParts { k, n: g.n() });
         }
-        let tpwgts = self
-            .params
-            .tpwgts
-            .as_deref()
-            .map(|weights| validate_tpwgts(weights, k))
-            .transpose()?;
+        let tpwgts = self.params.tpwgts.clone();
 
         let base_seed = self
             .params
@@ -301,11 +370,6 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         // Recursive bisection path: bisect into halves and recurse on each subgraph.
         // Mirrors METIS_PartGraphRecursive / MlevelRecursiveBisection.
         if self.params.use_recursive && k > 2 {
-            if tpwgts.is_some() {
-                return Err(PartitionError::InvalidParams(
-                    "tpwgts is not supported with recursive bisection",
-                ));
-            }
             use crate::init::grow::RecursiveBisect;
             let rb = RecursiveBisect {
                 niter: self.params.niter,
@@ -708,6 +772,52 @@ mod tests {
     fn metis_partitioner_new_uses_default_params() {
         let partitioner = MetisPartitioner::new(2);
         assert_eq!(partitioner.params(), &MetisParams::default());
+    }
+
+    #[test]
+    fn metis_params_builders_preserve_struct_literal_defaults() {
+        let params = MetisParams::kway()
+            .with_seed(7)
+            .with_ufactor(30)
+            .with_ncuts(4)
+            .with_coarsening_method(CoarseningMethod::MinDegree)
+            .with_contiguity(true)
+            .with_min_connectivity(true);
+
+        assert_eq!(params.seed, Some(7));
+        assert_eq!(params.ufactor, 30);
+        assert_eq!(params.ncuts, 4);
+        assert_eq!(params.coarsen_method, CoarseningMethod::MinDegree);
+        assert!(params.contig_fm);
+        assert!(params.min_conn);
+    }
+
+    #[test]
+    fn metis_params_with_target_weights_validates_for_k() {
+        let params = MetisParams::kway()
+            .with_target_weights(2, vec![0.75, 0.25])
+            .unwrap();
+
+        assert_eq!(params.tpwgts, Some(vec![0.75, 0.25]));
+        assert!(params.validate_for_k(2).is_ok());
+    }
+
+    #[test]
+    fn metis_params_with_target_weights_rejects_bad_shape() {
+        let result = MetisParams::kway().with_target_weights(3, vec![0.5, 0.5]);
+        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+    }
+
+    #[test]
+    fn metis_params_validate_for_k_rejects_recursive_target_weights() {
+        let params = MetisParams::recursive()
+            .with_target_weights(3, vec![0.5, 0.25, 0.25])
+            .unwrap();
+
+        assert!(matches!(
+            params.validate_for_k(3),
+            Err(PartitionError::InvalidParams(_))
+        ));
     }
 
     #[test]

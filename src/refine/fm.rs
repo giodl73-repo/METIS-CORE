@@ -203,6 +203,7 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool, ufactor:
     let n = state.graph.n();
     let mut locked = vec![false; n];
     let mut candidates: Vec<(u32, i32)> = Vec::new();
+    let mut vwgt_v = vec![0i64; ncon];
 
     while let Some((v, _gain)) = state.gain_table.pop_max() {
         let v = v as usize;
@@ -224,9 +225,9 @@ fn fm_pass(state: &mut FmState, best: &mut Checkpoint, contig_fm: bool, ufactor:
         }
 
         // Gather per-constraint weights for vertex v
-        let vwgt_v: Vec<i64> = (0..ncon)
-            .map(|c| state.graph.vwgt[v * ncon + c] as i64)
-            .collect();
+        for (c, weight) in vwgt_v.iter_mut().enumerate().take(ncon) {
+            *weight = state.graph.vwgt[v * ncon + c] as i64;
+        }
 
         let Some(to_part) = best_legal_destination(
             state,

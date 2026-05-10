@@ -471,13 +471,13 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             };
             let mut p = rb.partition_graph(g, k, base_seed)?;
             if self.params.contig_fm {
-                repair_contiguity(g, &mut p);
+                repair_contiguity(g, &mut p)?;
             }
             if self.params.min_conn {
                 use crate::refine::minconn::minimize_connectivity;
                 minimize_connectivity(g, &mut p, self.params.ufactor);
                 if self.params.contig_fm {
-                    repair_contiguity(g, &mut p);
+                    repair_contiguity(g, &mut p)?;
                 }
             }
             return Ok(p);
@@ -524,13 +524,13 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                     init_p,
                     self.params.contig_fm,
                 )
-                .refine_and_project(&self.refiner)
+                .refine_and_project(&self.refiner)?
                 .into_partition()
             } else {
                 Pipeline::new(hierarchy)
                     .with_contiguity_repair(self.params.contig_fm)
                     .initial_partition(&self.init, k, trial_seed)
-                    .refine_and_project(&self.refiner)
+                    .refine_and_project(&self.refiner)?
                     .into_partition()
             };
 
@@ -553,7 +553,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         // Final contiguity safety net when requested. METIS leaves this off by
         // default; forcing it after refinement can disrupt the achieved balance.
         if self.params.contig_fm {
-            repair_contiguity(g, &mut p);
+            repair_contiguity(g, &mut p)?;
         }
 
         // MinConn post-processing: reduce subdomain connectivity by iteratively
@@ -564,7 +564,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             if self.params.contig_fm {
                 // MinConn may break contiguity by moving boundary vertices without
                 // checking whether the source part remains connected.
-                repair_contiguity(g, &mut p);
+                repair_contiguity(g, &mut p)?;
             }
         }
 
@@ -648,7 +648,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 init_p,
                 self.params.contig_fm,
             );
-            let mut result = pipeline.refine_and_project(&self.refiner).into_partition();
+            let mut result = pipeline.refine_and_project(&self.refiner)?.into_partition();
 
             let cut = compute_cut(g, &result.assignment);
             let excess = balance_excess(g, &result, self.params.ufactor, Some(&tpwgts));

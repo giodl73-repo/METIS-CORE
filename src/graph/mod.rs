@@ -486,7 +486,8 @@ pub fn extract_subgraph(
 /// Using the largest component as "main" avoids the pathological case where a
 /// small low-index island is kept as "main" and a large correct piece gets
 /// spuriously reassigned (which can cascade and require many extra passes).
-pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
+pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> Result<usize, PartitionError> {
+    partition.validate_for_graph(g)?;
     let n = g.n();
     let mut reassigned = 0usize;
 
@@ -592,7 +593,7 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
             break;
         } // no further progress possible
     }
-    reassigned
+    Ok(reassigned)
 }
 
 #[cfg(test)]
@@ -926,7 +927,7 @@ mod tests {
             check_contiguity(&g, &p).is_err(),
             "pre-condition: must be non-contiguous"
         );
-        let moved = repair_contiguity(&g, &mut p);
+        let moved = repair_contiguity(&g, &mut p).unwrap();
         assert!(moved > 0, "must have moved at least one vertex");
         assert!(
             check_contiguity(&g, &p).is_ok(),
@@ -943,7 +944,7 @@ mod tests {
             tpwgts: None,
         };
         let orig = p.assignment.clone();
-        let moved = repair_contiguity(&g, &mut p);
+        let moved = repair_contiguity(&g, &mut p).unwrap();
         assert_eq!(
             moved, 0,
             "no vertices should move when partition is already contiguous"
@@ -959,8 +960,23 @@ mod tests {
             k: 1,
             tpwgts: None,
         };
-        let moved = repair_contiguity(&g, &mut p);
+        let moved = repair_contiguity(&g, &mut p).unwrap();
         assert_eq!(moved, 0, "k=1 is trivially contiguous — no repair needed");
+    }
+
+    #[test]
+    fn repair_contiguity_rejects_invalid_partition_without_panic() {
+        let g = path_graph(3);
+        let mut p = Partition {
+            assignment: vec![0, 1],
+            k: 2,
+            tpwgts: None,
+        };
+
+        assert!(matches!(
+            repair_contiguity(&g, &mut p),
+            Err(PartitionError::InvalidPartition(_))
+        ));
     }
 }
 

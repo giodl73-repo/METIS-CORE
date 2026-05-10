@@ -249,7 +249,7 @@ fn repair_contiguity_leaves_already_contiguous_unchanged() {
     let g = path_graph(8);
     let mut partition =
         Partition::new(vec![0, 0, 0, 0, 1, 1, 1, 1], 2).expect("partition is valid");
-    let reassigned = repair_contiguity(&g, &mut partition);
+    let reassigned = repair_contiguity(&g, &mut partition).unwrap();
     assert_eq!(
         reassigned, 0,
         "no reassignments needed for contiguous partition"
@@ -262,7 +262,7 @@ fn repair_contiguity_fixes_disconnected_assignment() {
     let g = path_graph(6);
     // Part 0 = {0, 5}, Part 1 = {1,2,3,4} — part 0 is disconnected
     let mut partition = Partition::new(vec![0, 1, 1, 1, 1, 0], 2).expect("partition is valid");
-    let _ = repair_contiguity(&g, &mut partition);
+    let _ = repair_contiguity(&g, &mut partition).unwrap();
     assert!(
         check_contiguity(&g, &partition).is_ok(),
         "repair_contiguity must restore contiguity"

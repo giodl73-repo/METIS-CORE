@@ -371,7 +371,7 @@ impl RecursiveBisect {
             k,
             tpwgts: None,
         };
-        repair_contiguity(g, &mut p);
+        repair_contiguity(g, &mut p)?;
         Ok(p)
     }
 }

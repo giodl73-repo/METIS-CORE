@@ -1,3 +1,4 @@
+use crate::error::PartitionError;
 use crate::graph::{repair_contiguity, Partition};
 use crate::init::InitialPartitioner;
 use crate::multilevel::hierarchy::CoarseningHierarchy;
@@ -72,14 +73,17 @@ impl Pipeline<NeedsRefinement> {
         }
     }
 
-    pub(crate) fn refine_and_project(self, refiner: &dyn Refiner) -> Pipeline<Complete> {
+    pub(crate) fn refine_and_project(
+        self,
+        refiner: &dyn Refiner,
+    ) -> Result<Pipeline<Complete>, PartitionError> {
         let depth = self.hierarchy.depth();
         let mut current_p = self.state.partition;
 
         // Repair contiguity of initial partition BEFORE first FM pass.
         // Mirrors METIS contig.c: EnsureConnectivity after initial partition.
         if self.repair_contiguity {
-            repair_contiguity(self.hierarchy.coarsest(), &mut current_p);
+            repair_contiguity(self.hierarchy.coarsest(), &mut current_p)?;
         }
 
         // Uncoarsen: refine at each coarser level, then project to finer.
@@ -98,19 +102,19 @@ impl Pipeline<NeedsRefinement> {
             // Repair contiguity after projection, BEFORE next FM pass.
             // FM operates on an already-connected partition at every level.
             if self.repair_contiguity {
-                repair_contiguity(&self.hierarchy.levels()[lev], &mut current_p);
+                repair_contiguity(&self.hierarchy.levels()[lev], &mut current_p)?;
             }
         }
         // Final refinement at original level (level 0)
         current_p = refiner.refine(&self.hierarchy.levels()[0], current_p);
 
-        Pipeline {
+        Ok(Pipeline {
             hierarchy: self.hierarchy,
             repair_contiguity: self.repair_contiguity,
             state: Complete {
                 partition: current_p,
             },
-        }
+        })
     }
 }
 
@@ -171,6 +175,7 @@ mod tests {
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 2, 42)
             .refine_and_project(&refiner)
+            .unwrap()
             .into_partition();
 
         assert_eq!(p.assignment.len(), 10);
@@ -200,6 +205,7 @@ mod tests {
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 4, 99)
             .refine_and_project(&refiner)
+            .unwrap()
             .into_partition();
 
         assert_eq!(p.assignment.len(), 100);
@@ -232,6 +238,7 @@ mod tests {
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 2, 0)
             .refine_and_project(&refiner)
+            .unwrap()
             .into_partition();
 
         assert_eq!(p.assignment.len(), 5);

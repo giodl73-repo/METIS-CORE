@@ -300,7 +300,7 @@ fn repair_contiguity_fixes_broken_partition() {
         check_contiguity(&g, &p).is_err(),
         "partition should be non-contiguous before repair"
     );
-    let reassigned = repair_contiguity(&g, &mut p);
+    let reassigned = repair_contiguity(&g, &mut p).unwrap();
     assert!(reassigned > 0, "repair should have moved vertices");
     assert!(
         check_contiguity(&g, &p).is_ok(),

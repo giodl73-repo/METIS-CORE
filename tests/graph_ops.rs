@@ -362,7 +362,7 @@ fn hierarchy_all_intermediate_levels_valid() {
         k: 2,
     };
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
-    for (i, level) in h.levels.iter().enumerate() {
+    for (i, level) in h.levels().iter().enumerate() {
         assert!(
             level.is_valid(),
             "hierarchy level {i} must be a valid CSR graph"

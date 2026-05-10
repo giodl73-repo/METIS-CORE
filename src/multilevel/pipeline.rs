@@ -22,7 +22,7 @@ pub struct Pipeline<S> {
 impl Pipeline<NeedsPartition> {
     pub fn new(h: CoarseningHierarchy) -> Self {
         debug_assert!(
-            h.cmaps.len() == h.levels.len().saturating_sub(1),
+            h.cmaps().len() == h.levels().len().saturating_sub(1),
             "CoarseningHierarchy invariant violated: cmaps.len() != levels.len()-1"
         );
         Self {
@@ -88,7 +88,12 @@ impl Pipeline<NeedsRefinement> {
         // We move from depth-1 down to 0 (finer levels).
         for lev in (0..depth).rev() {
             // Refine at the coarser level (lev+1)
-            current_p = refiner.refine(&self.hierarchy.levels[lev + 1], current_p);
+            current_p = refiner.refine(
+                self.hierarchy
+                    .level(lev + 1)
+                    .expect("valid hierarchy level"),
+                current_p,
+            );
             // Project down to the finer level (lev)
             let fine_assign = self.hierarchy.project_up(lev, &current_p.assignment);
             current_p = Partition {
@@ -99,11 +104,17 @@ impl Pipeline<NeedsRefinement> {
             // Repair contiguity after projection, BEFORE next FM pass.
             // FM operates on an already-connected partition at every level.
             if self.repair_contiguity {
-                repair_contiguity(&self.hierarchy.levels[lev], &mut current_p);
+                repair_contiguity(
+                    self.hierarchy.level(lev).expect("valid hierarchy level"),
+                    &mut current_p,
+                );
             }
         }
         // Final refinement at original level (level 0)
-        current_p = refiner.refine(&self.hierarchy.levels[0], current_p);
+        current_p = refiner.refine(
+            self.hierarchy.level(0).expect("valid hierarchy level"),
+            current_p,
+        );
 
         Pipeline {
             hierarchy: self.hierarchy,

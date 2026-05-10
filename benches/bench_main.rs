@@ -219,12 +219,12 @@ fn refine_and_project(
     let mut current = initial;
 
     for lev in (0..depth).rev() {
-        current = refiner.refine(&hierarchy.levels[lev + 1], current);
+        current = refiner.refine(hierarchy.level(lev + 1).expect("level exists"), current);
         current = Partition::new(hierarchy.project_up(lev, current.assignment()), current.k())
             .expect("projected partition remains structurally valid");
     }
 
-    refiner.refine(&hierarchy.levels[0], current)
+    refiner.refine(hierarchy.level(0).expect("level exists"), current)
 }
 
 criterion_group!(

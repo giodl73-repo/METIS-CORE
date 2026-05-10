@@ -7,8 +7,8 @@ pub const MAX_LEVELS: usize = 50;
 // ── arena ─────────────────────────────────────────────────────────────────
 
 pub struct CoarseningHierarchy {
-    pub levels: Vec<CsrGraph>, // [0] = original … [depth] = coarsest
-    pub cmaps: Vec<CoarseMap>, // cmaps[i] maps levels[i+1] → levels[i]
+    levels: Vec<CsrGraph>, // [0] = original … [depth] = coarsest
+    cmaps: Vec<CoarseMap>, // cmaps[i] maps levels[i+1] → levels[i]
 }
 
 impl CoarseningHierarchy {
@@ -47,6 +47,21 @@ impl CoarseningHierarchy {
     /// Return a reference to the coarsest (deepest) level.
     pub fn coarsest(&self) -> &CsrGraph {
         self.levels.last().unwrap()
+    }
+
+    /// Return all hierarchy levels, ordered from original graph to coarsest.
+    pub fn levels(&self) -> &[CsrGraph] {
+        &self.levels
+    }
+
+    /// Return a single hierarchy level.
+    pub fn level(&self, index: usize) -> Option<&CsrGraph> {
+        self.levels.get(index)
+    }
+
+    /// Return the projection maps between adjacent hierarchy levels.
+    pub fn cmaps(&self) -> &[CoarseMap] {
+        &self.cmaps
     }
 
     /// Number of coarsening steps performed (0 means no coarsening happened).
@@ -123,15 +138,15 @@ mod tests {
             k: 2,
         };
         let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
-        assert!(h.levels.len() >= 2, "should have at least 2 levels");
+        assert!(h.levels().len() >= 2, "should have at least 2 levels");
         assert!(
             h.coarsest().n() <= 40,
             "coarsest must satisfy should_stop threshold (<=40)"
         );
         assert!(h.coarsest().is_valid(), "coarsest graph must be valid");
         assert_eq!(
-            h.cmaps.len(),
-            h.levels.len() - 1,
+            h.cmaps().len(),
+            h.levels().len() - 1,
             "one cmap per coarsening step"
         );
     }
@@ -161,7 +176,7 @@ mod tests {
         let fine = h.project_up(depth - 1, &coarse_assign);
         assert_eq!(
             fine.len(),
-            h.levels[depth - 1].n(),
+            h.level(depth - 1).expect("level exists").n(),
             "projected partition must match finer level vertex count"
         );
         assert!(

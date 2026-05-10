@@ -180,3 +180,5 @@ Deliverables:
   malformed partitions without panicking.
 - Done: CI now gates formatting, debug tests, Linux release tests, clippy, docs,
   unsafe scan, packaging, Kani, and best-effort Prusti.
+- Done: CI unsafe scan ignores the crate-level `forbid(unsafe_code)` policy
+  attribute and scans for actual unsafe constructs.

@@ -38,7 +38,7 @@ jobs:
 
       - name: unsafe audit
         shell: bash
-        run: if grep -R "unsafe" src; then exit 1; fi
+        run: if grep -RInE '\bunsafe[[:space:]]*(\{|fn|impl|trait|extern)' src; then exit 1; fi
 
       - name: cargo package
         run: cargo package --no-verify

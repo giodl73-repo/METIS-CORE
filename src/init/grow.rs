@@ -275,12 +275,12 @@ mod tests {
 /// from `pmetis.c`.
 ///
 /// The recursion bottoms out at k == 1 (trivial) and k == 2 (single bisection).
-pub struct RecursiveBisect {
-    pub niter: u32,
-    pub ncuts: u32,
-    pub coarsen_to: u32,
-    pub ufactor: u32,
-    pub contig_fm: bool,
+pub(crate) struct RecursiveBisect {
+    pub(crate) niter: u32,
+    pub(crate) ncuts: u32,
+    pub(crate) coarsen_to: u32,
+    pub(crate) ufactor: u32,
+    pub(crate) contig_fm: bool,
 }
 
 impl Default for RecursiveBisect {
@@ -303,7 +303,7 @@ impl RecursiveBisect {
     /// 2. If k == 2: run the standard multilevel bisection pipeline.
     /// 3. Else: bisect into two parts, extract subgraphs, recurse on each half,
     ///    then merge — right part IDs are offset by `k_left`.
-    pub fn partition_graph(
+    pub(crate) fn partition_graph(
         &self,
         g: &CsrGraph,
         k: u32,

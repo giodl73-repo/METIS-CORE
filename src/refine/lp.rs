@@ -8,7 +8,7 @@ use crate::graph::{CsrGraph, Partition};
 /// keeps both the source and destination within `target ± epsilon`.
 ///
 /// Mirrors METIS `BalanceAndRefineLP` from `kmetis.c`.
-pub fn lp_balance(g: &CsrGraph, partition: &mut Partition, ufactor: u32, max_iter: u32) {
+pub(crate) fn lp_balance(g: &CsrGraph, partition: &mut Partition, ufactor: u32, max_iter: u32) {
     if max_iter == 0 {
         return;
     }

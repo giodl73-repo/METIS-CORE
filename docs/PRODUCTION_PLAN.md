@@ -169,6 +169,9 @@ Deliverables:
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.
+- Done: internal-only pipeline, recursive bisection, coarsening, boundary,
+  gain-table, LP, and min-connectivity helpers are crate-visible instead of
+  public API.
 - Done: `graph` and `error` source modules are private; their stable types and
   helpers are available from the crate root.
 - Done: advanced coarsener/refiner parameter structs use constructors and

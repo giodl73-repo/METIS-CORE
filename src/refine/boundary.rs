@@ -3,12 +3,12 @@ use crate::graph::{CsrGraph, Partition};
 /// Cache-friendly boundary set using a boolean array indexed by vertex ID.
 /// O(1) contains/insert/remove with sequential memory access.
 /// iter() is O(n) (scans full array) — acceptable since boundary is ~20% of n.
-pub struct BoundarySet {
+pub(crate) struct BoundarySet {
     inner: Vec<bool>,
 }
 
 impl BoundarySet {
-    pub fn from_partition(g: &CsrGraph, p: &Partition) -> Self {
+    pub(crate) fn from_partition(g: &CsrGraph, p: &Partition) -> Self {
         let n = g.n();
         let mut inner = vec![false; n];
         for (v, is_boundary) in inner.iter_mut().enumerate().take(n) {
@@ -28,15 +28,15 @@ impl BoundarySet {
         self.inner[v as usize]
     }
 
-    pub fn insert(&mut self, v: u32) {
+    pub(crate) fn insert(&mut self, v: u32) {
         self.inner[v as usize] = true;
     }
 
-    pub fn remove(&mut self, v: u32) {
+    pub(crate) fn remove(&mut self, v: u32) {
         self.inner[v as usize] = false;
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = u32> + '_ {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = u32> + '_ {
         self.inner
             .iter()
             .enumerate()

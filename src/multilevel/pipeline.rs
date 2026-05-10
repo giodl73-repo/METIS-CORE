@@ -5,24 +5,24 @@ use crate::refine::Refiner;
 
 // ── state markers ─────────────────────────────────────────────────────────
 
-pub struct NeedsPartition;
-pub struct NeedsRefinement {
+pub(crate) struct NeedsPartition;
+pub(crate) struct NeedsRefinement {
     partition: Partition,
 }
-pub struct Complete {
+pub(crate) struct Complete {
     partition: Partition,
 }
 
 // ── typestate pipeline ────────────────────────────────────────────────────
 
-pub struct Pipeline<S> {
+pub(crate) struct Pipeline<S> {
     hierarchy: CoarseningHierarchy,
     repair_contiguity: bool,
     state: S,
 }
 
 impl Pipeline<NeedsPartition> {
-    pub fn new(h: CoarseningHierarchy) -> Self {
+    pub(crate) fn new(h: CoarseningHierarchy) -> Self {
         debug_assert!(
             h.cmaps().len() == h.levels().len().saturating_sub(1),
             "CoarseningHierarchy invariant violated: cmaps.len() != levels.len()-1"
@@ -34,12 +34,12 @@ impl Pipeline<NeedsPartition> {
         }
     }
 
-    pub fn with_contiguity_repair(mut self, enabled: bool) -> Self {
+    pub(crate) fn with_contiguity_repair(mut self, enabled: bool) -> Self {
         self.repair_contiguity = enabled;
         self
     }
 
-    pub fn initial_partition(
+    pub(crate) fn initial_partition(
         self,
         init: &dyn InitialPartitioner,
         k: u32,
@@ -72,7 +72,7 @@ impl Pipeline<NeedsRefinement> {
         }
     }
 
-    pub fn refine_and_project(self, refiner: &dyn Refiner) -> Pipeline<Complete> {
+    pub(crate) fn refine_and_project(self, refiner: &dyn Refiner) -> Pipeline<Complete> {
         let depth = self.hierarchy.depth();
         let mut current_p = self.state.partition;
 
@@ -115,7 +115,7 @@ impl Pipeline<NeedsRefinement> {
 }
 
 impl Pipeline<Complete> {
-    pub fn into_partition(self) -> Partition {
+    pub(crate) fn into_partition(self) -> Partition {
         self.state.partition
     }
 }

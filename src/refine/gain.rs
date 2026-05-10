@@ -2,10 +2,10 @@
 ///
 /// Gains ∈ `[-max_gain, +max_gain]`. Uses offset indexing so all array
 /// indices are non-negative: `bucket_idx(gain) = gain + max_gain`.
-pub struct GainTable {
+pub(crate) struct GainTable {
     buckets: Vec<Vec<u32>>,
     position: Vec<Option<(i32, usize)>>,
-    pub max_gain: i32,
+    pub(crate) max_gain: i32,
     top_bucket: i32,
 }
 
@@ -107,7 +107,7 @@ mod kani_proofs {
 }
 
 impl GainTable {
-    pub fn new(n_vertices: usize, max_gain: i32) -> Self {
+    pub(crate) fn new(n_vertices: usize, max_gain: i32) -> Self {
         let size = (2 * max_gain + 1) as usize;
         Self {
             buckets: vec![Vec::new(); size],
@@ -121,7 +121,7 @@ impl GainTable {
         (gain + self.max_gain) as usize
     }
 
-    pub fn insert(&mut self, vertex: u32, gain: i32) {
+    pub(crate) fn insert(&mut self, vertex: u32, gain: i32) {
         let bi = self.bucket_idx(gain);
         let pos = self.buckets[bi].len();
         self.buckets[bi].push(vertex);
@@ -131,7 +131,7 @@ impl GainTable {
         }
     }
 
-    pub fn remove(&mut self, vertex: u32) {
+    pub(crate) fn remove(&mut self, vertex: u32) {
         if let Some((gain, pos)) = self.position[vertex as usize].take() {
             let bi = self.bucket_idx(gain);
             let last = self.buckets[bi].len() - 1;
@@ -144,12 +144,12 @@ impl GainTable {
         }
     }
 
-    pub fn update(&mut self, vertex: u32, new_gain: i32) {
+    pub(crate) fn update(&mut self, vertex: u32, new_gain: i32) {
         self.remove(vertex);
         self.insert(vertex, new_gain);
     }
 
-    pub fn peek_max(&self) -> Option<(u32, i32)> {
+    pub(crate) fn peek_max(&self) -> Option<(u32, i32)> {
         let mut g = self.top_bucket;
         while g >= -self.max_gain {
             let bi = self.bucket_idx(g);
@@ -161,7 +161,7 @@ impl GainTable {
         None
     }
 
-    pub fn pop_max(&mut self) -> Option<(u32, i32)> {
+    pub(crate) fn pop_max(&mut self) -> Option<(u32, i32)> {
         let (v, g) = self.peek_max()?;
         self.remove(v);
         self.top_bucket = g;
@@ -173,7 +173,7 @@ impl GainTable {
         self.peek_max().is_none()
     }
 
-    pub fn contains(&self, vertex: u32) -> bool {
+    pub(crate) fn contains(&self, vertex: u32) -> bool {
         self.position[vertex as usize].is_some()
     }
 }

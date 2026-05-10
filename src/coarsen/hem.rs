@@ -238,7 +238,7 @@ fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
 ///
 /// INVARIANT: `adjwgt: None` in → `adjwgt: None` out.
 /// Vertex weight accumulation uses i64 to prevent overflow on large graphs.
-pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, CoarseMap) {
+pub(crate) fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, CoarseMap) {
     let n = g.n();
     let ncon = g.ncon as usize;
 

@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 /// communication partners each part has. Respects balance tolerance defined
 /// by `ufactor` (units of 1/1000; the C METIS default is 30 for kway,
 /// meaning ±3% imbalance).
-pub fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
+pub(crate) fn minimize_connectivity(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
     let n = g.n();
     let k = partition.k as usize;
     if k <= 1 {

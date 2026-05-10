@@ -188,8 +188,8 @@ fn csr_is_valid_returns_true_for_well_formed_graph() {
 fn extract_subgraph_parts_cover_all_vertices() {
     let g = path_graph(6);
     let assignment: Vec<u32> = (0..6).map(|i| if i < 3 { 0 } else { 1 }).collect();
-    let (_, _, l2g0) = extract_subgraph(&g, &assignment, 0);
-    let (_, _, l2g1) = extract_subgraph(&g, &assignment, 1);
+    let (_, _, l2g0) = extract_subgraph(&g, &assignment, 0).unwrap();
+    let (_, _, l2g1) = extract_subgraph(&g, &assignment, 1).unwrap();
     assert_eq!(
         l2g0.len() + l2g1.len(),
         6,
@@ -201,7 +201,7 @@ fn extract_subgraph_parts_cover_all_vertices() {
 fn extract_subgraph_size_equals_part_population() {
     let g = path_graph(8);
     let assignment: Vec<u32> = (0..8).map(|i| if i < 5 { 0 } else { 1 }).collect();
-    let (sub, _, l2g) = extract_subgraph(&g, &assignment, 0);
+    let (sub, _, l2g) = extract_subgraph(&g, &assignment, 0).unwrap();
     assert_eq!(sub.n(), 5, "part 0 subgraph must have 5 vertices");
     assert_eq!(l2g.len(), 5, "local-to-global map must have 5 entries");
 }
@@ -210,7 +210,7 @@ fn extract_subgraph_size_equals_part_population() {
 fn extract_subgraph_adjncy_in_range() {
     let g = path_graph(6);
     let assignment: Vec<u32> = (0..6).map(|i| if i < 3 { 0 } else { 1 }).collect();
-    let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
+    let (sub, _, _) = extract_subgraph(&g, &assignment, 0).unwrap();
     for j in 0..sub.adjncy().len() {
         assert!(
             (sub.adjncy()[j] as usize) < sub.n(),

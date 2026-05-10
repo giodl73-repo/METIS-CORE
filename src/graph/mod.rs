@@ -412,9 +412,14 @@ pub fn extract_subgraph(
     g: &CsrGraph,
     assignment: &[u32],
     part: u32,
-) -> (CsrGraph, Vec<usize>, Vec<usize>) {
+) -> Result<(CsrGraph, Vec<usize>, Vec<usize>), PartitionError> {
     let n = g.n();
     let ncon = g.ncon as usize;
+    if assignment.len() != n {
+        return Err(PartitionError::InvalidPartition(
+            "assignment length must equal graph vertex count",
+        ));
+    }
 
     // Build vertex maps
     let mut global_to_local = vec![usize::MAX; n];
@@ -439,13 +444,17 @@ pub fn extract_subgraph(
         for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
             let u = g.adjncy[j] as usize;
             if assignment[u] == part {
-                adjncy.push(global_to_local[u] as u32);
+                adjncy.push(u32::try_from(global_to_local[u]).map_err(|_| {
+                    PartitionError::InvalidGraph("subgraph vertex count exceeds u32 range")
+                })?);
                 if let Some(ref aw) = g.adjwgt {
                     adjwgt.push(aw[j]);
                 }
             }
         }
-        xadj.push(adjncy.len() as u32);
+        xadj.push(u32::try_from(adjncy.len()).map_err(|_| {
+            PartitionError::InvalidGraph("subgraph adjacency length exceeds u32 range")
+        })?);
     }
 
     let sub = CsrGraph {
@@ -459,7 +468,7 @@ pub fn extract_subgraph(
             None
         },
     };
-    (sub, global_to_local, local_to_global)
+    Ok((sub, global_to_local, local_to_global))
 }
 
 /// Repair non-contiguous partitions by reassigning disconnected components
@@ -726,7 +735,7 @@ mod tests {
     fn extract_subgraph_contains_correct_vertices() {
         let g = path_graph(4);
         let assignment = [0u32, 0, 1, 1];
-        let (sub, _g2l, l2g) = extract_subgraph(&g, &assignment, 0);
+        let (sub, _g2l, l2g) = extract_subgraph(&g, &assignment, 0).unwrap();
         assert_eq!(
             l2g,
             vec![0, 1],
@@ -746,7 +755,7 @@ mod tests {
         let mut g = path_graph(4);
         g.adjwgt = Some(vec![3i32; g.adjncy.len()]);
         let assignment = [0u32, 0, 1, 1];
-        let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
+        let (sub, _, _) = extract_subgraph(&g, &assignment, 0).unwrap();
         assert!(sub.adjwgt.is_some());
         assert!(
             sub.adjwgt.as_ref().unwrap().iter().all(|&w| w == 3),
@@ -758,7 +767,7 @@ mod tests {
     fn extract_subgraph_unweighted_stays_unweighted() {
         let g = path_graph(4);
         let assignment = [0u32, 0, 1, 1];
-        let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
+        let (sub, _, _) = extract_subgraph(&g, &assignment, 0).unwrap();
         assert!(sub.adjwgt.is_none());
     }
 
@@ -766,7 +775,7 @@ mod tests {
     fn extract_subgraph_single_vertex_no_edges() {
         let g = path_graph(4);
         let assignment = [0u32, 1, 0, 0]; // vertex 1 is isolated in part 1
-        let (sub, _, l2g) = extract_subgraph(&g, &assignment, 1);
+        let (sub, _, l2g) = extract_subgraph(&g, &assignment, 1).unwrap();
         assert_eq!(l2g, vec![1]);
         assert_eq!(sub.n(), 1);
         assert_eq!(sub.adjncy.len(), 0, "isolated vertex has no internal edges");
@@ -778,11 +787,19 @@ mod tests {
         g.ncon = 2;
         g.vwgt = vec![1, 2, 3, 4, 5, 6, 7, 8];
         let assignment = [0u32, 0, 1, 1];
-        let (sub, _, _) = extract_subgraph(&g, &assignment, 0);
+        let (sub, _, _) = extract_subgraph(&g, &assignment, 0).unwrap();
         assert_eq!(sub.ncon, 2);
         assert_eq!(sub.vwgt.len(), 4, "2 vertices × 2 constraints");
         assert_eq!(&sub.vwgt[0..2], &[1, 2], "vertex 0 weights");
         assert_eq!(&sub.vwgt[2..4], &[3, 4], "vertex 1 weights");
+    }
+
+    #[test]
+    fn extract_subgraph_rejects_short_assignment() {
+        let g = path_graph(3);
+        let result = extract_subgraph(&g, &[0, 1], 0);
+
+        assert!(matches!(result, Err(PartitionError::InvalidPartition(_))));
     }
 
     // ── check_contiguity ───────────────────────────────────────────────────

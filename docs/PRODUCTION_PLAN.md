@@ -185,6 +185,8 @@ Deliverables:
   public `CoarseMap` construction rejects coarse counts outside `u32`.
 - Done: root METIS-style entry points now have explicit contract coverage for
   malformed CSR, empty graphs, zero parts, and too many parts.
+- Done: public `extract_subgraph` now returns `Result` and rejects malformed
+  assignments or subgraph CSR sizes instead of panicking/truncating.
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.

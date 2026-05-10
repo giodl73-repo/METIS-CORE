@@ -346,8 +346,8 @@ impl RecursiveBisect {
         let k_right = k - k_left;
 
         // Extract induced subgraph for each half.
-        let (left_g, _, l2g_left) = extract_subgraph(g, &bisection.assignment, 0);
-        let (right_g, _, l2g_right) = extract_subgraph(g, &bisection.assignment, 1);
+        let (left_g, _, l2g_left) = extract_subgraph(g, &bisection.assignment, 0)?;
+        let (right_g, _, l2g_right) = extract_subgraph(g, &bisection.assignment, 1)?;
 
         // Use distinct seeds for each half to avoid correlated partitions.
         let left_seed = seed.wrapping_add(0x9E3779B9_7F4A7C15);

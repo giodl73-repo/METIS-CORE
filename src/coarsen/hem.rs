@@ -270,14 +270,18 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
         neighbors.truncate(write);
     }
 
-    let mut xadj = vec![0u32];
-    let mut adjncy = Vec::new();
-    let mut adjwgt = Vec::new();
+    let coarse_edges: usize = cadj.iter().map(Vec::len).sum();
+    let mut xadj = Vec::with_capacity(cn + 1);
+    xadj.push(0u32);
+    let mut adjncy = Vec::with_capacity(coarse_edges);
+    let mut adjwgt = g.adjwgt.as_ref().map(|_| Vec::with_capacity(coarse_edges));
 
     for neighbors in &cadj {
         for &(cu, ew) in neighbors {
             adjncy.push(cu);
-            adjwgt.push(ew);
+            if let Some(weights) = &mut adjwgt {
+                weights.push(ew);
+            }
         }
         xadj.push(adjncy.len() as u32);
     }
@@ -288,11 +292,7 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
         ncon: g.ncon,
         vwgt: cvwgt_i32,
         // KEY: only preserve adjwgt if input had edge weights (NO || true)
-        adjwgt: if g.adjwgt.is_some() {
-            Some(adjwgt)
-        } else {
-            None
-        },
+        adjwgt,
     };
     (
         coarse,

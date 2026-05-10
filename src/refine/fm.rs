@@ -113,7 +113,7 @@ impl Refiner for FiducciaMattheyses {
 ///    subdomain if v was the only `from`-neighbour.
 ///
 /// Returns a positive value when the move decreases total volume (improvement).
-pub fn compute_volume_gain(
+pub(crate) fn compute_volume_gain(
     g: &CsrGraph,
     assignment: &[u32],
     v: usize,
@@ -442,31 +442,31 @@ fn best_legal_destination(
         .map(|(to, _)| to)
 }
 
-pub struct FmState<'g> {
-    pub graph: &'g CsrGraph,
-    pub assignment: Vec<u32>,
-    pub k: u32,
-    pub gain_table: GainTable,
-    pub boundary: BoundarySet,
+pub(crate) struct FmState<'g> {
+    pub(crate) graph: &'g CsrGraph,
+    pub(crate) assignment: Vec<u32>,
+    pub(crate) k: u32,
+    pub(crate) gain_table: GainTable,
+    pub(crate) boundary: BoundarySet,
     /// `pwgts[constraint][part]` = weight sum for constraint c in part p.
     /// For ncon=1, `pwgts[0][part]` is equivalent to the old single-constraint `pwgts[part]`.
-    pub pwgts: Vec<Vec<i64>>,
-    pub current_cut: i64,
+    pub(crate) pwgts: Vec<Vec<i64>>,
+    pub(crate) current_cut: i64,
     /// Per-part target weights (one f32 per part, summing to 1.0).
     /// `None` means equal weights: each part targets `total_wgt / k`.
-    pub tpwgts: Option<Vec<f32>>,
+    pub(crate) tpwgts: Option<Vec<f32>>,
     /// Objective function used for gain computation and move selection.
-    pub objective: ObjectiveType,
+    pub(crate) objective: ObjectiveType,
 }
 
 #[derive(Clone)]
-pub struct Checkpoint {
-    pub assignment: Vec<u32>,
-    pub cut: i64,
+pub(crate) struct Checkpoint {
+    pub(crate) assignment: Vec<u32>,
+    pub(crate) cut: i64,
 }
 
 impl<'g> FmState<'g> {
-    pub fn new(g: &'g CsrGraph, p: Partition, objective: ObjectiveType) -> Self {
+    pub(crate) fn new(g: &'g CsrGraph, p: Partition, objective: ObjectiveType) -> Self {
         let n = g.n();
         let k = p.k as usize;
         let ncon = g.ncon as usize;
@@ -528,7 +528,7 @@ impl<'g> FmState<'g> {
         state
     }
 
-    pub fn cut(&self) -> i64 {
+    pub(crate) fn cut(&self) -> i64 {
         let g = self.graph;
         let mut c = 0i64;
         for v in 0..g.n() {
@@ -542,14 +542,14 @@ impl<'g> FmState<'g> {
         c / 2 // each edge counted twice
     }
 
-    pub fn checkpoint(&self) -> Checkpoint {
+    pub(crate) fn checkpoint(&self) -> Checkpoint {
         Checkpoint {
             assignment: self.assignment.clone(),
             cut: self.current_cut,
         }
     }
 
-    pub fn restore(&mut self, cp: &Checkpoint) {
+    pub(crate) fn restore(&mut self, cp: &Checkpoint) {
         self.assignment = cp.assignment.clone();
         // tpwgts is preserved across restore — it is a property of the partition problem,
         // not the current state, and must survive all passes.
@@ -601,7 +601,7 @@ impl<'g> FmState<'g> {
 /// partitioning the destination must be a single part, so using total external
 /// degree across all neighboring parts overstates the true move gain.
 #[cfg(kani)]
-pub fn compute_gain(g: &CsrGraph, assignment: &[u32], v: usize) -> i32 {
+pub(crate) fn compute_gain(g: &CsrGraph, assignment: &[u32], v: usize) -> i32 {
     compute_cut_gain_with_buffer(g, assignment, v, &mut Vec::new())
 }
 
@@ -687,7 +687,13 @@ fn fill_volume_candidates(
 /// Best volume gain for vertex `v` moving away from `from_part` — scans all
 /// adjacent parts and returns the maximum `compute_volume_gain` across them.
 /// Returns 0 if v has no adjacent parts other than `from_part`.
-pub fn best_volume_gain(g: &CsrGraph, assignment: &[u32], v: usize, from_part: u32, k: u32) -> i32 {
+pub(crate) fn best_volume_gain(
+    g: &CsrGraph,
+    assignment: &[u32],
+    v: usize,
+    from_part: u32,
+    k: u32,
+) -> i32 {
     // Collect distinct adjacent parts (other than from_part)
     let mut adj_parts: Vec<u32> = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
         .map(|j| assignment[g.adjncy[j] as usize])

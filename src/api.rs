@@ -593,7 +593,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         if fracs.is_empty() {
             return Err(PartitionError::ZeroParts);
         }
-        let total_fracs: u32 = fracs.iter().sum();
+        let total_fracs: u64 = fracs.iter().map(|&frac| u64::from(frac)).sum();
         if total_fracs == 0 {
             return Err(PartitionError::ZeroParts);
         }
@@ -1005,6 +1005,17 @@ mod tests {
             Some(0),
         );
         assert!(matches!(p, Err(PartitionError::InvalidParams(_))));
+    }
+
+    #[test]
+    fn split_weighted_fraction_sum_does_not_overflow() {
+        let g = make_path_graph(2);
+        let p = MetisPartitioner::with_params(MetisParams::default(), 2)
+            .split_weighted(&g, &[u32::MAX, u32::MAX], Some(0))
+            .unwrap();
+
+        assert_eq!(p.assignment.len(), 2);
+        assert_eq!(p.k, 2);
     }
 
     /// Structural validity test for asymmetric fracs — both parts must be non-empty

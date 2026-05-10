@@ -181,6 +181,8 @@ Deliverables:
 - Done: coarse graph CSR construction now rejects vertex or adjacency counts
   that exceed the crate's `u32` index representation instead of truncating.
 - Done: seed-spreading retry limits now use saturating size arithmetic.
+- Done: public weighted-split fractions now sum in widened arithmetic, and
+  public `CoarseMap` construction rejects coarse counts outside `u32`.
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.

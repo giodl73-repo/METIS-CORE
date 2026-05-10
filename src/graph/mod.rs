@@ -300,6 +300,11 @@ impl CoarseMap {
                 "coarse map length must equal fine vertex count",
             ));
         }
+        if coarse_n > u32::MAX as usize {
+            return Err(PartitionError::InvalidGraph(
+                "coarse vertex count exceeds u32 range",
+            ));
+        }
         if coarse_n == 0 && fine_n > 0 {
             return Err(PartitionError::InvalidGraph(
                 "non-empty coarse map must target at least one coarse vertex",
@@ -870,6 +875,12 @@ mod tests {
         assert!(matches!(
             CoarseMap::new(vec![0, 0], 2, 2),
             Err(PartitionError::InvalidGraph(_))
+        ));
+        assert!(matches!(
+            CoarseMap::new(Vec::new(), 0, u32::MAX as usize + 1),
+            Err(PartitionError::InvalidGraph(
+                "coarse vertex count exceeds u32 range"
+            ))
         ));
     }
 

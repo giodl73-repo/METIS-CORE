@@ -70,7 +70,8 @@ Deliverables:
   overweight parts instead of only the most overweight source part.
 - Done: recursive bisection rejects `tpwgts` until asymmetric recursive targets
   are implemented.
-- Ensure post-rebalance does not destroy cut unnecessarily.
+- Done: post-rebalance minimizes cut damage by selecting the lowest-penalty
+  legal boundary move across all overweight parts.
 
 ## Phase 4: Cut Quality
 
@@ -109,11 +110,26 @@ Goal: make speed regressions visible.
 
 Checks:
 
-- Benchmark before and after each algorithmic change.
+- Done: benchmark before and after each algorithmic change.
 - Done: separate CA benchmark coverage for coarsening, init, projection,
   refinement/projection, and final rebalance timing.
-- Track allocations where practical.
-- Keep full k-way benchmarks for realistic sizes.
+- Done: scratch buffers in final rebalance are reused across move selection
+  iterations to avoid repeated allocation.
+- Done: full k-way benchmarks cover VT/PA/TX/NY/CA-sized synthetic grids.
+
+Current baseline from `cargo bench` after the final API and balance scrub:
+
+- `vt_bisect_k1_n255`: about `80 us`
+- `pa_kway_k17_n5256`: about `7.0 ms`
+- `tx_kway_k38_n5256`: about `7.6 ms`
+- `ny_kway_k26_n4900`: about `6.7 ms`
+- `ca_kway_k53_n9120`: about `15.2 ms`
+- `ca_coarsen_only_n9120`: about `2.8 ms`
+- `ca_init_only_k53_n9120`: about `770 us`
+- `ca_projection_only_k53_n9120`: about `6.3 us`
+- `ca_refine_project_only_k53_n9120`: about `9.3 ms`
+- `ca_rebalance_only_k53_n9120`: about `8.6 ms` on the deliberately
+  imbalanced rebalance fixture.
 
 ## Phase 6: Release Hardening
 

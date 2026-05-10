@@ -109,8 +109,20 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
         pwgts[partition.assignment[v] as usize] += g.vwgt[v] as i64;
     }
 
+    let mut seen_parts = vec![0u32; k];
+    let mut adjacent_parts = Vec::new();
+    let mut visit_mark = 1u32;
+
     for _ in 0..g.n().saturating_mul(k) {
-        let Some((from, v, to)) = best_rebalance_move(g, partition, &pwgts, max_wgt) else {
+        let Some((from, v, to)) = best_rebalance_move(
+            g,
+            partition,
+            &pwgts,
+            max_wgt,
+            &mut seen_parts,
+            &mut adjacent_parts,
+            &mut visit_mark,
+        ) else {
             break;
         };
 
@@ -126,11 +138,11 @@ fn best_rebalance_move(
     partition: &Partition,
     pwgts: &[i64],
     max_wgt: i64,
+    seen_parts: &mut [u32],
+    adjacent_parts: &mut Vec<usize>,
+    visit_mark: &mut u32,
 ) -> Option<(usize, usize, usize)> {
     let k = partition.k as usize;
-    let mut seen_parts = vec![0u32; k];
-    let mut adjacent_parts = Vec::new();
-    let mut visit_mark = 1u32;
     let mut best: Option<(i64, usize, usize, usize)> = None;
 
     for from in 0..k {
@@ -148,19 +160,19 @@ fn best_rebalance_move(
 
             for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
                 let to = partition.assignment[g.adjncy[j] as usize] as usize;
-                if to == from || seen_parts[to] == visit_mark {
+                if to == from || seen_parts[to] == *visit_mark {
                     continue;
                 }
-                seen_parts[to] = visit_mark;
+                seen_parts[to] = *visit_mark;
                 adjacent_parts.push(to);
             }
-            visit_mark = visit_mark.wrapping_add(1);
-            if visit_mark == 0 {
+            *visit_mark = visit_mark.wrapping_add(1);
+            if *visit_mark == 0 {
                 seen_parts.fill(0);
-                visit_mark = 1;
+                *visit_mark = 1;
             }
 
-            for &to in &adjacent_parts {
+            for &to in adjacent_parts.iter() {
                 if pwgts[to] + v_wgt > max_wgt {
                     continue;
                 }
@@ -477,8 +489,20 @@ mod tests {
         };
         let partition = Partition::new(vec![0, 0, 0, 1, 1, 1, 0, 1, 2], 3).unwrap();
         let pwgts = vec![4, 4, 1];
+        let mut seen_parts = vec![0u32; 3];
+        let mut adjacent_parts = Vec::new();
+        let mut visit_mark = 1u32;
 
-        let candidate = best_rebalance_move(&g, &partition, &pwgts, 3).unwrap();
+        let candidate = best_rebalance_move(
+            &g,
+            &partition,
+            &pwgts,
+            3,
+            &mut seen_parts,
+            &mut adjacent_parts,
+            &mut visit_mark,
+        )
+        .unwrap();
         assert_eq!(candidate, (1, 3, 2));
     }
 }

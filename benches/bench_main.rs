@@ -185,7 +185,7 @@ fn bench_ca_rebalance_only(c: &mut Criterion) {
     c.bench_function("ca_rebalance_only_k53_n9120", |b| {
         b.iter(|| {
             let mut trial = partition.clone();
-            rebalance_to_ufactor(&g, &mut trial, 5);
+            rebalance_to_ufactor(&g, &mut trial, 5).expect("rebalance should succeed");
             trial
         });
     });

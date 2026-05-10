@@ -1,3 +1,4 @@
+use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 
 /// Label-propagation balance refinement.
@@ -93,10 +94,17 @@ fn balance_targets(total_wgt: i64, k: usize, tpwgts: Option<&[f32]>) -> Vec<i64>
 /// vertex without exceeding their own limit. Among legal moves it chooses the
 /// smallest edge-cut penalty across all overweight parts, with deterministic
 /// tie-breakers on source part and vertex id.
-pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
+pub fn rebalance_to_ufactor(
+    g: &CsrGraph,
+    partition: &mut Partition,
+    ufactor: u32,
+) -> Result<(), PartitionError> {
+    g.validate()?;
+    partition.validate_for_graph(g)?;
+
     let k = partition.k as usize;
     if k <= 1 || g.n() == 0 {
-        return;
+        return Ok(());
     }
 
     let total_wgt: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
@@ -131,6 +139,8 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
         pwgts[from] -= v_wgt;
         pwgts[to] += v_wgt;
     }
+
+    Ok(())
 }
 
 fn best_rebalance_move(
@@ -459,13 +469,24 @@ mod tests {
         let g = path_graph(3);
         let mut p = Partition::new(vec![0, 0, 1], 3).unwrap();
 
-        rebalance_to_ufactor(&g, &mut p, 0);
+        rebalance_to_ufactor(&g, &mut p, 0).unwrap();
 
         assert_eq!(
             p.assignment(),
             &[0, 0, 1],
             "rebalance must not move vertices into non-adjacent empty parts"
         );
+    }
+
+    #[test]
+    fn rebalance_rejects_partition_with_wrong_length() {
+        let g = path_graph(3);
+        let mut p = Partition::new(vec![0, 1], 2).unwrap();
+
+        assert!(matches!(
+            rebalance_to_ufactor(&g, &mut p, 0),
+            Err(PartitionError::InvalidPartition(_))
+        ));
     }
 
     #[test]

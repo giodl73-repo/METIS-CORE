@@ -535,7 +535,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             };
 
             if tpwgts.is_none() {
-                crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor);
+                crate::refine::lp::rebalance_to_ufactor(g, &mut p, self.params.ufactor)?;
             }
             let cut = compute_cut(g, &p.assignment);
             let excess = balance_excess(g, &p, self.params.ufactor, tpwgts.as_deref());

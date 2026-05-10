@@ -6,7 +6,7 @@ Multilevel graph partitioning — sometimes called the METIS algorithm after Kar
 
 ---
 
-## What it does
+## What It Does
 
 Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices into *k* balanced parts while minimizing the edge cut between parts. Two entry points:
 
@@ -18,7 +18,13 @@ pipeline.
 
 ---
 
-## The algorithm
+Both functions accept METIS-style CSR slices and return a part assignment vector.
+For callers that want a validated graph object, reusable partitioner, or access
+to part metadata, use `CsrGraph` and `MetisPartitioner`.
+
+---
+
+## Algorithm
 
 Three phases:
 
@@ -41,40 +47,119 @@ SHEM also follows the C implementation's important behavior: when edge weights a
 
 ---
 
-## Usage
+## Install
 
 ```toml
 [dependencies]
 metis-core = { git = "https://github.com/giodl73-repo/METIS-CORE.git" }
 ```
 
+This crate is not published to crates.io yet; repository metadata intentionally
+blocks accidental publishing until release policy is decided.
+
+---
+
+## Usage
+
+METIS-style entry point:
+
 ```rust
 use metis_core::{part_recursive, MetisParams};
 
-let xadj   = vec![0u32, 2, 4, 6, 8];    // 4-vertex cycle
-let adjncy = vec![1, 3, 0, 2, 1, 3, 0, 2];
-let assignment = part_recursive(&xadj, &adjncy, &[], &[], 2, MetisParams::default())?;
-// assignment: each vertex labeled 0 or 1
+fn main() -> Result<(), metis_core::PartitionError> {
+    let xadj = vec![0u32, 2, 4, 6, 8]; // 4-vertex cycle
+    let adjncy = vec![1, 3, 0, 2, 1, 3, 0, 2];
+
+    let assignment = part_recursive(&xadj, &adjncy, &[], &[], 2, MetisParams::recursive())?;
+    assert_eq!(assignment.len(), 4);
+    assert!(assignment.iter().all(|&part| part < 2));
+
+    Ok(())
+}
 ```
 
 CSR input must be exact and undirected: `xadj[n]` must equal `adjncy.len()`,
 each adjacency entry must have its reciprocal entry, weights must be positive,
 and the graph must be connected. Empty weight slices mean unit weights.
 
-For full control use `MetisPartitioner` directly:
+Reusable partitioner with validated graph and result objects:
 
 ```rust
 use metis_core::{
     CoarseningMethod, CsrGraph, MetisParams, MetisPartitioner, Partitioner,
 };
 
-let g = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
-let params = MetisParams::kway()
-    .with_coarsening_method(CoarseningMethod::Shem)
-    .with_ncuts(3);
-params.validate_for_k(k)?;
-let partition = MetisPartitioner::with_params(params, k).split(&g, k, Some(seed))?;
-partition.validate_for_graph(&g)?;
+fn main() -> Result<(), metis_core::PartitionError> {
+    let xadj = vec![0u32, 2, 4, 6, 8];
+    let adjncy = vec![1, 3, 0, 2, 1, 3, 0, 2];
+    let graph = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
+
+    let k = 2;
+    let params = MetisParams::kway()
+        .with_coarsening_method(CoarseningMethod::Shem)
+        .with_ncuts(3)
+        .with_seed(7);
+    params.validate_for_k(k)?;
+
+    let partition = MetisPartitioner::with_params(params, k).split(&graph, k, None)?;
+    partition.validate_for_graph(&graph)?;
+
+    assert_eq!(partition.assignment().len(), graph.n());
+    assert_eq!(partition.k(), k);
+
+    Ok(())
+}
+```
+
+Unequal target weights are supported for direct k-way partitioning:
+
+```rust
+use metis_core::{CsrGraph, MetisParams, MetisPartitioner, Partitioner};
+
+fn main() -> Result<(), metis_core::PartitionError> {
+    let xadj = vec![0u32, 1, 3, 5, 6];
+    let adjncy = vec![1, 0, 2, 1, 3, 2];
+    let graph = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
+
+    let params = MetisParams::kway().with_target_weights(2, [0.25, 0.75])?;
+    let partition = MetisPartitioner::with_params(params, 2).split(&graph, 2, Some(11))?;
+    partition.validate_for_graph(&graph)?;
+
+    Ok(())
+}
+```
+
+Advanced components are available for experiments and proofs. These extension
+traits are fallible, so custom code can report invalid inputs or internal
+contract failures without panicking:
+
+```rust
+use metis_core::advanced::{
+    Coarsener, FiducciaMattheyses, GrowBisect, InitialPartitioner, Refiner,
+    SortedHeavyEdgeMatchWithParams,
+};
+use metis_core::{CsrGraph, ObjectiveType};
+
+fn main() -> Result<(), metis_core::PartitionError> {
+    let graph = CsrGraph::from_csr(
+        &[0, 2, 4, 6, 8],
+        &[1, 3, 0, 2, 1, 3, 0, 2],
+        &[],
+        &[],
+    )?;
+
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
+    let (coarse, _map) = coarsener.coarsen(&graph)?;
+
+    let init = GrowBisect;
+    let initial = init.partition(&coarse, 2, 7)?;
+
+    let refiner = FiducciaMattheyses::new(10, false, ObjectiveType::Cut, 10, 5);
+    let refined = refiner.refine(&coarse, initial)?;
+    refined.validate_for_graph(&coarse)?;
+
+    Ok(())
+}
 ```
 
 ---
@@ -85,6 +170,7 @@ partition.validate_for_graph(&g)?;
 |----------|--------|
 | **No C dependency** | Pure Rust; no `cc`, no external library, no `bindgen` |
 | **Deterministic** | Seeded RNG (`rand_pcg`) — same seed, same partition |
+| **Validated API** | Public graph, partition, coarsening, initialization, refinement, repair, and subgraph operations return `Result` |
 | **Verified** | Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs in `verify/prusti/` |
 | **Tested** | Unit, integration, proptest invariant, graph-file, and benchmark smoke suites |
 | **No unsafe** | All partitioning code is safe Rust |
@@ -105,6 +191,16 @@ Lower-level algorithm components for experiments and proofs live under
 `metis_core::advanced`, including coarseners, initial partitioners, refiners,
 and `CoarseningHierarchy`. Source modules are private so the implementation can
 evolve without exposing the internal file layout as API.
+
+Public construction is intentionally validated:
+
+- Use `CsrGraph::from_csr` or `CsrGraph::new` instead of struct literals.
+- Use `Partition::new`, `partition.assignment()`, `partition.k()`, and
+  `partition.into_assignment()` instead of direct field access.
+- Use `MetisParams` builder methods and `validate_for_k` instead of struct
+  literals.
+- Implement `advanced::Coarsener`, `advanced::InitialPartitioner`, or
+  `advanced::Refiner` with `Result` returns so pipeline failures stay explicit.
 
 ---
 

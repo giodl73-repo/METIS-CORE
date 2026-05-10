@@ -38,19 +38,28 @@
 //! # Advanced API Example
 //!
 //! ```
-//! use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatchWithParams};
-//! use metis_core::CsrGraph;
+//! use metis_core::advanced::{
+//!     Coarsener, FiducciaMattheyses, GrowBisect, InitialPartitioner, Refiner,
+//!     SortedHeavyEdgeMatchWithParams,
+//! };
+//! use metis_core::{CsrGraph, ObjectiveType};
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let graph = CsrGraph::from_csr(
-//!     &[0, 1, 3, 4],
-//!     &[1, 0, 2, 1],
+//!     &[0, 2, 4, 6, 8],
+//!     &[1, 3, 0, 2, 1, 3, 0, 2],
 //!     &[],
 //!     &[],
 //! )?;
 //! let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
-//! let (_coarse, cmap) = coarsener.coarsen(&graph)?;
+//! let (coarse, cmap) = coarsener.coarsen(&graph)?;
 //! assert_eq!(cmap.len(), graph.n());
+//!
+//! let init = GrowBisect;
+//! let initial = init.partition(&coarse, 2, 7)?;
+//! let refiner = FiducciaMattheyses::new(10, false, ObjectiveType::Cut, 10, 5);
+//! let refined = refiner.refine(&coarse, initial)?;
+//! refined.validate_for_graph(&coarse)?;
 //! # Ok(())
 //! # }
 //! ```

@@ -1,4 +1,19 @@
 #![allow(clippy::items_after_test_module)]
+//! Pure Rust multilevel graph partitioning with METIS-style entry points.
+//!
+//! The stable API is exported from the crate root. Use [`part_recursive`] for
+//! METIS `PartGraphRecursive`-style recursive bisection, [`part_kway`] for
+//! direct k-way partitioning, or [`MetisPartitioner`] with [`MetisParams`] when
+//! you need explicit control over seeds, coarsening, balance, and refinement
+//! options.
+//!
+//! Graphs are represented by validated CSR input through [`CsrGraph`]. Results
+//! are returned as [`Partition`] values or raw assignment vectors from the
+//! METIS-compatible helper functions.
+//!
+//! Lower-level algorithm components are available under [`advanced`] for
+//! experiments, benchmarks, and proof work. Source modules are private so the
+//! implementation can evolve without exposing file layout as API.
 
 pub mod advanced;
 mod api;

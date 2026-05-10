@@ -535,7 +535,7 @@ fn spread_seeds(g: &CsrGraph, k: usize, seed: u64) -> Vec<usize> {
     let (mut seeds, mut selected) = spread_seed_prefix(g, k, first_seed);
 
     let mut attempts = 0usize;
-    while seeds.len() < k && seeds.len() < n && attempts < n * 10 {
+    while seeds.len() < k && seeds.len() < n && attempts < n.saturating_mul(10) {
         let v = rng.gen_range(0..n);
         if !selected[v] {
             seeds.push(v);

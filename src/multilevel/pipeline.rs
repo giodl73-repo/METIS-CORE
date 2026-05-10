@@ -2,21 +2,23 @@ use crate::graph::{repair_contiguity, Partition};
 use crate::init::InitialPartitioner;
 use crate::multilevel::hierarchy::CoarseningHierarchy;
 use crate::refine::Refiner;
-use std::marker::PhantomData;
 
 // ── state markers ─────────────────────────────────────────────────────────
 
 pub struct NeedsPartition;
-pub struct NeedsRefinement;
-pub struct Complete;
+pub struct NeedsRefinement {
+    partition: Partition,
+}
+pub struct Complete {
+    partition: Partition,
+}
 
 // ── typestate pipeline ────────────────────────────────────────────────────
 
 pub struct Pipeline<S> {
     hierarchy: CoarseningHierarchy,
-    partition: Option<Partition>,
     repair_contiguity: bool,
-    _state: PhantomData<S>,
+    state: S,
 }
 
 impl Pipeline<NeedsPartition> {
@@ -27,9 +29,8 @@ impl Pipeline<NeedsPartition> {
         );
         Self {
             hierarchy: h,
-            partition: None,
             repair_contiguity: true,
-            _state: PhantomData,
+            state: NeedsPartition,
         }
     }
 
@@ -52,9 +53,8 @@ impl Pipeline<NeedsPartition> {
         let p = init.partition(self.hierarchy.coarsest(), k, seed);
         Pipeline {
             hierarchy: self.hierarchy,
-            partition: Some(p),
             repair_contiguity: self.repair_contiguity,
-            _state: PhantomData,
+            state: NeedsRefinement { partition: p },
         }
     }
 }
@@ -67,15 +67,14 @@ impl Pipeline<NeedsRefinement> {
     ) -> Self {
         Self {
             hierarchy,
-            partition: Some(partition),
             repair_contiguity,
-            _state: PhantomData,
+            state: NeedsRefinement { partition },
         }
     }
 
-    pub fn refine_and_project(mut self, refiner: &dyn Refiner) -> Pipeline<Complete> {
+    pub fn refine_and_project(self, refiner: &dyn Refiner) -> Pipeline<Complete> {
         let depth = self.hierarchy.depth();
-        let mut current_p = self.partition.take().unwrap();
+        let mut current_p = self.state.partition;
 
         // Repair contiguity of initial partition BEFORE first FM pass.
         // Mirrors METIS contig.c: EnsureConnectivity after initial partition.
@@ -88,12 +87,7 @@ impl Pipeline<NeedsRefinement> {
         // We move from depth-1 down to 0 (finer levels).
         for lev in (0..depth).rev() {
             // Refine at the coarser level (lev+1)
-            current_p = refiner.refine(
-                self.hierarchy
-                    .level(lev + 1)
-                    .expect("valid hierarchy level"),
-                current_p,
-            );
+            current_p = refiner.refine(&self.hierarchy.levels()[lev + 1], current_p);
             // Project down to the finer level (lev)
             let fine_assign = self.hierarchy.project_up(lev, &current_p.assignment);
             current_p = Partition {
@@ -104,30 +98,25 @@ impl Pipeline<NeedsRefinement> {
             // Repair contiguity after projection, BEFORE next FM pass.
             // FM operates on an already-connected partition at every level.
             if self.repair_contiguity {
-                repair_contiguity(
-                    self.hierarchy.level(lev).expect("valid hierarchy level"),
-                    &mut current_p,
-                );
+                repair_contiguity(&self.hierarchy.levels()[lev], &mut current_p);
             }
         }
         // Final refinement at original level (level 0)
-        current_p = refiner.refine(
-            self.hierarchy.level(0).expect("valid hierarchy level"),
-            current_p,
-        );
+        current_p = refiner.refine(&self.hierarchy.levels()[0], current_p);
 
         Pipeline {
             hierarchy: self.hierarchy,
-            partition: Some(current_p),
             repair_contiguity: self.repair_contiguity,
-            _state: PhantomData,
+            state: Complete {
+                partition: current_p,
+            },
         }
     }
 }
 
 impl Pipeline<Complete> {
     pub fn into_partition(self) -> Partition {
-        self.partition.unwrap()
+        self.state.partition
     }
 }
 

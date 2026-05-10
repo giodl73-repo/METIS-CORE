@@ -138,6 +138,8 @@ Deliverables:
   ad hoc struct literals.
 - Done: multilevel `Pipeline` typestate internals are no longer publicly
   forgeable; target-weight seeding now goes through a crate-private constructor.
+- Done: multilevel `Pipeline` typestate now carries stage-specific state instead
+  of an optional partition slot.
 - Done: `CoarseningHierarchy` storage is private with read-only accessors, so
   callers cannot construct inconsistent hierarchy levels/maps.
 - Done: `MetisParams` fields are crate-private with public builders/getters, so

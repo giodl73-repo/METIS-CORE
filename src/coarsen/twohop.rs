@@ -1,5 +1,6 @@
 use crate::coarsen::hem::build_coarse_graph;
 use crate::coarsen::Coarsener;
+use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 
 /// Two-hop heavy-edge matching coarsener.
@@ -32,7 +33,7 @@ impl TwoHopMatchWithParams {
 }
 
 impl Coarsener for TwoHopMatch {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         twohop_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -41,7 +42,7 @@ impl Coarsener for TwoHopMatch {
 }
 
 impl Coarsener for TwoHopMatchWithParams {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         twohop_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -49,7 +50,7 @@ impl Coarsener for TwoHopMatchWithParams {
     }
 }
 
-fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> (CsrGraph, CoarseMap) {
+fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
 
     // Bucket-sort vertices by max incident edge weight descending (SHEM order)
@@ -185,7 +186,7 @@ mod tests {
 
     #[test]
     fn twohop_valid_output_path() {
-        let (c, cmap) = TwoHopMatch.coarsen(&path_graph(10));
+        let (c, cmap) = TwoHopMatch.coarsen(&path_graph(10)).unwrap();
         assert!(c.is_valid());
         assert_eq!(cmap.len(), 10);
         assert!(c.n() < 10);
@@ -194,7 +195,7 @@ mod tests {
     #[test]
     fn twohop_valid_output_star() {
         let g = star_graph(8);
-        let (c, cmap) = TwoHopMatch.coarsen(&g);
+        let (c, cmap) = TwoHopMatch.coarsen(&g).unwrap();
         assert!(c.is_valid());
         assert_eq!(cmap.len(), 8);
         assert!(c.n() < 8);
@@ -202,13 +203,13 @@ mod tests {
 
     #[test]
     fn twohop_unweighted_stays_unweighted() {
-        let (c, _) = TwoHopMatch.coarsen(&path_graph(8));
+        let (c, _) = TwoHopMatch.coarsen(&path_graph(8)).unwrap();
         assert!(c.adjwgt.is_none());
     }
 
     #[test]
     fn twohop_strictly_smaller() {
-        let (c, _) = TwoHopMatch.coarsen(&path_graph(12));
+        let (c, _) = TwoHopMatch.coarsen(&path_graph(12)).unwrap();
         assert!(c.n() < 12);
     }
 
@@ -224,7 +225,7 @@ mod tests {
         // TwoHop can match leaves with each other via 2-hop through hub.
         // Result should be <= 4 coarse vertices (vs up to 7 with SHEM).
         let g = star_graph(8);
-        let (c, _) = TwoHopMatch.coarsen(&g);
+        let (c, _) = TwoHopMatch.coarsen(&g).unwrap();
         // 2-hop should do better than leaving all unmatched leaves solo
         assert!(
             c.n() <= 5,

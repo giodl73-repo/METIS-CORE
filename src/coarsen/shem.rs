@@ -1,5 +1,6 @@
 use crate::coarsen::hem::{build_coarse_graph, HeavyEdgeMatch};
 use crate::coarsen::Coarsener;
+use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 
 // ── structs ────────────────────────────────────────────────────────────────
@@ -68,7 +69,7 @@ mod tests {
 
     #[test]
     fn shem_coarsened_valid() {
-        let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4());
+        let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4()).unwrap();
         assert!(c.is_valid(), "coarsened graph must be valid");
         assert_eq!(cmap.len(), 4);
         assert!(c.n() < 4);
@@ -78,7 +79,7 @@ mod tests {
     fn shem_prefers_heavy_edges() {
         // 0 --10-- 1 --1-- 2 --10-- 3
         // SHEM processes heaviest edges first: 0&1 matched, 2&3 matched
-        let (_, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4());
+        let (_, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4()).unwrap();
         assert_eq!(
             cmap.as_slice()[0],
             cmap.as_slice()[1],
@@ -93,7 +94,7 @@ mod tests {
 
     #[test]
     fn shem_unweighted_valid() {
-        let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&path5());
+        let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(c.is_valid());
         assert_eq!(cmap.len(), 5);
         assert!(c.n() < 5);
@@ -101,7 +102,7 @@ mod tests {
 
     #[test]
     fn shem_unweighted_stays_unweighted() {
-        let (c, _) = SortedHeavyEdgeMatch.coarsen(&path5());
+        let (c, _) = SortedHeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(
             c.adjwgt.is_none(),
             "unweighted input must produce unweighted output"
@@ -110,7 +111,7 @@ mod tests {
 
     #[test]
     fn shem_weighted_stays_weighted() {
-        let (c, _) = SortedHeavyEdgeMatch.coarsen(&weighted_path4());
+        let (c, _) = SortedHeavyEdgeMatch.coarsen(&weighted_path4()).unwrap();
         assert!(
             c.adjwgt.is_some(),
             "weighted input must produce weighted output"
@@ -128,7 +129,7 @@ mod tests {
 
     #[test]
     fn shem_strictly_smaller() {
-        let (c, _) = SortedHeavyEdgeMatch.coarsen(&path5());
+        let (c, _) = SortedHeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(c.n() < path5().n());
     }
 }
@@ -168,7 +169,7 @@ mod kani_proofs {
         let n: usize = kani::any_where(|&n: &usize| n >= 2 && n <= 16);
         let g = kani_path(n);
         kani::assume(g.is_valid());
-        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
         // These must hold without panic
         assert!(cmap.len() == g.n());
         assert!(coarsened.n() < g.n());
@@ -178,7 +179,7 @@ mod kani_proofs {
 // ── implementation ────────────────────────────────────────────────────────
 
 impl Coarsener for SortedHeavyEdgeMatch {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         shem_coarsen(g)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -187,7 +188,7 @@ impl Coarsener for SortedHeavyEdgeMatch {
 }
 
 impl Coarsener for SortedHeavyEdgeMatchWithParams {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         shem_coarsen(g)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -207,7 +208,7 @@ impl Coarsener for SortedHeavyEdgeMatchWithParams {
 ///
 /// This guarantees high-weight edges are considered first, yielding better
 /// coarsening quality than plain HEM without sacrificing linear complexity.
-fn shem_coarsen(g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+fn shem_coarsen(g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
 
     // C METIS falls back from SHEM to random matching when edge weights are

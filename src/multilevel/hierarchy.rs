@@ -30,7 +30,10 @@ impl CoarseningHierarchy {
             if current.n() <= 1 {
                 break;
             }
-            let (coarsened, cmap) = coarsener.coarsen(current);
+            let (coarsened, cmap) = coarsener.coarsen(current)?;
+            if !coarsened.is_valid() {
+                return Err(PartitionError::InvalidGraph("coarsened graph is invalid"));
+            }
             cmaps.push(cmap);
             levels.push(coarsened);
         }
@@ -113,7 +116,7 @@ struct NeverStops;
 
 #[cfg(test)]
 impl Coarsener for NeverStops {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         // Delegate to SHEM so the graph actually shrinks (avoids infinite loop),
         // but should_stop always returns false so we hit CoarseningStalled.
         crate::coarsen::shem::SortedHeavyEdgeMatch.coarsen(g)

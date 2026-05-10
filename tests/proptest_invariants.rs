@@ -54,7 +54,7 @@ fn arb_path(max_n: usize) -> impl Strategy<Value = CsrGraph> {
 proptest! {
     #[test]
     fn coarsen_preserves_validity(g in arb_path(32)) {
-        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
         prop_assert!(coarsened.is_valid(),
             "coarsened graph must satisfy is_valid()");
         prop_assert_eq!(cmap.len(), g.n(),
@@ -65,7 +65,7 @@ proptest! {
 
     #[test]
     fn coarsen_cmap_targets_in_range(g in arb_path(32)) {
-        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
         for &t in cmap.as_slice() {
             prop_assert!((t as usize) < coarsened.n(),
                 "cmap target {} out of range (coarsened n={})", t, coarsened.n());
@@ -74,7 +74,7 @@ proptest! {
 
     #[test]
     fn coarsen_grid_preserves_validity(g in arb_grid(4, 4)) {
-        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
         prop_assert!(coarsened.is_valid(),
             "coarsened grid must satisfy is_valid()");
         prop_assert_eq!(cmap.len(), g.n());
@@ -83,7 +83,7 @@ proptest! {
 
     #[test]
     fn coarsen_grid_cmap_surjective(g in arb_grid(4, 4)) {
-        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
         // Every coarse vertex must be the target of at least one fine vertex (surjectivity)
         let mut covered = vec![false; coarsened.n()];
         for &t in cmap.as_slice() { covered[t as usize] = true; }

@@ -709,12 +709,12 @@ mod tests {
 
     struct AlwaysTrivial;
     impl Coarsener for AlwaysTrivial {
-        fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+        fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
             let cmap = (0..g.n() as u32).collect();
-            (
+            Ok((
                 g.clone(),
                 CoarseMap::new(cmap, g.n(), g.n()).expect("identity coarse map is valid"),
-            )
+            ))
         }
         fn should_stop(&self, _: &CsrGraph) -> bool {
             true

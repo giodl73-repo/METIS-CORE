@@ -275,7 +275,7 @@ fn repair_contiguity_fixes_disconnected_assignment() {
 fn hem_preserves_adjwgt_none_invariant() {
     let g = path_graph(8);
     assert!(g.adjwgt().is_none());
-    let (c, _) = HeavyEdgeMatch.coarsen(&g);
+    let (c, _) = HeavyEdgeMatch.coarsen(&g).unwrap();
     assert!(
         c.adjwgt().is_none(),
         "unweighted in -> unweighted out (HEM)"
@@ -285,7 +285,7 @@ fn hem_preserves_adjwgt_none_invariant() {
 #[test]
 fn shem_coarsens_weighted_graph_to_fewer_vertices() {
     let g = weighted_path_4();
-    let (c, _) = SortedHeavyEdgeMatch.coarsen(&g);
+    let (c, _) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
     assert!(c.n() < 4, "SHEM must reduce vertex count of 4-vertex graph");
     assert!(c.is_valid(), "SHEM output must be a valid graph");
 }
@@ -294,7 +294,7 @@ fn shem_coarsens_weighted_graph_to_fewer_vertices() {
 fn coarsening_preserves_total_vertex_weight() {
     let g = path_graph(6);
     let total_original: i32 = g.vwgt().iter().sum();
-    let (c, _) = SortedHeavyEdgeMatch.coarsen(&g);
+    let (c, _) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
     let total_coarse: i32 = c.vwgt().iter().sum();
     assert_eq!(
         total_original, total_coarse,
@@ -305,7 +305,7 @@ fn coarsening_preserves_total_vertex_weight() {
 #[test]
 fn heavy_edge_match_path4_builds_valid_smaller_graph() {
     let g = path_graph(4);
-    let (c, cmap) = HeavyEdgeMatch.coarsen(&g);
+    let (c, cmap) = HeavyEdgeMatch.coarsen(&g).unwrap();
     assert!(c.n() < g.n(), "path4 should coarsen to fewer vertices");
     assert_eq!(cmap.len(), 4, "cmap must retain length of original graph");
     assert!(c.is_valid(), "coarse graph must be valid");

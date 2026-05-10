@@ -49,7 +49,7 @@
 //!     &[],
 //! )?;
 //! let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
-//! let (_coarse, cmap) = coarsener.coarsen(&graph);
+//! let (_coarse, cmap) = coarsener.coarsen(&graph)?;
 //! assert_eq!(cmap.len(), graph.n());
 //! # Ok(())
 //! # }

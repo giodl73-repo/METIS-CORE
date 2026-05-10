@@ -1,5 +1,6 @@
 use crate::coarsen::hem::build_coarse_graph;
 use crate::coarsen::Coarsener;
+use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 
 // ── struct ─────────────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ mod tests {
     #[test]
     fn mindegree_valid_output() {
         let g = star_graph(6);
-        let (c, cmap) = MinDegreeMatch.coarsen(&g);
+        let (c, cmap) = MinDegreeMatch.coarsen(&g).unwrap();
         assert!(c.is_valid(), "coarsened graph must be valid");
         assert_eq!(cmap.len(), 6);
         assert!(c.n() < 6);
@@ -72,20 +73,20 @@ mod tests {
 
     #[test]
     fn mindegree_unweighted_stays_unweighted() {
-        let (c, _) = MinDegreeMatch.coarsen(&path5());
+        let (c, _) = MinDegreeMatch.coarsen(&path5()).unwrap();
         assert!(c.adjwgt.is_none());
     }
 
     #[test]
     fn mindegree_cmap_targets_in_range() {
         let g = star_graph(6);
-        let (c, cmap) = MinDegreeMatch.coarsen(&g);
+        let (c, cmap) = MinDegreeMatch.coarsen(&g).unwrap();
         assert!(cmap.as_slice().iter().all(|&t| (t as usize) < c.n()));
     }
 
     #[test]
     fn mindegree_strictly_smaller() {
-        let (c, _) = MinDegreeMatch.coarsen(&path5());
+        let (c, _) = MinDegreeMatch.coarsen(&path5()).unwrap();
         assert!(c.n() < 5);
     }
 }
@@ -93,7 +94,7 @@ mod tests {
 // ── implementation ────────────────────────────────────────────────────────
 
 impl Coarsener for MinDegreeMatch {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         mindegree_coarsen(g)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -101,7 +102,7 @@ impl Coarsener for MinDegreeMatch {
     }
 }
 
-fn mindegree_coarsen(g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+fn mindegree_coarsen(g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
 
     // Compute degrees

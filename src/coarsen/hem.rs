@@ -1,4 +1,5 @@
 use crate::coarsen::Coarsener;
+use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 use rand::Rng;
 use rand::SeedableRng;
@@ -72,7 +73,7 @@ mod tests {
 
     #[test]
     fn coarsened_strictly_smaller() {
-        let (c, _) = HeavyEdgeMatch.coarsen(&path5());
+        let (c, _) = HeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(c.n() < 5, "coarsened graph must be strictly smaller");
         assert!(c.is_valid(), "coarsened graph must be valid");
     }
@@ -80,14 +81,14 @@ mod tests {
     #[test]
     fn cmap_length_equals_fine_n() {
         let g = path5();
-        let (_, cmap) = HeavyEdgeMatch.coarsen(&g);
+        let (_, cmap) = HeavyEdgeMatch.coarsen(&g).unwrap();
         assert_eq!(cmap.len(), g.n());
     }
 
     #[test]
     fn cmap_targets_in_range() {
         let g = path5();
-        let (c, cmap) = HeavyEdgeMatch.coarsen(&g);
+        let (c, cmap) = HeavyEdgeMatch.coarsen(&g).unwrap();
         assert!(cmap.as_slice().iter().all(|&t| (t as usize) < c.n()));
     }
 
@@ -107,14 +108,14 @@ mod tests {
 
     #[test]
     fn triangle_coarsens_to_at_most_2() {
-        let (c, _) = HeavyEdgeMatch.coarsen(&triangle());
+        let (c, _) = HeavyEdgeMatch.coarsen(&triangle()).unwrap();
         assert!(c.n() <= 2, "triangle must coarsen to <= 2 vertices");
         assert!(c.is_valid());
     }
 
     #[test]
     fn unweighted_stays_unweighted() {
-        let (c, _) = HeavyEdgeMatch.coarsen(&path5());
+        let (c, _) = HeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(
             c.adjwgt.is_none(),
             "unweighted input must produce unweighted coarsened graph"
@@ -125,11 +126,37 @@ mod tests {
     fn weighted_stays_weighted() {
         let mut g = path5();
         g.adjwgt = Some(vec![1i32; g.adjncy.len()]);
-        let (c, _) = HeavyEdgeMatch.coarsen(&g);
+        let (c, _) = HeavyEdgeMatch.coarsen(&g).unwrap();
         assert!(
             c.adjwgt.is_some(),
             "weighted input must produce weighted coarsened graph"
         );
+    }
+
+    #[test]
+    fn coarsening_reports_vertex_weight_overflow() {
+        let mut g = path_graph(2);
+        g.vwgt = vec![i32::MAX, 1];
+
+        let result = HeavyEdgeMatch.coarsen(&g);
+
+        assert!(matches!(result, Err(PartitionError::WeightOverflow)));
+    }
+
+    #[test]
+    fn coarsening_reports_edge_weight_overflow() {
+        let g = CsrGraph {
+            xadj: vec![0, 1, 2, 4],
+            adjncy: vec![2, 2, 0, 1],
+            ncon: 1,
+            vwgt: vec![1, 1, 1],
+            adjwgt: Some(vec![i32::MAX; 4]),
+        };
+        let cmap = vec![0, 0, 1];
+
+        let result = build_coarse_graph(&g, &cmap, 2);
+
+        assert!(matches!(result, Err(PartitionError::WeightOverflow)));
     }
 }
 
@@ -167,7 +194,7 @@ mod kani_proofs {
         let n: usize = kani::any_where(|&n: &usize| n >= 2 && n <= 16);
         let g = kani_path(n);
         kani::assume(g.is_valid());
-        let (coarsened, cmap) = HeavyEdgeMatch.coarsen(&g);
+        let (coarsened, cmap) = HeavyEdgeMatch.coarsen(&g).unwrap();
         assert!(cmap.len() == g.n());
         assert!(coarsened.n() < g.n());
     }
@@ -176,7 +203,7 @@ mod kani_proofs {
 // ── implementation ────────────────────────────────────────────────────────
 
 impl Coarsener for HeavyEdgeMatch {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         hem_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -185,7 +212,7 @@ impl Coarsener for HeavyEdgeMatch {
 }
 
 impl Coarsener for HeavyEdgeMatchWithParams {
-    fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
+    fn coarsen(&self, g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         hem_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
@@ -194,7 +221,7 @@ impl Coarsener for HeavyEdgeMatchWithParams {
     }
 }
 
-fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
+fn hem_coarsen(g: &CsrGraph, seed: u64) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
     let mut rng = Pcg64::seed_from_u64(seed);
     let mut matched = vec![false; n];
@@ -238,7 +265,11 @@ fn hem_coarsen(g: &CsrGraph, seed: u64) -> (CsrGraph, CoarseMap) {
 ///
 /// INVARIANT: `adjwgt: None` in → `adjwgt: None` out.
 /// Vertex weight accumulation uses i64 to prevent overflow on large graphs.
-pub(crate) fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, CoarseMap) {
+pub(crate) fn build_coarse_graph(
+    g: &CsrGraph,
+    cmap: &[u32],
+    cn: usize,
+) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
     let ncon = g.ncon as usize;
 
@@ -250,7 +281,10 @@ pub(crate) fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrG
             cvwgt[cv * ncon + c] += g.vwgt[v * ncon + c] as i64;
         }
     }
-    let cvwgt_i32: Vec<i32> = cvwgt.iter().map(|&w| w as i32).collect();
+    let cvwgt_i32: Vec<i32> = cvwgt
+        .iter()
+        .map(|&w| i32::try_from(w).map_err(|_| PartitionError::WeightOverflow))
+        .collect::<Result<_, _>>()?;
 
     // Build coarse adjacency using Vec + sort + dedup (cache-friendly, no HashMap allocs)
     let mut cadj: Vec<Vec<(u32, i32)>> = vec![Vec::new(); cn];
@@ -272,7 +306,10 @@ pub(crate) fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrG
         let mut write = 0usize;
         for read in 0..neighbors.len() {
             if write > 0 && neighbors[write - 1].0 == neighbors[read].0 {
-                neighbors[write - 1].1 += neighbors[read].1;
+                neighbors[write - 1].1 = neighbors[write - 1]
+                    .1
+                    .checked_add(neighbors[read].1)
+                    .ok_or(PartitionError::WeightOverflow)?;
             } else {
                 neighbors[write] = neighbors[read];
                 write += 1;
@@ -305,5 +342,5 @@ pub(crate) fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrG
         // KEY: only preserve adjwgt if input had edge weights (NO || true)
         adjwgt,
     };
-    (coarse, CoarseMap::from_validated(cmap.to_vec()))
+    Ok((coarse, CoarseMap::from_validated(cmap.to_vec())))
 }

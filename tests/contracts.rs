@@ -181,7 +181,7 @@ fn coarsening_terminates_path255() {
         if coarsener.should_stop(&current) {
             return;
         }
-        let (next, _) = coarsener.coarsen(&current);
+        let (next, _) = coarsener.coarsen(&current).unwrap();
         assert!(next.is_valid(), "invalid at level {level}");
         assert!(next.n() < current.n(), "did not shrink at level {level}");
         current = next;

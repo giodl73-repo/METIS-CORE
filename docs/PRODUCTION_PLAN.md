@@ -64,6 +64,8 @@ Deliverables:
   partition requests back toward equal weights.
 - Done: direct k-way `split` now validates and applies `MetisParams::tpwgts`
   instead of silently ignoring it.
+- Done: direct target weights and split-weight fractions now reject zero-weight
+  parts instead of accepting impossible partition targets.
 - Done: recursive bisection rejects `tpwgts` until asymmetric recursive targets
   are implemented.
 - Ensure post-rebalance does not destroy cut unnecessarily.

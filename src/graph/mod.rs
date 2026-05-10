@@ -261,10 +261,10 @@ impl Partition {
             }
             if tpwgts
                 .iter()
-                .any(|&weight| !weight.is_finite() || weight < 0.0)
+                .any(|&weight| !weight.is_finite() || weight <= 0.0)
             {
                 return Err(PartitionError::InvalidPartition(
-                    "tpwgts entries must be finite and nonnegative",
+                    "tpwgts entries must be finite and positive",
                 ));
             }
             let sum: f32 = tpwgts.iter().sum();

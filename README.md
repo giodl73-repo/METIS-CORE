@@ -30,7 +30,7 @@ Optional extensions:
 
 - **Multi-cut (`ncuts`)** — run multiple independent trials, return the best cut.
 - **Target weights (`tpwgts`)** — direct k-way partitioning can target unequal
-  part weights when the vector has one nonnegative entry per part and sums to
+  part weights when the vector has one positive entry per part and sums to
   `1.0`.
 - **Contiguity enforcement (`contig_fm`)** — skip FM moves that would disconnect a part and repair projected partitions.
 - **Minimum-connectivity refinement** — post-processing pass minimizes inter-part adjacency counts.

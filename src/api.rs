@@ -101,10 +101,10 @@ fn validate_tpwgts(tpwgts: &[f32], k: u32) -> Result<Vec<f32>, PartitionError> {
     }
     if tpwgts
         .iter()
-        .any(|&weight| !weight.is_finite() || weight < 0.0)
+        .any(|&weight| !weight.is_finite() || weight <= 0.0)
     {
         return Err(PartitionError::InvalidParams(
-            "tpwgts entries must be finite and nonnegative",
+            "tpwgts entries must be finite and positive",
         ));
     }
     let sum: f32 = tpwgts.iter().sum();
@@ -298,7 +298,7 @@ impl MetisParams {
 
     /// Set direct k-way target weights for exactly `k` parts.
     ///
-    /// The vector must contain one finite, nonnegative entry per part and sum to
+    /// The vector must contain one finite, positive entry per part and sum to
     /// `1.0` within a small floating-point tolerance. Recursive bisection still
     /// rejects target weights for `k > 2`; call [`Self::validate_for_k`] to check
     /// that complete mode-specific contract before partitioning.
@@ -582,6 +582,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
     /// # Errors
     ///
     /// * [`PartitionError::ZeroParts`] — `fracs` is empty or all entries are zero.
+    /// * [`PartitionError::InvalidParams`] — any individual fraction is zero.
     /// * Propagates all errors from the coarsening/initial-partition/refinement pipeline.
     fn split_weighted(
         &self,
@@ -595,6 +596,11 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
         let total_fracs: u32 = fracs.iter().sum();
         if total_fracs == 0 {
             return Err(PartitionError::ZeroParts);
+        }
+        if fracs.contains(&0) {
+            return Err(PartitionError::InvalidParams(
+                "fracs entries must be positive",
+            ));
         }
         let k = fracs.len() as u32;
 
@@ -900,6 +906,12 @@ mod tests {
     }
 
     #[test]
+    fn metis_params_with_target_weights_rejects_zero_weight() {
+        let result = MetisParams::kway().with_target_weights(2, vec![1.0, 0.0]);
+        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+    }
+
+    #[test]
     fn metis_params_validate_for_k_rejects_recursive_target_weights() {
         let params = MetisParams::recursive()
             .with_target_weights(3, vec![0.5, 0.25, 0.25])
@@ -982,6 +994,17 @@ mod tests {
             Some(0),
         );
         assert!(matches!(p, Err(crate::error::PartitionError::ZeroParts)));
+    }
+
+    #[test]
+    fn split_weighted_zero_frac_errors() {
+        let g = make_path_graph(10);
+        let p = MetisPartitioner::with_params(MetisParams::default(), 2).split_weighted(
+            &g,
+            &[1u32, 0u32],
+            Some(0),
+        );
+        assert!(matches!(p, Err(PartitionError::InvalidParams(_))));
     }
 
     /// Structural validity test for asymmetric fracs — both parts must be non-empty

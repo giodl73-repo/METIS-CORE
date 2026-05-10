@@ -39,6 +39,9 @@ Status:
 
 - Done: optional `gpmetis` discovery through environment variables, known local
   paths, and `PATH`.
+- Done: graph-file fixture tests now discover the peer C METIS `graphs/`
+  corpus, so local runs exercise real `4elt`, `test.mgraph`, `copter2`, and
+  `mdual` data instead of silently skipping them.
 - Done: quality envelopes for synthetic grids, `4elt.graph`, and `test.mgraph`.
 - Done: public CSR validation now requires exact undirected adjacency and
   symmetric edge weights, matching METIS graph semantics.

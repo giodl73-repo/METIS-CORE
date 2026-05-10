@@ -38,6 +38,7 @@
 //!   fmt=010 ncon=2    — TWO vertex weights per line prefix (e.g. test.mgraph)
 
 use metis_core::{check_contiguity, CsrGraph, MetisParams, MetisPartitioner, Partitioner};
+use std::path::PathBuf;
 
 // ── .graph parser ─────────────────────────────────────────────────────────────
 
@@ -136,17 +137,40 @@ fn load_graph(path: &str) -> Option<CsrGraph> {
     CsrGraph::new(xadj, adjncy, 1, vwgt_primary, adjwgt).ok()
 }
 
-/// Graphs directory path: sibling of the rust/ crate directory.
+/// Graphs directory path: peer C METIS checkout, explicit env override, or
+/// the historical in-tree layout.
 ///
-/// On disk layout:
+/// Preferred local layout:
 /// ```text
 /// C:\src\metis\
-///   rust\        ← CARGO_MANIFEST_DIR
-///   graphs\      ← returned path
+///   graphs\
+/// C:\src\metis-core\  ← CARGO_MANIFEST_DIR
 /// ```
 fn graphs_dir() -> String {
-    let manifest = env!("CARGO_MANIFEST_DIR");
-    format!("{manifest}/../graphs")
+    for key in ["METIS_CORE_GRAPHS", "METIS_GRAPHS"] {
+        if let Ok(path) = std::env::var(key) {
+            let path = PathBuf::from(path);
+            if path.is_dir() {
+                return path.to_string_lossy().into_owned();
+            }
+        }
+    }
+
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for dir in [
+        manifest.join("../metis/graphs"),
+        manifest.join("../graphs"),
+        PathBuf::from(r"C:\src\metis\graphs"),
+    ] {
+        if dir.is_dir() {
+            return dir.to_string_lossy().into_owned();
+        }
+    }
+
+    manifest
+        .join("../metis/graphs")
+        .to_string_lossy()
+        .into_owned()
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -183,7 +207,6 @@ fn max_imbalance_ratio(assignment: &[u32], k: u32) -> f64 {
 ///   - correct length
 ///   - all part IDs in `0..k`
 ///   - every part non-empty
-///   - every part is a connected subgraph
 fn assert_structural_invariants(g: &CsrGraph, assignment: &[u32], k: u32, label: &str) {
     assert_eq!(
         assignment.len(),
@@ -200,6 +223,9 @@ fn assert_structural_invariants(g: &CsrGraph, assignment: &[u32], k: u32, label:
             "{label}: part {part} is missing (empty part)"
         );
     }
+}
+
+fn assert_contiguous_partition(g: &CsrGraph, assignment: &[u32], k: u32, label: &str) {
     let p = metis_core::Partition::new(assignment.to_vec(), k).expect("partition is valid");
     assert!(
         check_contiguity(g, &p).is_ok(),
@@ -312,7 +338,8 @@ fn test_4elt_k8() {
 }
 
 /// Compares contig_fm=true vs contig_fm=false on 4elt k=8 using the same seed.
-/// Reports cut and imbalance for both modes; both must pass structural invariants.
+/// Reports cut and imbalance for both modes. Only contig_fm=true is expected to
+/// guarantee connected parts, matching METIS-compatible defaults.
 #[test]
 fn test_4elt_k8_contig_fm_comparison() {
     let path = format!("{}/4elt.graph", graphs_dir());
@@ -333,6 +360,7 @@ fn test_4elt_k8_contig_fm_comparison() {
 
     assert_structural_invariants(&g, p_on.assignment(), 8, "4elt k=8 contig_fm=true");
     assert_structural_invariants(&g, p_off.assignment(), 8, "4elt k=8 contig_fm=false");
+    assert_contiguous_partition(&g, p_on.assignment(), 8, "4elt k=8 contig_fm=true");
 
     let cut_on = edge_cut(&g, p_on.assignment());
     let cut_off = edge_cut(&g, p_off.assignment());

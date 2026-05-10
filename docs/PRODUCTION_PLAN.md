@@ -135,6 +135,8 @@ Deliverables:
 - Done: `MetisParams` now has builder-style helpers and `validate_for_k`, so
   callers can construct and preflight mode-specific options without relying on
   ad hoc struct literals.
+- Done: multilevel `Pipeline` typestate internals are no longer publicly
+  forgeable; target-weight seeding now goes through a crate-private constructor.
 - Done: `part_recursive` now forces recursive-bisection semantics and promotes
   default `ncuts` to the METIS pmetis-style value of 4, even when callers set
   unrelated options such as seed.

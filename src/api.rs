@@ -428,14 +428,11 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             let mut p = if let Some(weights) = &tpwgts {
                 let mut init_p = self.init.partition(hierarchy.coarsest(), k, trial_seed);
                 init_p.tpwgts = Some(weights.clone());
-                crate::multilevel::pipeline::Pipeline {
+                crate::multilevel::pipeline::Pipeline::from_initial_partition(
                     hierarchy,
-                    partition: Some(init_p),
-                    repair_contiguity: self.params.contig_fm,
-                    _state: std::marker::PhantomData::<
-                        crate::multilevel::pipeline::NeedsRefinement,
-                    >,
-                }
+                    init_p,
+                    self.params.contig_fm,
+                )
                 .refine_and_project(&self.refiner)
                 .into_partition()
             } else {
@@ -549,12 +546,11 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 p
             };
 
-            let pipeline = crate::multilevel::pipeline::Pipeline {
+            let pipeline = crate::multilevel::pipeline::Pipeline::from_initial_partition(
                 hierarchy,
-                partition: Some(init_p),
-                repair_contiguity: self.params.contig_fm,
-                _state: std::marker::PhantomData::<crate::multilevel::pipeline::NeedsRefinement>,
-            };
+                init_p,
+                self.params.contig_fm,
+            );
             let mut result = pipeline.refine_and_project(&self.refiner).into_partition();
 
             let cut = compute_cut(g, &result.assignment);

@@ -6,22 +6,17 @@ use std::marker::PhantomData;
 
 // ── state markers ─────────────────────────────────────────────────────────
 
-pub struct NeedsPartition {
-    pub levels_built: usize,
-}
-pub struct NeedsRefinement {
-    pub k: u32,
-    pub coarsest_n: usize,
-}
+pub struct NeedsPartition;
+pub struct NeedsRefinement;
 pub struct Complete;
 
 // ── typestate pipeline ────────────────────────────────────────────────────
 
 pub struct Pipeline<S> {
-    pub hierarchy: CoarseningHierarchy,
-    pub partition: Option<Partition>,
-    pub repair_contiguity: bool,
-    pub _state: PhantomData<S>,
+    hierarchy: CoarseningHierarchy,
+    partition: Option<Partition>,
+    repair_contiguity: bool,
+    _state: PhantomData<S>,
 }
 
 impl Pipeline<NeedsPartition> {
@@ -65,6 +60,19 @@ impl Pipeline<NeedsPartition> {
 }
 
 impl Pipeline<NeedsRefinement> {
+    pub(crate) fn from_initial_partition(
+        hierarchy: CoarseningHierarchy,
+        partition: Partition,
+        repair_contiguity: bool,
+    ) -> Self {
+        Self {
+            hierarchy,
+            partition: Some(partition),
+            repair_contiguity,
+            _state: PhantomData,
+        }
+    }
+
     pub fn refine_and_project(mut self, refiner: &dyn Refiner) -> Pipeline<Complete> {
         let depth = self.hierarchy.depth();
         let mut current_p = self.partition.take().unwrap();

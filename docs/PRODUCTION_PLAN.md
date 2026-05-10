@@ -189,3 +189,5 @@ Deliverables:
   attribute and scans for actual unsafe constructs.
 - Done: Kani and Prusti verification docs match the current source-level
   harnesses and CI jobs.
+- Done: Cargo metadata now blocks accidental crates.io publishing until the
+  crate is intentionally released.

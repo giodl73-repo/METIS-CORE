@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Gio Della-Libera"]
 license = "MIT"
-description = "Pure Rust implementation of multilevel graph partitioning — formally verified, deterministic"
+description = "Pure Rust deterministic multilevel graph partitioning with model-checking harnesses"
 repository = "https://github.com/giodl73-repo/METIS-CORE"
+publish = false
 keywords = ["graph", "partitioning", "metis", "multilevel", "combinatorial"]
 categories = ["algorithms", "science", "mathematics"]
 

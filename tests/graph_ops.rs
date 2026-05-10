@@ -316,7 +316,7 @@ fn build_coarse_graph_correct_supervertex_count() {
         "build_coarse_graph with 2 supervertices must produce n=2"
     );
     assert_eq!(
-        cmap_out.cmap.len(),
+        cmap_out.len(),
         4,
         "cmap must retain length of original graph"
     );

@@ -75,7 +75,7 @@ impl CoarseningHierarchy {
     /// Returns `fine` such that `fine[v] = coarse_assign[cmap[lev][v]]`.
     pub fn project_up(&self, lev: usize, coarse_assign: &[u32]) -> Vec<u32> {
         self.cmaps[lev]
-            .cmap
+            .as_slice()
             .iter()
             .map(|&c| coarse_assign[c as usize])
             .collect()

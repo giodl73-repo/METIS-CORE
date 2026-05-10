@@ -66,7 +66,7 @@ mod tests {
         let g = star_graph(6);
         let (c, cmap) = MinDegreeMatch.coarsen(&g);
         assert!(c.is_valid(), "coarsened graph must be valid");
-        assert_eq!(cmap.cmap.len(), 6);
+        assert_eq!(cmap.len(), 6);
         assert!(c.n() < 6);
     }
 
@@ -80,7 +80,7 @@ mod tests {
     fn mindegree_cmap_targets_in_range() {
         let g = star_graph(6);
         let (c, cmap) = MinDegreeMatch.coarsen(&g);
-        assert!(cmap.cmap.iter().all(|&t| (t as usize) < c.n()));
+        assert!(cmap.as_slice().iter().all(|&t| (t as usize) < c.n()));
     }
 
     #[test]

@@ -280,7 +280,59 @@ impl Partition {
 
 #[derive(Debug, Clone)]
 pub struct CoarseMap {
-    pub cmap: Vec<u32>,
+    cmap: Vec<u32>,
+}
+
+impl CoarseMap {
+    /// Build a fine-to-coarse vertex map.
+    ///
+    /// `cmap[v]` is the coarse vertex containing fine vertex `v`. The map must
+    /// contain one entry per fine vertex, every target must be in
+    /// `0..coarse_n`, and every coarse vertex must be targeted by at least one
+    /// fine vertex.
+    pub fn new(cmap: Vec<u32>, fine_n: usize, coarse_n: usize) -> Result<Self, PartitionError> {
+        if cmap.len() != fine_n {
+            return Err(PartitionError::InvalidGraph(
+                "coarse map length must equal fine vertex count",
+            ));
+        }
+        if coarse_n == 0 && fine_n > 0 {
+            return Err(PartitionError::InvalidGraph(
+                "non-empty coarse map must target at least one coarse vertex",
+            ));
+        }
+        if cmap.iter().any(|&target| target as usize >= coarse_n) {
+            return Err(PartitionError::InvalidGraph(
+                "coarse map target is outside coarse vertex range",
+            ));
+        }
+        let mut covered = vec![false; coarse_n];
+        for &target in &cmap {
+            covered[target as usize] = true;
+        }
+        if covered.iter().any(|&seen| !seen) {
+            return Err(PartitionError::InvalidGraph(
+                "coarse map must target every coarse vertex",
+            ));
+        }
+        Ok(Self { cmap })
+    }
+
+    pub(crate) fn from_validated(cmap: Vec<u32>) -> Self {
+        Self { cmap }
+    }
+
+    pub fn as_slice(&self) -> &[u32] {
+        &self.cmap
+    }
+
+    pub fn len(&self) -> usize {
+        self.cmap.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cmap.is_empty()
+    }
 }
 
 /// Check if every part in `partition` is connected within `g`.
@@ -791,6 +843,29 @@ mod tests {
         assert!(matches!(
             p.validate_for_graph(&g),
             Err(PartitionError::InvalidPartition(_))
+        ));
+    }
+
+    #[test]
+    fn coarse_map_new_accepts_surjective_in_range_map() {
+        let cmap = CoarseMap::new(vec![0, 0, 1, 1], 4, 2)
+            .expect("valid fine-to-coarse map should construct");
+        assert_eq!(cmap.as_slice(), &[0, 0, 1, 1]);
+    }
+
+    #[test]
+    fn coarse_map_new_rejects_malformed_maps() {
+        assert!(matches!(
+            CoarseMap::new(vec![0, 1], 3, 2),
+            Err(PartitionError::InvalidGraph(_))
+        ));
+        assert!(matches!(
+            CoarseMap::new(vec![0, 2], 2, 2),
+            Err(PartitionError::InvalidGraph(_))
+        ));
+        assert!(matches!(
+            CoarseMap::new(vec![0, 0], 2, 2),
+            Err(PartitionError::InvalidGraph(_))
         ));
     }
 

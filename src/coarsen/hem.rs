@@ -64,14 +64,14 @@ mod tests {
     fn cmap_length_equals_fine_n() {
         let g = path5();
         let (_, cmap) = HeavyEdgeMatch.coarsen(&g);
-        assert_eq!(cmap.cmap.len(), g.n());
+        assert_eq!(cmap.len(), g.n());
     }
 
     #[test]
     fn cmap_targets_in_range() {
         let g = path5();
         let (c, cmap) = HeavyEdgeMatch.coarsen(&g);
-        assert!(cmap.cmap.iter().all(|&t| (t as usize) < c.n()));
+        assert!(cmap.as_slice().iter().all(|&t| (t as usize) < c.n()));
     }
 
     #[test]
@@ -157,7 +157,7 @@ mod kani_proofs {
         let g = kani_path(n);
         kani::assume(g.is_valid());
         let (coarsened, cmap) = HeavyEdgeMatch.coarsen(&g);
-        assert!(cmap.cmap.len() == g.n());
+        assert!(cmap.len() == g.n());
         assert!(coarsened.n() < g.n());
     }
 }
@@ -294,10 +294,5 @@ pub fn build_coarse_graph(g: &CsrGraph, cmap: &[u32], cn: usize) -> (CsrGraph, C
         // KEY: only preserve adjwgt if input had edge weights (NO || true)
         adjwgt,
     };
-    (
-        coarse,
-        CoarseMap {
-            cmap: cmap.to_vec(),
-        },
-    )
+    (coarse, CoarseMap::from_validated(cmap.to_vec()))
 }

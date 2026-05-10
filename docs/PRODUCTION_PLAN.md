@@ -141,6 +141,8 @@ Deliverables:
   callers cannot construct inconsistent hierarchy levels/maps.
 - Done: `MetisParams` fields are crate-private with public builders/getters, so
   external callers configure partitioning through the validated API surface.
+- Done: `CoarseMap` construction now validates length, target range, and
+  surjectivity while exposing maps through read-only slices.
 - Done: `part_recursive` now forces recursive-bisection semantics and promotes
   default `ncuts` to the METIS pmetis-style value of 4, even when callers set
   unrelated options such as seed.

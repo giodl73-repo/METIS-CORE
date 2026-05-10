@@ -173,7 +173,7 @@ mod tests {
     fn twohop_valid_output_path() {
         let (c, cmap) = TwoHopMatch.coarsen(&path_graph(10));
         assert!(c.is_valid());
-        assert_eq!(cmap.cmap.len(), 10);
+        assert_eq!(cmap.len(), 10);
         assert!(c.n() < 10);
     }
 
@@ -182,7 +182,7 @@ mod tests {
         let g = star_graph(8);
         let (c, cmap) = TwoHopMatch.coarsen(&g);
         assert!(c.is_valid());
-        assert_eq!(cmap.cmap.len(), 8);
+        assert_eq!(cmap.len(), 8);
         assert!(c.n() < 8);
     }
 

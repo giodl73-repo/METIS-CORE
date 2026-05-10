@@ -58,7 +58,7 @@ proptest! {
         let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
         prop_assert!(coarsened.is_valid(),
             "coarsened graph must satisfy is_valid()");
-        prop_assert_eq!(cmap.cmap.len(), g.n(),
+        prop_assert_eq!(cmap.len(), g.n(),
             "cmap length must equal fine graph vertex count");
         prop_assert!(coarsened.n() < g.n(),
             "coarsened graph must be strictly smaller");
@@ -67,7 +67,7 @@ proptest! {
     #[test]
     fn coarsen_cmap_targets_in_range(g in arb_path(32)) {
         let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
-        for &t in &cmap.cmap {
+        for &t in cmap.as_slice() {
             prop_assert!((t as usize) < coarsened.n(),
                 "cmap target {} out of range (coarsened n={})", t, coarsened.n());
         }
@@ -78,7 +78,7 @@ proptest! {
         let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
         prop_assert!(coarsened.is_valid(),
             "coarsened grid must satisfy is_valid()");
-        prop_assert_eq!(cmap.cmap.len(), g.n());
+        prop_assert_eq!(cmap.len(), g.n());
         prop_assert!(coarsened.n() < g.n());
     }
 
@@ -87,7 +87,7 @@ proptest! {
         let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
         // Every coarse vertex must be the target of at least one fine vertex (surjectivity)
         let mut covered = vec![false; coarsened.n()];
-        for &t in &cmap.cmap { covered[t as usize] = true; }
+        for &t in cmap.as_slice() { covered[t as usize] = true; }
         prop_assert!(covered.iter().all(|&c| c),
             "CoarseMap must be surjective — every coarse vertex must be targeted");
     }

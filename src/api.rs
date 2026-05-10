@@ -704,7 +704,10 @@ mod tests {
     impl Coarsener for AlwaysTrivial {
         fn coarsen(&self, g: &CsrGraph) -> (CsrGraph, CoarseMap) {
             let cmap = (0..g.n() as u32).collect();
-            (g.clone(), CoarseMap { cmap })
+            (
+                g.clone(),
+                CoarseMap::new(cmap, g.n(), g.n()).expect("identity coarse map is valid"),
+            )
         }
         fn should_stop(&self, _: &CsrGraph) -> bool {
             true

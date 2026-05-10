@@ -56,7 +56,7 @@ mod tests {
     fn shem_coarsened_valid() {
         let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4());
         assert!(c.is_valid(), "coarsened graph must be valid");
-        assert_eq!(cmap.cmap.len(), 4);
+        assert_eq!(cmap.len(), 4);
         assert!(c.n() < 4);
     }
 
@@ -66,11 +66,13 @@ mod tests {
         // SHEM processes heaviest edges first: 0&1 matched, 2&3 matched
         let (_, cmap) = SortedHeavyEdgeMatch.coarsen(&weighted_path4());
         assert_eq!(
-            cmap.cmap[0], cmap.cmap[1],
+            cmap.as_slice()[0],
+            cmap.as_slice()[1],
             "vertices 0 and 1 (connected by weight-10 edge) should be matched"
         );
         assert_eq!(
-            cmap.cmap[2], cmap.cmap[3],
+            cmap.as_slice()[2],
+            cmap.as_slice()[3],
             "vertices 2 and 3 (connected by weight-10 edge) should be matched"
         );
     }
@@ -79,7 +81,7 @@ mod tests {
     fn shem_unweighted_valid() {
         let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&path5());
         assert!(c.is_valid());
-        assert_eq!(cmap.cmap.len(), 5);
+        assert_eq!(cmap.len(), 5);
         assert!(c.n() < 5);
     }
 
@@ -157,7 +159,7 @@ mod kani_proofs {
         kani::assume(g.is_valid());
         let (coarsened, cmap) = SortedHeavyEdgeMatch.coarsen(&g);
         // These must hold without panic
-        assert!(cmap.cmap.len() == g.n());
+        assert!(cmap.len() == g.n());
         assert!(coarsened.n() < g.n());
     }
 }

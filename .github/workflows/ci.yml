@@ -28,7 +28,7 @@ jobs:
 
       - name: cargo test release
         if: matrix.os == 'ubuntu-latest'
-        run: cargo test --release
+        run: cargo test --all-targets --release
 
       - name: cargo clippy
         run: cargo clippy --all-targets -- -D warnings
@@ -41,7 +41,8 @@ jobs:
         run: if grep -RInE '\bunsafe[[:space:]]*(\{|fn|impl|trait|extern)' src; then exit 1; fi
 
       - name: cargo package
-        run: cargo package --no-verify
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo package
 
   kani:
     name: Kani model checking

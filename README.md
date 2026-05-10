@@ -65,8 +65,7 @@ For full control use `MetisPartitioner` directly:
 
 ```rust
 use metis_core::{
-    graph::CsrGraph,
-    CoarseningMethod, MetisParams, MetisPartitioner, Partitioner,
+    CoarseningMethod, CsrGraph, MetisParams, MetisPartitioner, Partitioner,
 };
 
 let g = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
@@ -92,18 +91,20 @@ partition.validate_for_graph(&g)?;
 
 ---
 
-## Module layout
+## Public API
 
-```
-src/
-  api.rs           MetisPartitioner, MetisParams, Partitioner trait
-  graph/mod.rs     CsrGraph, Partition, CSR helpers, contiguity check/repair
-  coarsen/         HEM, SHEM, TwoHop coarsening
-  init/            Greedy-grow and random initial bisection
-  refine/          FM boundary refinement, gain tables, minconn, LP balance
-  multilevel/      Coarsening hierarchy + unified pipeline
-  error.rs         PartitionError enum
-```
+The stable surface is exported from the crate root:
+
+- `part_recursive`, `part_kway`
+- `MetisParams`, `MetisPartitioner`, `Partitioner`
+- `CsrGraph`, `Partition`, `CoarseMap`, `PartitionError`
+- `check_contiguity`, `repair_contiguity`, `extract_subgraph`
+- `CoarseningMethod`, `ObjectiveType`
+
+Lower-level algorithm components for experiments and proofs live under
+`metis_core::advanced`, including coarseners, initial partitioners, refiners,
+and `CoarseningHierarchy`. Source modules are private so the implementation can
+evolve without exposing the internal file layout as API.
 
 ---
 

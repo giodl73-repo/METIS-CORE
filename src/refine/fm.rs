@@ -486,8 +486,10 @@ impl<'g> FmState<'g> {
             .as_ref()
             .and_then(|aw| aw.iter().copied().max())
             .unwrap_or(1);
-        let max_deg = (0..n).map(|v| g.xadj[v + 1] - g.xadj[v]).max().unwrap_or(1) as i32;
-        let max_gain = (max_ew * max_deg).max(1);
+        let max_deg = (0..n).map(|v| g.xadj[v + 1] - g.xadj[v]).max().unwrap_or(1) as i64;
+        let max_gain = i64::from(max_ew)
+            .saturating_mul(max_deg)
+            .clamp(1, i64::from(i32::MAX)) as i32;
 
         let boundary = BoundarySet::from_partition(g, &p);
         let mut gain_table = GainTable::new(n, max_gain);
@@ -505,7 +507,7 @@ impl<'g> FmState<'g> {
                 }
             };
             debug_assert!(
-                gain.abs() <= max_gain,
+                i64::from(gain).abs() <= i64::from(max_gain),
                 "computed gain {gain} exceeds max_gain {max_gain} — max_gain estimate is wrong"
             );
             let gain_clamped = gain.clamp(-max_gain, max_gain);
@@ -575,7 +577,7 @@ impl<'g> FmState<'g> {
                 }
             };
             debug_assert!(
-                gain.abs() <= max_gain,
+                i64::from(gain).abs() <= i64::from(max_gain),
                 "computed gain {gain} exceeds max_gain {max_gain} — max_gain estimate is wrong"
             );
             let gain_clamped = gain.clamp(-max_gain, max_gain);
@@ -619,12 +621,12 @@ fn compute_cut_gain_with_buffer(
         let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
         let part = assignment[g.adjncy[j] as usize];
         if part == from {
-            internal += ew;
+            internal = internal.saturating_add(ew);
         } else if let Some((_, external)) = candidates
             .iter_mut()
             .find(|(candidate, _)| *candidate == part)
         {
-            *external += ew;
+            *external = external.saturating_add(ew);
         } else {
             candidates.push((part, ew));
         }
@@ -632,7 +634,7 @@ fn compute_cut_gain_with_buffer(
 
     candidates
         .iter()
-        .map(|&(_, external)| external - internal)
+        .map(|&(_, external)| external.saturating_sub(internal))
         .max()
         .unwrap_or(-internal)
 }
@@ -650,19 +652,19 @@ fn fill_cut_candidates(
         let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
         let part = assignment[g.adjncy[j] as usize];
         if part == from {
-            internal += ew;
+            internal = internal.saturating_add(ew);
         } else if let Some((_, external)) = candidates
             .iter_mut()
             .find(|(candidate, _)| *candidate == part)
         {
-            *external += ew;
+            *external = external.saturating_add(ew);
         } else {
             candidates.push((part, ew));
         }
     }
 
     for (_, external) in candidates.iter_mut() {
-        *external -= internal;
+        *external = external.saturating_sub(internal);
     }
 }
 

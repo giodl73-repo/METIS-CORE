@@ -1,13 +1,22 @@
+use std::collections::BTreeMap;
+
 /// Bucket-sort gain table for O(1) max-gain lookup.
 ///
 /// Gains ∈ `[-max_gain, +max_gain]`. Uses offset indexing so all array
 /// indices are non-negative: `bucket_idx(gain) = gain + max_gain`.
 pub(crate) struct GainTable {
-    buckets: Vec<Vec<u32>>,
+    buckets: GainBuckets,
     position: Vec<Option<(i32, usize)>>,
     pub(crate) max_gain: i32,
     top_bucket: i32,
 }
+
+enum GainBuckets {
+    Dense(Vec<Vec<u32>>),
+    Sparse(BTreeMap<i32, Vec<u32>>),
+}
+
+const MAX_DENSE_BUCKETS: usize = 1 << 20;
 
 #[cfg(test)]
 mod tests {
@@ -59,6 +68,18 @@ mod tests {
         assert!(gt.peek_max().is_none());
         assert!(gt.is_empty());
     }
+
+    #[test]
+    fn gain_table_large_range_uses_sparse_storage() {
+        let mut gt = GainTable::new(3, i32::MAX);
+        gt.insert(0, i32::MAX);
+        gt.insert(1, -i32::MAX);
+        gt.insert(2, 7);
+
+        assert_eq!(gt.peek_max(), Some((0, i32::MAX)));
+        assert_eq!(gt.pop_max(), Some((0, i32::MAX)));
+        assert_eq!(gt.peek_max(), Some((2, 7)));
+    }
 }
 
 #[cfg(kani)]
@@ -108,23 +129,44 @@ mod kani_proofs {
 
 impl GainTable {
     pub(crate) fn new(n_vertices: usize, max_gain: i32) -> Self {
-        let size = (2 * max_gain + 1) as usize;
+        let max_gain = max_gain.max(1);
+        let size = i64::from(max_gain)
+            .checked_mul(2)
+            .and_then(|size| size.checked_add(1))
+            .unwrap_or(i64::MAX);
+        let buckets = if size <= MAX_DENSE_BUCKETS as i64 {
+            GainBuckets::Dense(vec![Vec::new(); size as usize])
+        } else {
+            GainBuckets::Sparse(BTreeMap::new())
+        };
         Self {
-            buckets: vec![Vec::new(); size],
+            buckets,
             position: vec![None; n_vertices],
             max_gain,
             top_bucket: i32::MIN,
         }
     }
 
-    fn bucket_idx(&self, gain: i32) -> usize {
-        (gain + self.max_gain) as usize
+    fn bucket_idx(max_gain: i32, gain: i32) -> usize {
+        (i64::from(gain) + i64::from(max_gain)) as usize
     }
 
     pub(crate) fn insert(&mut self, vertex: u32, gain: i32) {
-        let bi = self.bucket_idx(gain);
-        let pos = self.buckets[bi].len();
-        self.buckets[bi].push(vertex);
+        let gain = gain.clamp(-self.max_gain, self.max_gain);
+        let pos = match &mut self.buckets {
+            GainBuckets::Dense(buckets) => {
+                let bi = Self::bucket_idx(self.max_gain, gain);
+                let pos = buckets[bi].len();
+                buckets[bi].push(vertex);
+                pos
+            }
+            GainBuckets::Sparse(buckets) => {
+                let bucket = buckets.entry(gain).or_default();
+                let pos = bucket.len();
+                bucket.push(vertex);
+                pos
+            }
+        };
         self.position[vertex as usize] = Some((gain, pos));
         if gain > self.top_bucket {
             self.top_bucket = gain;
@@ -133,14 +175,32 @@ impl GainTable {
 
     pub(crate) fn remove(&mut self, vertex: u32) {
         if let Some((gain, pos)) = self.position[vertex as usize].take() {
-            let bi = self.bucket_idx(gain);
-            let last = self.buckets[bi].len() - 1;
-            if pos < last {
-                let swap_v = self.buckets[bi][last];
-                self.buckets[bi][pos] = swap_v;
-                self.position[swap_v as usize] = Some((gain, pos));
+            match &mut self.buckets {
+                GainBuckets::Dense(buckets) => {
+                    let bi = Self::bucket_idx(self.max_gain, gain);
+                    let last = buckets[bi].len() - 1;
+                    if pos < last {
+                        let swap_v = buckets[bi][last];
+                        buckets[bi][pos] = swap_v;
+                        self.position[swap_v as usize] = Some((gain, pos));
+                    }
+                    buckets[bi].pop();
+                }
+                GainBuckets::Sparse(buckets) => {
+                    if let Some(bucket) = buckets.get_mut(&gain) {
+                        let last = bucket.len() - 1;
+                        if pos < last {
+                            let swap_v = bucket[last];
+                            bucket[pos] = swap_v;
+                            self.position[swap_v as usize] = Some((gain, pos));
+                        }
+                        bucket.pop();
+                        if bucket.is_empty() {
+                            buckets.remove(&gain);
+                        }
+                    }
+                }
             }
-            self.buckets[bi].pop();
         }
     }
 
@@ -150,15 +210,25 @@ impl GainTable {
     }
 
     pub(crate) fn peek_max(&self) -> Option<(u32, i32)> {
-        let mut g = self.top_bucket;
-        while g >= -self.max_gain {
-            let bi = self.bucket_idx(g);
-            if let Some(&v) = self.buckets[bi].last() {
-                return Some((v, g));
+        match &self.buckets {
+            GainBuckets::Dense(buckets) => {
+                let mut g = i64::from(self.top_bucket);
+                let min_gain = -i64::from(self.max_gain);
+                while g >= min_gain {
+                    let gain = g as i32;
+                    let bi = Self::bucket_idx(self.max_gain, gain);
+                    if let Some(&v) = buckets[bi].last() {
+                        return Some((v, gain));
+                    }
+                    g -= 1;
+                }
+                None
             }
-            g -= 1;
+            GainBuckets::Sparse(buckets) => buckets
+                .range(..=self.top_bucket)
+                .next_back()
+                .and_then(|(&gain, bucket)| bucket.last().copied().map(|v| (v, gain))),
         }
-        None
     }
 
     pub(crate) fn pop_max(&mut self) -> Option<(u32, i32)> {

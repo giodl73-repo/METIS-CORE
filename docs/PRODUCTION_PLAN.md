@@ -196,3 +196,5 @@ Deliverables:
   harnesses and CI jobs.
 - Done: Cargo metadata now blocks accidental crates.io publishing until the
   crate is intentionally released.
+- Done: unused `serde` was removed from release dependencies; `serde_json` is
+  dev-only for golden fixture generation.

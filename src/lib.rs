@@ -14,6 +14,51 @@
 //! Lower-level algorithm components are available under [`advanced`] for
 //! experiments, benchmarks, and proof work. Source modules are private so the
 //! implementation can evolve without exposing file layout as API.
+//!
+//! # Stable API Example
+//!
+//! ```
+//! use metis_core::{CsrGraph, MetisParams, MetisPartitioner, Partitioner};
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let graph = CsrGraph::from_csr(
+//!     &[0, 2, 4, 6, 8],
+//!     &[1, 3, 0, 2, 1, 3, 0, 2],
+//!     &[],
+//!     &[],
+//! )?;
+//! let params = MetisParams::kway().with_seed(7);
+//! let partition = MetisPartitioner::with_params(params, 2).split(&graph, 2, None)?;
+//! partition.validate_for_graph(&graph)?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Advanced API Example
+//!
+//! ```
+//! use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatchWithParams};
+//! use metis_core::CsrGraph;
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let graph = CsrGraph::from_csr(
+//!     &[0, 1, 3, 4],
+//!     &[1, 0, 2, 1],
+//!     &[],
+//!     &[],
+//! )?;
+//! let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
+//! let (_coarse, cmap) = coarsener.coarsen(&graph);
+//! assert_eq!(cmap.len(), graph.n());
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! Source modules are intentionally private; use root exports instead:
+//!
+//! ```compile_fail
+//! use metis_core::graph::CsrGraph;
+//! ```
 
 pub mod advanced;
 mod api;

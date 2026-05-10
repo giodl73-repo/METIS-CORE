@@ -89,9 +89,12 @@ fn advanced_api_exposes_intentional_algorithm_components() {
 
     let hierarchy = CoarseningHierarchy::build(&graph, &coarsener)
         .expect("hierarchy should build from valid graph");
-    let initial = GrowBisect.partition(hierarchy.coarsest(), 2, 42);
+    let initial = GrowBisect
+        .partition(hierarchy.coarsest(), 2, 42)
+        .expect("initial partition should succeed");
     let refined = FiducciaMattheyses::new(10, false, ObjectiveType::Cut, 0, 30)
-        .refine(hierarchy.coarsest(), initial);
+        .refine(hierarchy.coarsest(), initial)
+        .expect("refinement should succeed");
     let partition = if hierarchy.depth() == 0 {
         refined
     } else {

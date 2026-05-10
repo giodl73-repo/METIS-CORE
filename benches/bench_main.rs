@@ -128,7 +128,7 @@ fn bench_ca_init_only(c: &mut Criterion) {
     let init = GrowBisect;
 
     c.bench_function("ca_init_only_k53_n9120", |b| {
-        b.iter(|| init.partition(hierarchy.coarsest(), 53, 42));
+        b.iter(|| init.partition(hierarchy.coarsest(), 53, 42).unwrap());
     });
 }
 
@@ -139,7 +139,7 @@ fn bench_ca_projection_only(c: &mut Criterion) {
     let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     let init = GrowBisect;
-    let coarse = init.partition(hierarchy.coarsest(), 53, 42);
+    let coarse = init.partition(hierarchy.coarsest(), 53, 42).unwrap();
 
     c.bench_function("ca_projection_only_k53_n9120", |b| {
         b.iter(|| {
@@ -159,7 +159,7 @@ fn bench_ca_refine_project_only(c: &mut Criterion) {
     let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     let init = GrowBisect;
-    let coarse = init.partition(hierarchy.coarsest(), 53, 42);
+    let coarse = init.partition(hierarchy.coarsest(), 53, 42).unwrap();
     let refiner = FiducciaMattheyses::new(10, false, ObjectiveType::Cut, 10, 5);
 
     c.bench_function("ca_refine_project_only_k53_n9120", |b| {
@@ -200,12 +200,16 @@ fn refine_and_project(
     let mut current = initial;
 
     for lev in (0..depth).rev() {
-        current = refiner.refine(hierarchy.level(lev + 1).expect("level exists"), current);
+        current = refiner
+            .refine(hierarchy.level(lev + 1).expect("level exists"), current)
+            .expect("refinement should succeed");
         current = Partition::new(hierarchy.project_up(lev, current.assignment()), current.k())
             .expect("projected partition remains structurally valid");
     }
 
-    refiner.refine(hierarchy.level(0).expect("level exists"), current)
+    refiner
+        .refine(hierarchy.level(0).expect("level exists"), current)
+        .expect("refinement should succeed")
 }
 
 criterion_group!(

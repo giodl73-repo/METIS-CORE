@@ -189,6 +189,8 @@ Deliverables:
   assignments or subgraph CSR sizes instead of panicking/truncating.
 - Done: public `repair_contiguity` now returns `Result` and validates partition
   compatibility before mutating assignments.
+- Done: advanced initial partitioners and refiners now return `Result`, and
+  pipeline stages validate extension outputs before continuing.
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.

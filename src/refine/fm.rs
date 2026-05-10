@@ -1,5 +1,6 @@
 use super::{boundary::BoundarySet, gain::GainTable};
 use crate::api::ObjectiveType;
+use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 use crate::refine::Refiner;
 
@@ -68,7 +69,9 @@ impl FiducciaMattheyses {
 }
 
 impl Refiner for FiducciaMattheyses {
-    fn refine(&self, g: &CsrGraph, p: Partition) -> Partition {
+    fn refine(&self, g: &CsrGraph, p: Partition) -> Result<Partition, PartitionError> {
+        g.validate()?;
+        p.validate_for_graph(g)?;
         // Optional label-propagation pre-balance pass (BalanceAndRefineLP).
         // Runs before FM so that FM starts from a better-balanced state.
         let p = if self.lp_iter > 0 {
@@ -91,11 +94,11 @@ impl Refiner for FiducciaMattheyses {
                 break;
             }
         }
-        Partition {
+        Ok(Partition {
             assignment: state.assignment,
             k: state.k,
             tpwgts: state.tpwgts,
-        }
+        })
     }
 }
 
@@ -779,6 +782,22 @@ mod tests {
         }
     }
 
+    #[test]
+    fn fm_rejects_partition_with_wrong_length() {
+        let g = path_graph(3);
+        let p = Partition {
+            assignment: vec![0, 1],
+            k: 2,
+            tpwgts: None,
+        };
+        let fm = FiducciaMattheyses::default();
+
+        assert!(matches!(
+            fm.refine(&g, p),
+            Err(PartitionError::InvalidPartition(_))
+        ));
+    }
+
     fn dumbbell_graph() -> CsrGraph {
         // Two K5 cliques connected by a single bridge edge
         // Vertices 0-4: left clique, vertices 5-9: right clique
@@ -867,7 +886,7 @@ mod tests {
         use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let g = grid_4x4();
-        let p_init = RandomBisect.partition(&g, 2, 0);
+        let p_init = RandomBisect.partition(&g, 2, 0).unwrap();
         let cut_before = compute_cut_for_test(&g, &p_init.assignment);
         let fm = FiducciaMattheyses {
             niter: 10,
@@ -876,7 +895,7 @@ mod tests {
             lp_iter: 0,
             ufactor: 5,
         };
-        let p = fm.refine(&g, p_init);
+        let p = fm.refine(&g, p_init).unwrap();
         let cut_after = compute_cut_for_test(&g, &p.assignment);
         assert!(
             cut_after <= cut_before,
@@ -891,7 +910,7 @@ mod tests {
         use crate::init::InitialPartitioner;
         use crate::refine::Refiner;
         let g = dumbbell_graph();
-        let p_init = RandomBisect.partition(&g, 2, 42);
+        let p_init = RandomBisect.partition(&g, 2, 42).unwrap();
         let fm = FiducciaMattheyses {
             niter: 20,
             contig_fm: true,
@@ -899,7 +918,7 @@ mod tests {
             lp_iter: 0,
             ufactor: 5,
         };
-        let p = fm.refine(&g, p_init);
+        let p = fm.refine(&g, p_init).unwrap();
         let cut = compute_cut_for_test(&g, &p.assignment);
         assert_eq!(cut, 1, "dumbbell bisect optimal cut is 1, got {cut}");
     }
@@ -913,7 +932,7 @@ mod tests {
         let total: i64 = g.vwgt.iter().map(|&w| w as i64).sum(); // = 16
         let target = total / 2; // = 8
         let eps = (target * 5 + 999) / 1000; // ceiling of 0.5% = 1
-        let p_init = RandomBisect.partition(&g, 2, 99);
+        let p_init = RandomBisect.partition(&g, 2, 99).unwrap();
         let fm = FiducciaMattheyses {
             niter: 10,
             contig_fm: true,
@@ -921,7 +940,7 @@ mod tests {
             lp_iter: 0,
             ufactor: 5,
         };
-        let p = fm.refine(&g, p_init);
+        let p = fm.refine(&g, p_init).unwrap();
         for part in 0..2u32 {
             let wgt: i64 = (0..g.n())
                 .filter(|&v| p.assignment[v] == part)
@@ -945,7 +964,7 @@ mod tests {
         g.ncon = 2;
         // vwgt: vertex i has [pop=1, vap=1]; interleaved layout: [1, 1, 1, 1, ...]
         g.vwgt = vec![1i32; 32]; // 16 vertices × 2 constraints
-        let p_init = RandomBisect.partition(&g, 2, 42);
+        let p_init = RandomBisect.partition(&g, 2, 42).unwrap();
         let fm = FiducciaMattheyses {
             niter: 10,
             contig_fm: true,
@@ -953,7 +972,7 @@ mod tests {
             lp_iter: 0,
             ufactor: 5,
         };
-        let p = fm.refine(&g, p_init);
+        let p = fm.refine(&g, p_init).unwrap();
         assert_eq!(p.assignment.len(), 16);
         // Both constraints should be balanced within ε = ceil(0.5% × target) = 1
         let target = 8i64;
@@ -1091,7 +1110,7 @@ mod tests {
             lp_iter: 0,
             ufactor: 5,
         };
-        let result = fm.refine(&g, p);
+        let result = fm.refine(&g, p).unwrap();
 
         // Verify both parts are contiguous by checking that each part's induced
         // subgraph is connected via a simple BFS.
@@ -1248,7 +1267,7 @@ mod kani_proofs {
             lp_iter: 0,
             ufactor: 5,
         };
-        let result = fm.refine(&g, p);
+        let result = fm.refine(&g, p).unwrap();
 
         // Safety postconditions:
         assert!(result.assignment.len() == n);

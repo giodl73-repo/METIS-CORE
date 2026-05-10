@@ -45,18 +45,19 @@ impl Pipeline<NeedsPartition> {
         init: &dyn InitialPartitioner,
         k: u32,
         seed: u64,
-    ) -> Pipeline<NeedsRefinement> {
+    ) -> Result<Pipeline<NeedsRefinement>, PartitionError> {
         let coarsest_n = self.hierarchy.coarsest().n();
         debug_assert!(
             coarsest_n >= 1,
             "coarsest graph must have at least 1 vertex, got {coarsest_n}"
         );
-        let p = init.partition(self.hierarchy.coarsest(), k, seed);
-        Pipeline {
+        let p = init.partition(self.hierarchy.coarsest(), k, seed)?;
+        p.validate_for_graph(self.hierarchy.coarsest())?;
+        Ok(Pipeline {
             hierarchy: self.hierarchy,
             repair_contiguity: self.repair_contiguity,
             state: NeedsRefinement { partition: p },
-        }
+        })
     }
 }
 
@@ -91,7 +92,8 @@ impl Pipeline<NeedsRefinement> {
         // We move from depth-1 down to 0 (finer levels).
         for lev in (0..depth).rev() {
             // Refine at the coarser level (lev+1)
-            current_p = refiner.refine(&self.hierarchy.levels()[lev + 1], current_p);
+            current_p = refiner.refine(&self.hierarchy.levels()[lev + 1], current_p)?;
+            current_p.validate_for_graph(&self.hierarchy.levels()[lev + 1])?;
             // Project down to the finer level (lev)
             let fine_assign = self.hierarchy.project_up(lev, &current_p.assignment);
             current_p = Partition {
@@ -106,7 +108,8 @@ impl Pipeline<NeedsRefinement> {
             }
         }
         // Final refinement at original level (level 0)
-        current_p = refiner.refine(&self.hierarchy.levels()[0], current_p);
+        current_p = refiner.refine(&self.hierarchy.levels()[0], current_p)?;
+        current_p.validate_for_graph(&self.hierarchy.levels()[0])?;
 
         Ok(Pipeline {
             hierarchy: self.hierarchy,
@@ -133,6 +136,23 @@ mod tests {
     use crate::graph::CsrGraph;
     use crate::init::grow::GrowBisect;
     use crate::refine::fm::FiducciaMattheyses;
+
+    struct ShortPartitioner;
+
+    impl InitialPartitioner for ShortPartitioner {
+        fn partition(
+            &self,
+            _g: &CsrGraph,
+            k: u32,
+            _seed: u64,
+        ) -> Result<Partition, PartitionError> {
+            Ok(Partition {
+                assignment: vec![0],
+                k,
+                tpwgts: None,
+            })
+        }
+    }
 
     fn path_graph(n: usize) -> CsrGraph {
         let mut xadj = vec![0u32];
@@ -174,6 +194,7 @@ mod tests {
 
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 2, 42)
+            .unwrap()
             .refine_and_project(&refiner)
             .unwrap()
             .into_partition();
@@ -204,6 +225,7 @@ mod tests {
 
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 4, 99)
+            .unwrap()
             .refine_and_project(&refiner)
             .unwrap()
             .into_partition();
@@ -237,11 +259,27 @@ mod tests {
 
         let p = Pipeline::new(hierarchy)
             .initial_partition(&init, 2, 0)
+            .unwrap()
             .refine_and_project(&refiner)
             .unwrap()
             .into_partition();
 
         assert_eq!(p.assignment.len(), 5);
         assert_eq!(p.k, 2);
+    }
+
+    #[test]
+    fn pipeline_rejects_invalid_initial_partition_output() {
+        let g = path_graph(5);
+        let coarsener = SortedHeavyEdgeMatchWithParams {
+            coarsen_to: 20,
+            k: 2,
+        };
+        let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
+
+        assert!(matches!(
+            Pipeline::new(hierarchy).initial_partition(&ShortPartitioner, 2, 0),
+            Err(PartitionError::InvalidPartition(_))
+        ));
     }
 }

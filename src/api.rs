@@ -517,7 +517,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
                 CoarseningHierarchy::build(g, &self.coarsener)?
             };
             let mut p = if let Some(weights) = &tpwgts {
-                let mut init_p = self.init.partition(hierarchy.coarsest(), k, trial_seed);
+                let mut init_p = self.init.partition(hierarchy.coarsest(), k, trial_seed)?;
                 init_p.tpwgts = Some(weights.clone());
                 crate::multilevel::pipeline::Pipeline::from_initial_partition(
                     hierarchy,
@@ -529,7 +529,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             } else {
                 Pipeline::new(hierarchy)
                     .with_contiguity_repair(self.params.contig_fm)
-                    .initial_partition(&self.init, k, trial_seed)
+                    .initial_partition(&self.init, k, trial_seed)?
                     .refine_and_project(&self.refiner)?
                     .into_partition()
             };
@@ -637,7 +637,7 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
 
             // Build initial partition and attach tpwgts so FM can use per-part targets
             let init_p = {
-                let mut p = self.init.partition(hierarchy.coarsest(), k, trial_seed);
+                let mut p = self.init.partition(hierarchy.coarsest(), k, trial_seed)?;
                 // tpwgts applies to constraint 0 only; constraints 1..ncon use equal targets.
                 p.tpwgts = Some(tpwgts.clone());
                 p
@@ -723,18 +723,23 @@ mod tests {
 
     struct AllZeroPartitioner;
     impl InitialPartitioner for AllZeroPartitioner {
-        fn partition(&self, g: &CsrGraph, _k: u32, _seed: u64) -> Partition {
-            Partition {
+        fn partition(
+            &self,
+            g: &CsrGraph,
+            _k: u32,
+            _seed: u64,
+        ) -> Result<Partition, PartitionError> {
+            Ok(Partition {
                 assignment: vec![0; g.n()],
                 k: 1,
                 tpwgts: None,
-            }
+            })
         }
     }
 
     struct SeedParityPartitioner;
     impl InitialPartitioner for SeedParityPartitioner {
-        fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
+        fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Result<Partition, PartitionError> {
             let assignment = if seed.is_multiple_of(2) {
                 let mut assignment = vec![0; g.n()];
                 if let Some(last) = assignment.last_mut() {
@@ -744,18 +749,18 @@ mod tests {
             } else {
                 (0..g.n()).map(|v| (v % k as usize) as u32).collect()
             };
-            Partition {
+            Ok(Partition {
                 assignment,
                 k,
                 tpwgts: None,
-            }
+            })
         }
     }
 
     struct IdentityRefiner;
     impl Refiner for IdentityRefiner {
-        fn refine(&self, _g: &CsrGraph, p: Partition) -> Partition {
-            p
+        fn refine(&self, _g: &CsrGraph, p: Partition) -> Result<Partition, PartitionError> {
+            Ok(p)
         }
     }
 

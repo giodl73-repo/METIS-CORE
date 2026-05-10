@@ -1,3 +1,4 @@
+use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 use crate::init::InitialPartitioner;
 use rand::{Rng, SeedableRng};
@@ -74,7 +75,7 @@ mod tests {
     #[test]
     fn grow_bisect_valid_partition() {
         let g = grid_4x4();
-        let p = GrowBisect.partition(&g, 2, 42);
+        let p = GrowBisect.partition(&g, 2, 42).unwrap();
         assert_eq!(p.assignment.len(), 16);
         assert_eq!(p.k, 2);
         assert!(p.assignment.iter().all(|&x| x < 2));
@@ -85,15 +86,24 @@ mod tests {
     #[test]
     fn grow_bisect_k1_all_zero() {
         let g = path_graph(10);
-        let p = GrowBisect.partition(&g, 1, 0);
+        let p = GrowBisect.partition(&g, 1, 0).unwrap();
         assert!(p.assignment.iter().all(|&x| x == 0));
         assert_eq!(p.k, 1);
     }
 
     #[test]
+    fn grow_bisect_rejects_zero_parts() {
+        let g = path_graph(3);
+        assert!(matches!(
+            GrowBisect.partition(&g, 0, 0),
+            Err(PartitionError::ZeroParts)
+        ));
+    }
+
+    #[test]
     fn grow_kway_valid_k4() {
         let g = grid_4x4();
-        let p = GrowKway.partition(&g, 4, 99);
+        let p = GrowKway.partition(&g, 4, 99).unwrap();
         assert_eq!(p.assignment.len(), 16);
         assert_eq!(p.k, 4);
         assert!(p.assignment.iter().all(|&x| x < 4));
@@ -106,8 +116,17 @@ mod tests {
     #[test]
     fn grow_kway_k1_all_zero() {
         let g = path_graph(8);
-        let p = GrowKway.partition(&g, 1, 0);
+        let p = GrowKway.partition(&g, 1, 0).unwrap();
         assert!(p.assignment.iter().all(|&x| x == 0));
+    }
+
+    #[test]
+    fn grow_kway_rejects_too_many_parts() {
+        let g = path_graph(3);
+        assert!(matches!(
+            GrowKway.partition(&g, 4, 0),
+            Err(PartitionError::TooManyParts { k: 4, n: 3 })
+        ));
     }
 
     #[test]
@@ -379,30 +398,42 @@ impl RecursiveBisect {
 // ── implementation ────────────────────────────────────────────────────────
 
 impl InitialPartitioner for GrowBisect {
-    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
-        debug_assert!(g.is_valid(), "requires valid connected graph");
+    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Result<Partition, PartitionError> {
+        g.validate()?;
+        if k == 0 {
+            return Err(PartitionError::ZeroParts);
+        }
+        if k as usize > g.n() {
+            return Err(PartitionError::TooManyParts { k, n: g.n() });
+        }
         if k == 1 {
-            return Partition {
+            return Ok(Partition {
                 assignment: vec![0; g.n()],
                 k: 1,
                 tpwgts: None,
-            };
+            });
         }
-        grow_bisect(g, k, seed)
+        Ok(grow_bisect(g, k, seed))
     }
 }
 
 impl InitialPartitioner for GrowKway {
-    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
-        debug_assert!(g.is_valid(), "requires valid connected graph");
+    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Result<Partition, PartitionError> {
+        g.validate()?;
+        if k == 0 {
+            return Err(PartitionError::ZeroParts);
+        }
+        if k as usize > g.n() {
+            return Err(PartitionError::TooManyParts { k, n: g.n() });
+        }
         if k == 1 {
-            return Partition {
+            return Ok(Partition {
                 assignment: vec![0; g.n()],
                 k: 1,
                 tpwgts: None,
-            };
+            });
         }
-        grow_kway(g, k, seed)
+        Ok(grow_kway(g, k, seed))
     }
 }
 

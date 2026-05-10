@@ -1,10 +1,11 @@
+use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 use crate::init::{grow::GrowKway, InitialPartitioner};
 
 pub struct MultiConstraintInit;
 
 impl InitialPartitioner for MultiConstraintInit {
-    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Partition {
+    fn partition(&self, g: &CsrGraph, k: u32, seed: u64) -> Result<Partition, PartitionError> {
         // Delegate to GrowKway; multi-constraint balance is refined during FM
         GrowKway.partition(g, k, seed)
     }
@@ -78,7 +79,7 @@ mod tests {
         let mut g = grid_4x4();
         g.ncon = 2;
         g.vwgt = vec![1; 32]; // 16 vertices x 2 constraints
-        let p = MultiConstraintInit.partition(&g, 4, 0);
+        let p = MultiConstraintInit.partition(&g, 4, 0).unwrap();
         assert_eq!(p.k, 4);
         assert_eq!(p.assignment.len(), 16);
         assert!(p.assignment.iter().all(|&x| x < 4));
@@ -87,7 +88,7 @@ mod tests {
     #[test]
     fn multi_constraint_k1_trivial() {
         let g = path_graph(8);
-        let p = MultiConstraintInit.partition(&g, 1, 0);
+        let p = MultiConstraintInit.partition(&g, 1, 0).unwrap();
         assert!(p.assignment.iter().all(|&x| x == 0));
     }
 }

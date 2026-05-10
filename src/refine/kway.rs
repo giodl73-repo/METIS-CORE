@@ -1,4 +1,5 @@
 use super::fm::FiducciaMattheyses;
+use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 use crate::refine::Refiner;
 
@@ -17,7 +18,7 @@ impl GreedyKWay {
 }
 
 impl Refiner for GreedyKWay {
-    fn refine(&self, g: &CsrGraph, p: Partition) -> Partition {
+    fn refine(&self, g: &CsrGraph, p: Partition) -> Result<Partition, PartitionError> {
         FiducciaMattheyses {
             niter: self.niter,
             contig_fm: true,
@@ -76,7 +77,7 @@ mod tests {
             tpwgts: None,
         };
         let cut_before = edge_cut(&g, &p_bad.assignment);
-        let p_ref = GreedyKWay::new(10).refine(&g, p_bad);
+        let p_ref = GreedyKWay::new(10).refine(&g, p_bad).unwrap();
         let cut_after = edge_cut(&g, &p_ref.assignment);
         assert!(
             cut_after <= cut_before,
@@ -92,7 +93,7 @@ mod tests {
             k: 4,
             tpwgts: None,
         };
-        let p = GreedyKWay::new(10).refine(&g, p_init);
+        let p = GreedyKWay::new(10).refine(&g, p_init).unwrap();
         assert_eq!(p.assignment.len(), 12);
         assert!(
             p.assignment.iter().all(|&a| a < 4),

@@ -146,6 +146,8 @@ Deliverables:
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.
+- Done: `graph` and `error` source modules are private; their stable types and
+  helpers are available from the crate root.
 - Done: `part_recursive` now forces recursive-bisection semantics and promotes
   default `ncuts` to the METIS pmetis-style value of 4, even when callers set
   unrelated options such as seed.

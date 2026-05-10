@@ -1,7 +1,6 @@
 //! L1/L0 integration tests — correctness oracle, RNG golden pin, termination.
 
-use metis_core::graph::CsrGraph;
-use metis_core::{MetisParams, MetisPartitioner, Partitioner};
+use metis_core::{CsrGraph, MetisParams, MetisPartitioner, Partitioner};
 
 // ── graph helpers ──────────────────────────────────────────────────────────
 
@@ -270,7 +269,7 @@ fn make_spider() -> CsrGraph {
 
 #[test]
 fn all_oracle_partitions_are_contiguous() {
-    use metis_core::graph::check_contiguity;
+    use metis_core::check_contiguity;
 
     let test_cases: Vec<(CsrGraph, u32)> = vec![
         (make_path(10), 2),
@@ -294,7 +293,7 @@ fn all_oracle_partitions_are_contiguous() {
 
 #[test]
 fn repair_contiguity_fixes_broken_partition() {
-    use metis_core::graph::{check_contiguity, repair_contiguity};
+    use metis_core::{check_contiguity, repair_contiguity};
 
     // Manually construct a non-contiguous partition on path-6
     // Path: 0-1-2-3-4-5, partition: [0,0,1,1,0,0] -> part 0 is disconnected (0,1 vs 4,5)

@@ -3,8 +3,7 @@ use metis_core::advanced::{
     rebalance_to_ufactor, CoarseningHierarchy, FiducciaMattheyses, GrowBisect, InitialPartitioner,
     Refiner, SortedHeavyEdgeMatchWithParams,
 };
-use metis_core::graph::{CsrGraph, Partition};
-use metis_core::{MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
+use metis_core::{CsrGraph, MetisParams, MetisPartitioner, ObjectiveType, Partition, Partitioner};
 
 /// Build a `rows × cols` grid graph (connected, no self-loops).
 ///

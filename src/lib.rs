@@ -3,8 +3,8 @@
 pub mod advanced;
 mod api;
 mod coarsen;
-pub mod error;
-pub mod graph;
+mod error;
+mod graph;
 mod init;
 mod multilevel;
 mod refine;

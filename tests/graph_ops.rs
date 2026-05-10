@@ -14,10 +14,10 @@ use metis_core::advanced::{
     Coarsener, CoarseningHierarchy, HeavyEdgeMatch, SortedHeavyEdgeMatch,
     SortedHeavyEdgeMatchWithParams,
 };
-use metis_core::graph::{
-    check_contiguity, extract_subgraph, repair_contiguity, CsrGraph, Partition,
+use metis_core::{
+    check_contiguity, extract_subgraph, repair_contiguity, CoarseningMethod, CsrGraph, MetisParams,
+    MetisPartitioner, ObjectiveType, Partition, Partitioner,
 };
-use metis_core::{CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
 
 // ─── shared graph helpers ───────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 //! L0 property-based tests — CsrGraph invariants through coarsening.
 
 use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatch};
-use metis_core::graph::CsrGraph;
+use metis_core::CsrGraph;
 use proptest::prelude::*;
 
 fn arb_grid(max_rows: usize, max_cols: usize) -> impl Strategy<Value = CsrGraph> {

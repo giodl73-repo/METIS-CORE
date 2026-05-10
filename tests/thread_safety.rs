@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use metis_core::graph::{CoarseMap, CsrGraph, Partition};
-use metis_core::{MetisParams, MetisPartitioner, Partitioner};
+use metis_core::{CoarseMap, CsrGraph, MetisParams, MetisPartitioner, Partition, Partitioner};
 
 fn assert_send_sync<T: Send + Sync>() {}
 

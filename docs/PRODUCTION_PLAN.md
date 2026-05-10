@@ -182,3 +182,5 @@ Deliverables:
   unsafe scan, packaging, Kani, and best-effort Prusti.
 - Done: CI unsafe scan ignores the crate-level `forbid(unsafe_code)` policy
   attribute and scans for actual unsafe constructs.
+- Done: Kani and Prusti verification docs match the current source-level
+  harnesses and CI jobs.

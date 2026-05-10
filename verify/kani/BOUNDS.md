@@ -10,8 +10,9 @@ A bound covers all code paths when increasing it further produces no new LLVM bi
 | `verify_hem_no_oob` | n ≤ 16 | Same reasoning as SHEM. |
 | `verify_spread_seeds_no_oob` | n ≤ 16, k ≤ 8 | Exercises BFS-distance seed spreading, uniqueness tracking, and bounded path endpoints without entering high-k randomized fallback. |
 | `verify_gain_table_no_overflow` | gains ∈ [-128, 128] | Exercises full bucket range, top_bucket scan, swap-with-last dedup. |
+| `verify_gain_table_update_no_panic` | gains ∈ [-64, 64], n ≤ 8 | Exercises remove + insert update behavior after an arbitrary valid insertion. |
 | `verify_fm_no_oob` | n ≤ 16, k ≤ 4 | FM inner loop branches covered at n=4; 16 adds margin for gain updates. |
-| `verify_hierarchy_no_panic` | levels ≤ 8 | Covers ≥ 5 coarsening rounds (CA-scale depth). CoarseningStalled path exercised at levels=50. |
+| `verify_hierarchy_no_panic` | n ≤ 32, k ≤ 4 | Covers repeated hierarchy construction and valid coarsening maps on bounded path graphs. |
 
 All bounds verified by inspecting LLVM bitcode coverage output from `cargo kani --visualize`.
 
@@ -19,13 +20,13 @@ All bounds verified by inspecting LLVM bitcode coverage output from `cargo kani 
 
 **Kani 0.55+ is not available as a native Windows binary.** Compilation fails on Windows 11 with internal rustc errors in the kani crate itself (not this project's code). The harnesses are structurally correct and compile under `#[cfg(kani)]`, but verification must run on Linux.
 
-**Verification runs on Linux via GitHub Actions.** See `.github/workflows/verify.yml` (to be created) for the authoritative Kani job.
+**Verification runs on Linux via GitHub Actions.** See the `Kani model checking` job in `.github/workflows/ci.yml`.
 
 **To run locally on Windows:** Use WSL2 with Ubuntu 22.04+:
 ```powershell
 wsl -- cargo kani --harness verify_is_valid_no_panic
 ```
 
-**Prusti status:** Also not available on Windows (requires Java + SMT solver stack). Runs on Linux CI only.
+**Prusti status:** Also not available on Windows (requires Java + SMT solver stack). Runs as a best-effort Linux CI job.
 
-All 7 harnesses are production-ready. Pending CI infrastructure setup (Task 0).
+All source-level Kani harnesses are wired into CI.

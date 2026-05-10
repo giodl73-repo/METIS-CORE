@@ -97,30 +97,71 @@ fn balance_excess(g: &CsrGraph, p: &Partition, ufactor: u32, tpwgts: Option<&[f3
 
 fn validate_tpwgts(tpwgts: &[f32], k: u32) -> Result<Vec<f32>, PartitionError> {
     if tpwgts.len() != k as usize {
-        return Err(PartitionError::InvalidParams("tpwgts length must equal k"));
+        return Err(PartitionError::TargetWeightLength {
+            len: tpwgts.len(),
+            k,
+        });
     }
     if tpwgts
         .iter()
         .any(|&weight| !weight.is_finite() || weight <= 0.0)
     {
-        return Err(PartitionError::InvalidParams(
-            "tpwgts entries must be finite and positive",
-        ));
+        return Err(PartitionError::InvalidTargetWeight);
     }
     let sum: f32 = tpwgts.iter().sum();
     if sum <= 0.0 {
-        return Err(PartitionError::InvalidParams(
-            "tpwgts must contain positive total weight",
-        ));
+        return Err(PartitionError::InvalidTargetWeight);
     }
     if (sum - 1.0).abs() > 1.0e-4 {
-        return Err(PartitionError::InvalidParams("tpwgts must sum to 1.0"));
+        return Err(PartitionError::TargetWeightsDoNotSum);
     }
     Ok(tpwgts.to_vec())
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct PartitionResult {
+    partition: Partition,
+    objective_value: i64,
+}
+
+impl PartitionResult {
+    pub(crate) fn new(partition: Partition, objective_value: i64) -> Self {
+        Self {
+            partition,
+            objective_value,
+        }
+    }
+
+    pub fn partition(&self) -> &Partition {
+        &self.partition
+    }
+
+    pub fn objective_value(&self) -> i64 {
+        self.objective_value
+    }
+
+    pub fn into_partition(self) -> Partition {
+        self.partition
+    }
+
+    pub fn into_assignment(self) -> Vec<u32> {
+        self.partition.into_assignment()
+    }
+}
+
 pub trait Partitioner: Send + Sync {
     fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError>;
+    fn split_result(
+        &self,
+        g: &CsrGraph,
+        k: u32,
+        seed: Option<u64>,
+    ) -> Result<PartitionResult, PartitionError> {
+        let partition = self.split(g, k, seed)?;
+        let objective_value = compute_cut(g, partition.assignment());
+        Ok(PartitionResult::new(partition, objective_value))
+    }
+
     fn split_weighted(
         &self,
         g: &CsrGraph,
@@ -317,6 +358,21 @@ impl MetisParams {
         if k == 0 {
             return Err(PartitionError::ZeroParts);
         }
+        if self.ufactor > 1000 {
+            return Err(PartitionError::ParamOutOfRange { name: "ufactor" });
+        }
+        if self.niter == 0 {
+            return Err(PartitionError::NonPositiveParam { name: "niter" });
+        }
+        if self.coarsen_to == 0 {
+            return Err(PartitionError::NonPositiveParam { name: "coarsen_to" });
+        }
+        if self.ncuts == 0 {
+            return Err(PartitionError::NonPositiveParam { name: "ncuts" });
+        }
+        if self.lp_refine && self.lp_iter == 0 {
+            return Err(PartitionError::NonPositiveParam { name: "lp_iter" });
+        }
         if let Some(tpwgts) = &self.tpwgts {
             validate_tpwgts(tpwgts, k)?;
             if self.use_recursive && k > 2 {
@@ -388,35 +444,89 @@ pub struct RustMetisPartitioner<C, I, R> {
     params: MetisParams,
 }
 
-/// Concrete type alias: SHEM + GrowBisect + FM — the default METIS-like pipeline.
-pub type MetisPartitioner =
-    RustMetisPartitioner<SortedHeavyEdgeMatchWithParams, GrowBisect, FiducciaMattheyses>;
+/// Reusable METIS-like partitioner. The part count is supplied per split call.
+pub struct MetisPartitioner {
+    params: MetisParams,
+}
 
 impl MetisPartitioner {
-    pub fn new(k: u32) -> Self {
-        Self::with_params(MetisParams::default(), k)
+    /// Build the default partitioner from parameters.
+    ///
+    /// The number of parts belongs to each [`Partitioner::split`] call. This
+    /// avoids storing a stale `k` in reusable partitioner state.
+    pub fn from_params(params: MetisParams) -> Self {
+        Self { params }
     }
 
-    pub fn with_params(params: MetisParams, k: u32) -> Self {
-        RustMetisPartitioner {
-            coarsener: SortedHeavyEdgeMatchWithParams {
-                coarsen_to: params.coarsen_to,
-                k,
-            },
-            init: GrowBisect,
-            refiner: FiducciaMattheyses {
-                niter: params.niter,
-                contig_fm: params.contig_fm,
-                objective: params.objective,
-                lp_iter: if params.lp_refine { params.lp_iter } else { 0 },
-                ufactor: params.ufactor,
-            },
-            params,
-        }
+    /// Build the default partitioner with default parameters.
+    pub fn default_partitioner() -> Self {
+        Self::from_params(MetisParams::default())
+    }
+
+    pub fn new(_k: u32) -> Self {
+        Self::from_params(MetisParams::default())
+    }
+
+    pub fn with_params(params: MetisParams, _k: u32) -> Self {
+        Self::from_params(params)
     }
 
     pub fn params(&self) -> &MetisParams {
         &self.params
+    }
+}
+
+impl Partitioner for MetisPartitioner {
+    fn split(&self, g: &CsrGraph, k: u32, seed: Option<u64>) -> Result<Partition, PartitionError> {
+        RustMetisPartitioner {
+            coarsener: SortedHeavyEdgeMatchWithParams {
+                coarsen_to: self.params.coarsen_to,
+                k,
+            },
+            init: GrowBisect,
+            refiner: FiducciaMattheyses {
+                niter: self.params.niter,
+                contig_fm: self.params.contig_fm,
+                objective: self.params.objective,
+                lp_iter: if self.params.lp_refine {
+                    self.params.lp_iter
+                } else {
+                    0
+                },
+                ufactor: self.params.ufactor,
+            },
+            params: self.params.clone(),
+        }
+        .split(g, k, seed)
+    }
+
+    fn split_weighted(
+        &self,
+        g: &CsrGraph,
+        fracs: &[u32],
+        seed: Option<u64>,
+    ) -> Result<Partition, PartitionError> {
+        let k = fracs.len().max(1) as u32;
+        RustMetisPartitioner {
+            coarsener: SortedHeavyEdgeMatchWithParams {
+                coarsen_to: self.params.coarsen_to,
+                k,
+            },
+            init: GrowBisect,
+            refiner: FiducciaMattheyses {
+                niter: self.params.niter,
+                contig_fm: self.params.contig_fm,
+                objective: self.params.objective,
+                lp_iter: if self.params.lp_refine {
+                    self.params.lp_iter
+                } else {
+                    0
+                },
+                ufactor: self.params.ufactor,
+            },
+            params: self.params.clone(),
+        }
+        .split_weighted(g, fracs, seed)
     }
 }
 
@@ -598,11 +708,10 @@ impl<C: Coarsener, I: InitialPartitioner, R: Refiner> Partitioner
             return Err(PartitionError::ZeroParts);
         }
         if fracs.contains(&0) {
-            return Err(PartitionError::InvalidParams(
-                "fracs entries must be positive",
-            ));
+            return Err(PartitionError::InvalidTargetWeight);
         }
         let k = fracs.len() as u32;
+        self.params.validate_for_k(k)?;
 
         if g.n() == 0 {
             return Err(PartitionError::EmptyGraph);
@@ -907,13 +1016,16 @@ mod tests {
     #[test]
     fn metis_params_with_target_weights_rejects_bad_shape() {
         let result = MetisParams::kway().with_target_weights(3, vec![0.5, 0.5]);
-        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+        assert!(matches!(
+            result,
+            Err(PartitionError::TargetWeightLength { len: 2, k: 3 })
+        ));
     }
 
     #[test]
     fn metis_params_with_target_weights_rejects_zero_weight() {
         let result = MetisParams::kway().with_target_weights(2, vec![1.0, 0.0]);
-        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+        assert!(matches!(result, Err(PartitionError::InvalidTargetWeight)));
     }
 
     #[test]
@@ -935,7 +1047,7 @@ mod tests {
             ..MetisParams::default()
         };
         let partitioner = MetisPartitioner::with_params(params, 4);
-        assert_eq!(partitioner.refiner.ufactor, 30);
+        assert_eq!(partitioner.params().ufactor(), 30);
     }
 
     #[test]
@@ -965,7 +1077,7 @@ mod tests {
             ..MetisParams::default()
         };
         let result = MetisPartitioner::with_params(params, 2).split(&g, 2, Some(0));
-        assert!(matches!(result, Err(PartitionError::InvalidParams(_))));
+        assert!(matches!(result, Err(PartitionError::TargetWeightsDoNotSum)));
     }
 
     #[test]
@@ -1009,7 +1121,7 @@ mod tests {
             &[1u32, 0u32],
             Some(0),
         );
-        assert!(matches!(p, Err(PartitionError::InvalidParams(_))));
+        assert!(matches!(p, Err(PartitionError::InvalidTargetWeight)));
     }
 
     #[test]
@@ -1076,18 +1188,20 @@ mod tests {
         );
     }
 
-    /// ncuts=0 is treated as ncuts=1 (max(1) clamp).
+    /// ncuts=0 is rejected so callers do not accidentally disable all trials.
     #[test]
-    fn ncuts_zero_treated_as_one() {
+    fn ncuts_zero_is_rejected() {
         let g = make_path_graph(10);
         let params = MetisParams {
             ncuts: 0,
             ..MetisParams::default()
         };
         let partitioner = MetisPartitioner::with_params(params, 2);
-        let p = partitioner.split(&g, 2, Some(42)).unwrap();
-        assert_eq!(p.assignment.len(), 10);
-        assert_eq!(p.k, 2);
+        let result = partitioner.split(&g, 2, Some(42));
+        assert!(matches!(
+            result,
+            Err(PartitionError::NonPositiveParam { name: "ncuts" })
+        ));
     }
 
     /// ncuts=4 must still produce a valid partition.

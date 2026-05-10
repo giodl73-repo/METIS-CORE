@@ -49,6 +49,20 @@ impl CsrGraph {
         vwgt: &[i32],
         adjwgt: &[i32],
     ) -> Result<Self, PartitionError> {
+        Self::from_csr_strict(xadj, adjncy, vwgt, adjwgt)
+    }
+
+    /// Build a strict CSR graph for proof-oriented partitioning.
+    ///
+    /// This constructor requires a connected, undirected graph with reciprocal
+    /// adjacency entries and symmetric positive edge weights. Empty weight
+    /// slices mean unit weights.
+    pub fn from_csr_strict(
+        xadj: &[u32],
+        adjncy: &[u32],
+        vwgt: &[i32],
+        adjwgt: &[i32],
+    ) -> Result<Self, PartitionError> {
         let n = xadj.len().saturating_sub(1);
         Self::new(
             xadj.to_vec(),
@@ -65,6 +79,22 @@ impl CsrGraph {
                 Some(adjwgt.to_vec())
             },
         )
+    }
+
+    /// Build from METIS-style CSR slices.
+    ///
+    /// The current partitioning pipeline is proof-oriented and still requires
+    /// the strict connected, undirected contract enforced by
+    /// [`Self::from_csr_strict`]. This named constructor exists so callers can
+    /// document intent at the call site while the crate keeps compatibility
+    /// decisions explicit.
+    pub fn from_csr_metis(
+        xadj: &[u32],
+        adjncy: &[u32],
+        vwgt: &[i32],
+        adjwgt: &[i32],
+    ) -> Result<Self, PartitionError> {
+        Self::from_csr_strict(xadj, adjncy, vwgt, adjwgt)
     }
 
     pub fn n(&self) -> usize {
@@ -98,15 +128,13 @@ impl CsrGraph {
     pub fn validate(&self) -> Result<(), PartitionError> {
         let n = self.n();
         if self.xadj.len() != n + 1 {
-            return Err(PartitionError::InvalidGraph("xadj length must be n + 1"));
+            return Err(PartitionError::BadXadjLength);
         }
         if self.xadj[0] != 0 {
-            return Err(PartitionError::InvalidGraph("xadj must start at zero"));
+            return Err(PartitionError::BadXadjStart);
         }
         if self.xadj[n] as usize != self.adjncy.len() {
-            return Err(PartitionError::InvalidGraph(
-                "xadj terminator must equal adjncy length",
-            ));
+            return Err(PartitionError::BadXadjTerminator);
         }
         if self.ncon < 1 {
             return Err(PartitionError::InvalidGraph("ncon must be at least one"));
@@ -121,9 +149,7 @@ impl CsrGraph {
             ));
         }
         if self.vwgt.iter().any(|&w| w <= 0) {
-            return Err(PartitionError::InvalidGraph(
-                "vertex weights must be positive",
-            ));
+            return Err(PartitionError::NonPositiveVertexWeight);
         }
         if let Some(ref aw) = self.adjwgt {
             if aw.len() != self.adjncy.len() {
@@ -132,9 +158,7 @@ impl CsrGraph {
                 ));
             }
             if aw.iter().any(|&w| w <= 0) {
-                return Err(PartitionError::InvalidGraph(
-                    "edge weights must be positive",
-                ));
+                return Err(PartitionError::NonPositiveEdgeWeight);
             }
         }
         if n == 0 {
@@ -142,9 +166,7 @@ impl CsrGraph {
         }
         for i in 0..n {
             if self.xadj[i] > self.xadj[i + 1] {
-                return Err(PartitionError::InvalidGraph(
-                    "xadj must be monotonically nondecreasing",
-                ));
+                return Err(PartitionError::NonMonotonicXadj);
             }
             for j in self.xadj[i] as usize..self.xadj[i + 1] as usize {
                 if j >= self.adjncy.len() {
@@ -154,9 +176,7 @@ impl CsrGraph {
                 }
                 let nb = self.adjncy[j] as usize;
                 if nb >= n || nb == i {
-                    return Err(PartitionError::InvalidGraph(
-                        "adjncy contains an invalid neighbor",
-                    ));
+                    return Err(PartitionError::InvalidNeighbor);
                 }
             }
         }
@@ -166,15 +186,11 @@ impl CsrGraph {
                 let reverse = (self.xadj[u] as usize..self.xadj[u + 1] as usize)
                     .find(|&idx| self.adjncy[idx] as usize == v);
                 let Some(reverse_idx) = reverse else {
-                    return Err(PartitionError::InvalidGraph(
-                        "adjncy must describe an undirected graph",
-                    ));
+                    return Err(PartitionError::AsymmetricAdjacency);
                 };
                 if let Some(ref aw) = self.adjwgt {
                     if aw[j] != aw[reverse_idx] {
-                        return Err(PartitionError::InvalidGraph(
-                            "undirected edge weights must match",
-                        ));
+                        return Err(PartitionError::AsymmetricEdgeWeight);
                     }
                 }
             }
@@ -196,7 +212,7 @@ impl CsrGraph {
         if visited.iter().all(|&v| v) {
             Ok(())
         } else {
-            Err(PartitionError::InvalidGraph("graph must be connected"))
+            Err(PartitionError::DisconnectedGraph)
         }
     }
 }
@@ -637,7 +653,7 @@ mod tests {
     #[test]
     fn new_rejects_invalid_graph() {
         let result = CsrGraph::new(vec![0, 1, 2], vec![1, 2], 1, vec![1, 1], None);
-        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+        assert!(matches!(result, Err(PartitionError::InvalidNeighbor)));
     }
 
     #[test]
@@ -699,13 +715,13 @@ mod tests {
     #[test]
     fn invalid_trailing_adjncy() {
         let result = CsrGraph::new(vec![0, 1, 2], vec![1, 0, 0], 1, vec![1; 2], None);
-        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+        assert!(matches!(result, Err(PartitionError::BadXadjTerminator)));
     }
 
     #[test]
     fn invalid_directed_adjncy() {
         let result = CsrGraph::new(vec![0, 1, 2, 2], vec![1, 2], 1, vec![1; 3], None);
-        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+        assert!(matches!(result, Err(PartitionError::AsymmetricAdjacency)));
     }
 
     #[test]
@@ -719,7 +735,7 @@ mod tests {
     #[test]
     fn invalid_asymmetric_adjwgt() {
         let result = CsrGraph::new(vec![0, 1, 2], vec![1, 0], 1, vec![1; 2], Some(vec![1, 2]));
-        assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+        assert!(matches!(result, Err(PartitionError::AsymmetricEdgeWeight)));
     }
 
     #[test]

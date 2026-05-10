@@ -3,8 +3,8 @@ use metis_core::advanced::{
     SortedHeavyEdgeMatchWithParams,
 };
 use metis_core::{
-    check_contiguity, part_kway, part_recursive, CoarseningMethod, CsrGraph, MetisParams,
-    MetisPartitioner, ObjectiveType, Partition, PartitionError, Partitioner,
+    check_contiguity, part_kway, part_kway_result, part_recursive, CoarseningMethod, CsrGraph,
+    MetisParams, MetisPartitioner, ObjectiveType, Partition, PartitionError, Partitioner,
 };
 
 fn cycle_graph() -> CsrGraph {
@@ -32,7 +32,7 @@ fn root_api_supports_metis_style_entry_points() {
 fn root_api_rejects_malformed_csr() {
     let result = part_kway(&[0, 2], &[0], &[], &[], 2, MetisParams::kway());
 
-    assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+    assert!(matches!(result, Err(PartitionError::BadXadjTerminator)));
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn root_api_rejects_empty_graph() {
 #[test]
 fn root_api_rejects_zero_parts() {
     let graph = cycle_graph();
-    let result = MetisPartitioner::new(0).split(&graph, 0, None);
+    let result = MetisPartitioner::default_partitioner().split(&graph, 0, None);
 
     assert!(matches!(result, Err(PartitionError::ZeroParts)));
 }
@@ -71,7 +71,7 @@ fn root_api_supports_configured_partitioner() {
         .with_objective(ObjectiveType::Cut);
 
     params.validate_for_k(2).expect("params should be valid");
-    let partition = MetisPartitioner::with_params(params, 2)
+    let partition = MetisPartitioner::from_params(params)
         .split(&graph, 2, None)
         .expect("partition should succeed");
 
@@ -79,6 +79,18 @@ fn root_api_supports_configured_partitioner() {
         .validate_for_graph(&graph)
         .expect("partition should match graph");
     assert_eq!(check_contiguity(&graph, &partition), Ok(()));
+}
+
+#[test]
+fn root_api_result_reports_objective_value() {
+    let xadj = [0, 2, 4, 6, 8];
+    let adjncy = [1, 3, 0, 2, 1, 3, 0, 2];
+
+    let result = part_kway_result(&xadj, &adjncy, &[], &[], 2, MetisParams::kway())
+        .expect("kway result should succeed");
+
+    assert_eq!(result.partition().assignment().len(), 4);
+    assert!(result.objective_value() >= 0);
 }
 
 #[test]

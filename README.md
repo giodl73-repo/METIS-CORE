@@ -12,15 +12,17 @@ Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices 
 
 - **`part_recursive`** — multilevel recursive bisection
 - **`part_kway`** — direct multilevel k-way partitioning
+- **`part_recursive_result` / `part_kway_result`** — assignment plus objective metadata
 
 `part_recursive` uses recursive bisection; `part_kway` uses the direct k-way
 pipeline.
 
 ---
 
-Both functions accept METIS-style CSR slices and return a part assignment vector.
-For callers that want a validated graph object, reusable partitioner, or access
-to part metadata, use `CsrGraph` and `MetisPartitioner`.
+The simple helpers accept METIS-style CSR slices and return a part assignment
+vector. Use the `_result` helpers, `CsrGraph`, and `MetisPartitioner` when a
+caller needs a validated graph object, reusable partitioner, or objective
+metadata.
 
 ---
 
@@ -78,9 +80,12 @@ fn main() -> Result<(), metis_core::PartitionError> {
 }
 ```
 
-CSR input must be exact and undirected: `xadj[n]` must equal `adjncy.len()`,
-each adjacency entry must have its reciprocal entry, weights must be positive,
-and the graph must be connected. Empty weight slices mean unit weights.
+CSR input is strict by default: `xadj[n]` must equal `adjncy.len()`, each
+adjacency entry must have its reciprocal entry, reciprocal edge weights must
+match, weights must be positive, and the graph must be connected. Empty weight
+slices mean unit weights. Use `CsrGraph::from_csr_strict` when you want this
+proof-oriented contract to be explicit at the call site; `CsrGraph::from_csr`
+and `CsrGraph::from_csr_metis` currently enforce the same contract.
 
 Reusable partitioner with validated graph and result objects:
 
@@ -101,7 +106,7 @@ fn main() -> Result<(), metis_core::PartitionError> {
         .with_seed(7);
     params.validate_for_k(k)?;
 
-    let partition = MetisPartitioner::with_params(params, k).split(&graph, k, None)?;
+    let partition = MetisPartitioner::from_params(params).split(&graph, k, None)?;
     partition.validate_for_graph(&graph)?;
 
     assert_eq!(partition.assignment().len(), graph.n());
@@ -122,7 +127,7 @@ fn main() -> Result<(), metis_core::PartitionError> {
     let graph = CsrGraph::from_csr(&xadj, &adjncy, &[], &[])?;
 
     let params = MetisParams::kway().with_target_weights(2, [0.25, 0.75])?;
-    let partition = MetisPartitioner::with_params(params, 2).split(&graph, 2, Some(11))?;
+    let partition = MetisPartitioner::from_params(params).split(&graph, 2, Some(11))?;
     partition.validate_for_graph(&graph)?;
 
     Ok(())
@@ -169,7 +174,8 @@ fn main() -> Result<(), metis_core::PartitionError> {
 | Property | Detail |
 |----------|--------|
 | **No C dependency** | Pure Rust; no `cc`, no external library, no `bindgen` |
-| **Deterministic** | Seeded RNG (`rand_pcg`) — same seed, same partition |
+| **Deterministic** | Seeded RNG (`rand_pcg`) — same seed and parameters, same partition |
+| **Thread safe** | Public partitioners and algorithm traits are `Send + Sync`; no global RNG or mutable global state |
 | **Validated API** | Public graph, partition, coarsening, initialization, refinement, repair, and subgraph operations return `Result` |
 | **Verified** | Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs in `verify/prusti/` |
 | **Tested** | Unit, integration, proptest invariant, graph-file, and benchmark smoke suites |
@@ -181,8 +187,8 @@ fn main() -> Result<(), metis_core::PartitionError> {
 
 The stable surface is exported from the crate root:
 
-- `part_recursive`, `part_kway`
-- `MetisParams`, `MetisPartitioner`, `Partitioner`
+- `part_recursive`, `part_kway`, `part_recursive_result`, `part_kway_result`
+- `MetisParams`, `MetisPartitioner`, `Partitioner`, `PartitionResult`
 - `CsrGraph`, `Partition`, `CoarseMap`, `PartitionError`
 - `check_contiguity`, `repair_contiguity`, `extract_subgraph`
 - `CoarseningMethod`, `ObjectiveType`
@@ -194,11 +200,14 @@ evolve without exposing the internal file layout as API.
 
 Public construction is intentionally validated:
 
-- Use `CsrGraph::from_csr` or `CsrGraph::new` instead of struct literals.
+- Use `CsrGraph::from_csr_strict`, `CsrGraph::from_csr_metis`,
+  `CsrGraph::from_csr`, or `CsrGraph::new` instead of struct literals.
 - Use `Partition::new`, `partition.assignment()`, `partition.k()`, and
   `partition.into_assignment()` instead of direct field access.
 - Use `MetisParams` builder methods and `validate_for_k` instead of struct
   literals.
+- Use `MetisPartitioner::from_params(params)` for reusable partitioners; the
+  requested part count belongs to each `split` call.
 - Implement `advanced::Coarsener`, `advanced::InitialPartitioner`, or
   `advanced::Refiner` with `Result` returns so pipeline failures stay explicit.
 

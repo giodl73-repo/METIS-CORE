@@ -29,7 +29,7 @@
 //!     &[],
 //! )?;
 //! let params = MetisParams::kway().with_seed(7);
-//! let partition = MetisPartitioner::with_params(params, 2).split(&graph, 2, None)?;
+//! let partition = MetisPartitioner::from_params(params).split(&graph, 2, None)?;
 //! partition.validate_for_graph(&graph)?;
 //! # Ok(())
 //! # }
@@ -79,7 +79,9 @@ mod init;
 mod multilevel;
 mod refine;
 
-pub use api::{CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
+pub use api::{
+    CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, PartitionResult, Partitioner,
+};
 pub use error::PartitionError;
 pub use graph::{
     check_contiguity, extract_subgraph, repair_contiguity, CoarseMap, CsrGraph, Partition,
@@ -114,9 +116,27 @@ pub fn part_recursive(
     }
     params.use_recursive = true;
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
-    api::MetisPartitioner::with_params(params, nparts)
+    api::MetisPartitioner::from_params(params)
         .split(&g, nparts, None)
         .map(|p| p.into_assignment())
+}
+
+/// Partition a graph using multilevel recursive bisection and return metadata.
+pub fn part_recursive_result(
+    xadj: &[u32],
+    adjncy: &[u32],
+    vwgt: &[i32],
+    adjwgt: &[i32],
+    nparts: u32,
+    mut params: api::MetisParams,
+) -> Result<PartitionResult, PartitionError> {
+    let defaults = api::MetisParams::default();
+    if params.ncuts == defaults.ncuts {
+        params.ncuts = api::MetisParams::recursive().ncuts;
+    }
+    params.use_recursive = true;
+    let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
+    api::MetisPartitioner::from_params(params).split_result(&g, nparts, None)
 }
 
 /// Partition a graph using direct multilevel k-way partitioning.
@@ -134,9 +154,23 @@ pub fn part_kway(
 ) -> Result<Vec<u32>, PartitionError> {
     params.use_recursive = false;
     let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
-    api::MetisPartitioner::with_params(params, nparts)
+    api::MetisPartitioner::from_params(params)
         .split(&g, nparts, None)
         .map(|p| p.into_assignment())
+}
+
+/// Partition a graph using direct multilevel k-way partitioning and return metadata.
+pub fn part_kway_result(
+    xadj: &[u32],
+    adjncy: &[u32],
+    vwgt: &[i32],
+    adjwgt: &[i32],
+    nparts: u32,
+    mut params: api::MetisParams,
+) -> Result<PartitionResult, PartitionError> {
+    params.use_recursive = false;
+    let g = graph::CsrGraph::from_csr(xadj, adjncy, vwgt, adjwgt)?;
+    api::MetisPartitioner::from_params(params).split_result(&g, nparts, None)
 }
 
 #[cfg(test)]

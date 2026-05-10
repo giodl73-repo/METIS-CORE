@@ -3,6 +3,8 @@ use crate::coarsen::Coarsener;
 use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 
+const MAX_WEIGHT_BUCKETS: usize = 1 << 20;
+
 // ── structs ────────────────────────────────────────────────────────────────
 
 pub struct SortedHeavyEdgeMatch;
@@ -96,6 +98,22 @@ mod tests {
     fn should_stop_threshold_saturates_on_overflow() {
         let shem = SortedHeavyEdgeMatchWithParams::new(u32::MAX, u32::MAX);
         assert!(shem.should_stop(&path5()));
+    }
+
+    #[test]
+    fn shem_handles_extreme_weight_range_without_huge_bucket_table() {
+        let g = CsrGraph {
+            xadj: vec![0, 1, 3, 4],
+            adjncy: vec![1, 0, 2, 1],
+            ncon: 1,
+            vwgt: vec![1; 3],
+            adjwgt: Some(vec![i32::MAX, i32::MAX, 1, 1]),
+        };
+
+        let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&g).unwrap();
+
+        assert!(c.is_valid());
+        assert_eq!(cmap.as_slice()[0], cmap.as_slice()[1]);
     }
 
     #[test]
@@ -237,46 +255,56 @@ fn shem_coarsen(g: &CsrGraph) -> Result<(CsrGraph, CoarseMap), PartitionError> {
         })
         .collect();
 
-    // Step 2: bucket sort — O(n + max_weight), NOT comparison sort
-    // Buckets indexed by weight value; we iterate them in reverse (highest first).
-    let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
-    let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
-    for (v, &weight) in max_w.iter().enumerate() {
-        let w = (weight.max(0) as usize).min(max_bucket);
-        buckets[w].push(v);
-    }
+    let order = weighted_vertex_order(&max_w);
 
     // Step 3: match vertices, processing highest-weight buckets first
     let mut matched = vec![false; n];
     let mut cmap = vec![u32::MAX; n];
     let mut coarse_id = 0u32;
 
-    for bucket in buckets.iter().rev() {
-        for &v in bucket {
-            if matched[v] {
-                continue;
-            }
-            // Among unmatched neighbours, pick the one connected by the heaviest edge
-            let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
-                .filter(|&j| !matched[g.adjncy[j] as usize])
-                .max_by_key(|&j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]));
-            match best {
-                Some(j) => {
-                    let u = g.adjncy[j] as usize;
-                    cmap[v] = coarse_id;
-                    cmap[u] = coarse_id;
-                    matched[v] = true;
-                    matched[u] = true;
-                }
-                None => {
-                    // isolated or all neighbours already matched — singleton supernode
-                    cmap[v] = coarse_id;
-                    matched[v] = true;
-                }
-            }
-            coarse_id += 1;
+    for v in order {
+        if matched[v] {
+            continue;
         }
+        // Among unmatched neighbours, pick the one connected by the heaviest edge
+        let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
+            .filter(|&j| !matched[g.adjncy[j] as usize])
+            .max_by_key(|&j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]));
+        match best {
+            Some(j) => {
+                let u = g.adjncy[j] as usize;
+                cmap[v] = coarse_id;
+                cmap[u] = coarse_id;
+                matched[v] = true;
+                matched[u] = true;
+            }
+            None => {
+                // isolated or all neighbours already matched — singleton supernode
+                cmap[v] = coarse_id;
+                matched[v] = true;
+            }
+        }
+        coarse_id += 1;
     }
 
     build_coarse_graph(g, &cmap, coarse_id as usize)
+}
+
+fn weighted_vertex_order(max_w: &[i32]) -> Vec<usize> {
+    // Bucket sort is the fast path for ordinary METIS-style integer weights.
+    // Very sparse weight domains fall back to comparison sorting to avoid
+    // allocating a vector indexed by the maximum edge weight.
+    let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
+    if max_bucket <= MAX_WEIGHT_BUCKETS {
+        let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
+        for (v, &weight) in max_w.iter().enumerate() {
+            let w = (weight.max(0) as usize).min(max_bucket);
+            buckets[w].push(v);
+        }
+        buckets.into_iter().rev().flatten().collect()
+    } else {
+        let mut order: Vec<usize> = (0..max_w.len()).collect();
+        order.sort_unstable_by(|&a, &b| max_w[b].cmp(&max_w[a]).then_with(|| a.cmp(&b)));
+        order
+    }
 }

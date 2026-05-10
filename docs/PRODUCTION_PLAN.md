@@ -176,6 +176,8 @@ Deliverables:
   size arithmetic, keeping overflow behavior identical in debug and release.
 - Done: FM gain tables now fall back to sparse storage for extreme gain ranges,
   avoiding huge bucket allocations while keeping dense buckets for normal runs.
+- Done: SHEM and two-hop ordering now keep bucket sort for normal weights but
+  fall back to comparison sorting for extreme sparse weight domains.
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.

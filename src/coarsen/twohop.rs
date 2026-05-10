@@ -3,6 +3,8 @@ use crate::coarsen::Coarsener;
 use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
 
+const MAX_WEIGHT_BUCKETS: usize = 1 << 20;
+
 /// Two-hop heavy-edge matching coarsener.
 ///
 /// First pass: match each vertex with its heaviest unmatched direct neighbour
@@ -63,33 +65,27 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> Result<(CsrGraph, CoarseMap), Par
         })
         .collect();
 
-    let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
-    let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
-    for (v, &weight) in max_w.iter().enumerate() {
-        buckets[weight.max(0) as usize].push(v);
-    }
+    let order = weighted_vertex_order(&max_w);
 
     let mut matched = vec![false; n];
     let mut cmap = vec![u32::MAX; n];
     let mut coarse_id = 0u32;
 
     // Pass 1: direct heavy-edge matching (same as SHEM)
-    for bucket in buckets.iter().rev() {
-        for &v in bucket {
-            if matched[v] {
-                continue;
-            }
-            let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
-                .filter(|&j| !matched[g.adjncy[j] as usize])
-                .max_by_key(|&j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]));
-            if let Some(j) = best {
-                let u = g.adjncy[j] as usize;
-                cmap[v] = coarse_id;
-                cmap[u] = coarse_id;
-                matched[v] = true;
-                matched[u] = true;
-                coarse_id += 1;
-            }
+    for v in order {
+        if matched[v] {
+            continue;
+        }
+        let best = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
+            .filter(|&j| !matched[g.adjncy[j] as usize])
+            .max_by_key(|&j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]));
+        if let Some(j) = best {
+            let u = g.adjncy[j] as usize;
+            cmap[v] = coarse_id;
+            cmap[u] = coarse_id;
+            matched[v] = true;
+            matched[u] = true;
+            coarse_id += 1;
         }
     }
 
@@ -136,6 +132,22 @@ fn twohop_coarsen(g: &CsrGraph, _seed: u64) -> Result<(CsrGraph, CoarseMap), Par
     }
 
     build_coarse_graph(g, &cmap, coarse_id as usize)
+}
+
+fn weighted_vertex_order(max_w: &[i32]) -> Vec<usize> {
+    let max_bucket = max_w.iter().copied().max().unwrap_or(0).max(1) as usize;
+    if max_bucket <= MAX_WEIGHT_BUCKETS {
+        let mut buckets: Vec<Vec<usize>> = vec![Vec::new(); max_bucket + 1];
+        for (v, &weight) in max_w.iter().enumerate() {
+            let w = (weight.max(0) as usize).min(max_bucket);
+            buckets[w].push(v);
+        }
+        buckets.into_iter().rev().flatten().collect()
+    } else {
+        let mut order: Vec<usize> = (0..max_w.len()).collect();
+        order.sort_unstable_by(|&a, &b| max_w[b].cmp(&max_w[a]).then_with(|| a.cmp(&b)));
+        order
+    }
 }
 
 #[cfg(test)]
@@ -217,6 +229,22 @@ mod tests {
     fn twohop_with_params_should_stop() {
         let c = TwoHopMatchWithParams::new(20, 2);
         assert!(c.should_stop(&path_graph(5)));
+    }
+
+    #[test]
+    fn twohop_handles_extreme_weight_range_without_huge_bucket_table() {
+        let g = CsrGraph {
+            xadj: vec![0, 1, 3, 4],
+            adjncy: vec![1, 0, 2, 1],
+            ncon: 1,
+            vwgt: vec![1; 3],
+            adjwgt: Some(vec![i32::MAX, i32::MAX, 1, 1]),
+        };
+
+        let (c, cmap) = TwoHopMatch.coarsen(&g).unwrap();
+
+        assert!(c.is_valid());
+        assert_eq!(cmap.as_slice()[0], cmap.as_slice()[1]);
     }
 
     #[test]

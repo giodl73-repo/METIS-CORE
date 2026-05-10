@@ -19,15 +19,16 @@
 //!   2. Full coverage — every vertex is assigned to some part.
 //!   3. Valid part IDs — every assignment value is in `0..k`.
 //!   4. All parts occupied — no phantom empty part.
-//!   5. Contiguity — every part is a connected subgraph.
+//!   5. Optional contiguity — connected parts are asserted only when
+//!      `contig_fm=true`, matching METIS-compatible defaults.
 //!   6. Determinism — identical seed → identical assignment.
 //!
 //! Balance quality metrics (edge-cut, imbalance ratio) are reported via
 //! `eprintln!` for informational purposes but are NOT asserted.  The
-//! post-hoc contiguity repair can reassign large fractions of vertices
-//! on difficult graphs (copter2, mdual), which disrupts the weight
-//! balance that the FM refinement phase achieved; tight balance assertions
-//! would be fragile against seeds and implementation changes.
+//! contiguity repair can reassign large fractions of vertices on difficult
+//! graphs (copter2, mdual), which disrupts the weight balance that the FM
+//! refinement phase achieved; tight balance assertions would be fragile against
+//! seeds and implementation changes.
 //!
 //! ## Supported .graph format variants
 //!

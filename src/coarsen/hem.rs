@@ -170,14 +170,34 @@ mod tests {
         let g = CsrGraph {
             xadj: vec![0],
             adjncy: Vec::new(),
-            ncon: 2,
+            ncon: u32::MAX,
             vwgt: Vec::new(),
             adjwgt: None,
         };
 
-        let result = build_coarse_graph(&g, &[], usize::MAX);
+        let result = build_coarse_graph(&g, &[], u32::MAX as usize);
 
         assert!(matches!(result, Err(PartitionError::WeightOverflow)));
+    }
+
+    #[test]
+    fn coarse_graph_rejects_u32_vertex_count_overflow() {
+        let g = CsrGraph {
+            xadj: vec![0],
+            adjncy: Vec::new(),
+            ncon: 1,
+            vwgt: Vec::new(),
+            adjwgt: None,
+        };
+
+        let result = build_coarse_graph(&g, &[], u32::MAX as usize + 1);
+
+        assert!(matches!(
+            result,
+            Err(PartitionError::InvalidGraph(
+                "coarse vertex count exceeds u32 range"
+            ))
+        ));
     }
 }
 
@@ -293,10 +313,19 @@ pub(crate) fn build_coarse_graph(
 ) -> Result<(CsrGraph, CoarseMap), PartitionError> {
     let n = g.n();
     let ncon = g.ncon as usize;
+    if cn > u32::MAX as usize {
+        return Err(PartitionError::InvalidGraph(
+            "coarse vertex count exceeds u32 range",
+        ));
+    }
 
     // Accumulate in i64 to prevent overflow when summing many large vertex weights
     let cvwgt_len = cn.checked_mul(ncon).ok_or(PartitionError::WeightOverflow)?;
-    let mut cvwgt = vec![0i64; cvwgt_len];
+    let mut cvwgt = Vec::new();
+    cvwgt
+        .try_reserve_exact(cvwgt_len)
+        .map_err(|_| PartitionError::WeightOverflow)?;
+    cvwgt.resize(cvwgt_len, 0i64);
     for (v, &cv) in cmap.iter().enumerate().take(n) {
         let cv = cv as usize;
         for c in 0..ncon {
@@ -316,7 +345,10 @@ pub(crate) fn build_coarse_graph(
             let cu = cmap[g.adjncy[j] as usize] as usize;
             if cu != cv {
                 let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
-                cadj[cv].push((cu as u32, ew));
+                let cu = u32::try_from(cu).map_err(|_| {
+                    PartitionError::InvalidGraph("coarse vertex count exceeds u32 range")
+                })?;
+                cadj[cv].push((cu, ew));
             }
         }
     }
@@ -353,7 +385,9 @@ pub(crate) fn build_coarse_graph(
                 weights.push(ew);
             }
         }
-        xadj.push(adjncy.len() as u32);
+        xadj.push(u32::try_from(adjncy.len()).map_err(|_| {
+            PartitionError::InvalidGraph("coarse adjacency length exceeds u32 range")
+        })?);
     }
 
     let coarse = CsrGraph {

@@ -4,7 +4,7 @@ use metis_core::advanced::{
 };
 use metis_core::{
     check_contiguity, part_kway, part_recursive, CoarseningMethod, CsrGraph, MetisParams,
-    MetisPartitioner, ObjectiveType, Partition, Partitioner,
+    MetisPartitioner, ObjectiveType, Partition, PartitionError, Partitioner,
 };
 
 fn cycle_graph() -> CsrGraph {
@@ -26,6 +26,38 @@ fn root_api_supports_metis_style_entry_points() {
     assert_eq!(kway.len(), 4);
     assert!(recursive.iter().all(|&part| part < 2));
     assert!(kway.iter().all(|&part| part < 2));
+}
+
+#[test]
+fn root_api_rejects_malformed_csr() {
+    let result = part_kway(&[0, 2], &[0], &[], &[], 2, MetisParams::kway());
+
+    assert!(matches!(result, Err(PartitionError::InvalidGraph(_))));
+}
+
+#[test]
+fn root_api_rejects_empty_graph() {
+    let result = part_kway(&[0], &[], &[], &[], 1, MetisParams::kway());
+
+    assert!(matches!(result, Err(PartitionError::EmptyGraph)));
+}
+
+#[test]
+fn root_api_rejects_zero_parts() {
+    let graph = cycle_graph();
+    let result = MetisPartitioner::new(0).split(&graph, 0, None);
+
+    assert!(matches!(result, Err(PartitionError::ZeroParts)));
+}
+
+#[test]
+fn root_api_rejects_too_many_parts() {
+    let result = part_recursive(&[0, 1, 2], &[1, 0], &[], &[], 3, MetisParams::recursive());
+
+    assert!(matches!(
+        result,
+        Err(PartitionError::TooManyParts { k: 3, n: 2 })
+    ));
 }
 
 #[test]

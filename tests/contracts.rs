@@ -282,15 +282,9 @@ fn all_oracle_partitions_are_contiguous() {
     ];
 
     for (g, k) in test_cases {
-        let p = MetisPartitioner::with_params(
-            MetisParams {
-                contig_fm: true,
-                ..MetisParams::default()
-            },
-            k,
-        )
-        .split(&g, k, Some(42))
-        .unwrap();
+        let p = MetisPartitioner::with_params(MetisParams::default().with_contiguity(true), k)
+            .split(&g, k, Some(42))
+            .unwrap();
         assert!(
             check_contiguity(&g, &p).is_ok(),
             "partition k={k} n={} is not contiguous",

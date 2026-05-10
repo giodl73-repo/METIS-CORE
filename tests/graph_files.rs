@@ -325,24 +325,12 @@ fn test_4elt_k8_contig_fm_comparison() {
         }
     };
 
-    let p_on = MetisPartitioner::with_params(
-        MetisParams {
-            contig_fm: true,
-            ..MetisParams::default()
-        },
-        8,
-    )
-    .split(&g, 8, Some(42))
-    .expect("contig_fm=true k=8 should succeed");
-    let p_off = MetisPartitioner::with_params(
-        MetisParams {
-            contig_fm: false,
-            ..MetisParams::default()
-        },
-        8,
-    )
-    .split(&g, 8, Some(42))
-    .expect("contig_fm=false k=8 should succeed");
+    let p_on = MetisPartitioner::with_params(MetisParams::default().with_contiguity(true), 8)
+        .split(&g, 8, Some(42))
+        .expect("contig_fm=true k=8 should succeed");
+    let p_off = MetisPartitioner::with_params(MetisParams::default().with_contiguity(false), 8)
+        .split(&g, 8, Some(42))
+        .expect("contig_fm=false k=8 should succeed");
 
     assert_structural_invariants(&g, p_on.assignment(), 8, "4elt k=8 contig_fm=true");
     assert_structural_invariants(&g, p_off.assignment(), 8, "4elt k=8 contig_fm=false");
@@ -394,27 +382,15 @@ fn test_4elt_k8_ncuts4() {
     };
 
     // single-trial baseline (same seed as test_4elt_k8 for comparability)
-    let p1 = MetisPartitioner::with_params(
-        MetisParams {
-            ncuts: 1,
-            ..MetisParams::default()
-        },
-        8,
-    )
-    .split(&g, 8, Some(42))
-    .expect("4elt k=8 ncuts=1 should succeed");
+    let p1 = MetisPartitioner::with_params(MetisParams::default().with_ncuts(1), 8)
+        .split(&g, 8, Some(42))
+        .expect("4elt k=8 ncuts=1 should succeed");
     let cut1 = edge_cut(&g, p1.assignment());
 
     // best-of-4 trials
-    let p4 = MetisPartitioner::with_params(
-        MetisParams {
-            ncuts: 4,
-            ..MetisParams::default()
-        },
-        8,
-    )
-    .split(&g, 8, Some(42))
-    .expect("4elt k=8 ncuts=4 should succeed");
+    let p4 = MetisPartitioner::with_params(MetisParams::default().with_ncuts(4), 8)
+        .split(&g, 8, Some(42))
+        .expect("4elt k=8 ncuts=4 should succeed");
     assert_structural_invariants(&g, p4.assignment(), 8, "4elt k=8 ncuts=4");
     let cut4 = edge_cut(&g, p4.assignment());
     let imbal4 = max_imbalance_ratio(p4.assignment(), 8);

@@ -272,11 +272,9 @@ fn gpmetis_grid_quality_envelope() {
     let k = 8;
     let seed = 42;
     let c_assignment = run_gpmetis(&gpmetis, &graph_path, k, seed);
-    let params = MetisParams {
-        seed: Some(seed as u64),
-        ufactor: 30,
-        ..MetisParams::default()
-    };
+    let params = MetisParams::default()
+        .with_seed(seed as u64)
+        .with_ufactor(30);
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust partition")
@@ -331,11 +329,9 @@ fn gpmetis_4elt_quality_envelope() {
     let k = 8;
     let seed = 42;
     let c_assignment = run_gpmetis(&gpmetis, &graph_path, k, seed);
-    let params = MetisParams {
-        seed: Some(seed as u64),
-        ufactor: 30,
-        ..MetisParams::default()
-    };
+    let params = MetisParams::default()
+        .with_seed(seed as u64)
+        .with_ufactor(30);
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust 4elt partition")
@@ -390,11 +386,9 @@ fn gpmetis_test_mgraph_structural_reference() {
     let k = 4;
     let seed = 42;
     let c_assignment = run_gpmetis(&gpmetis, &graph_path, k, seed);
-    let params = MetisParams {
-        seed: Some(seed as u64),
-        ufactor: 30,
-        ..MetisParams::default()
-    };
+    let params = MetisParams::default()
+        .with_seed(seed as u64)
+        .with_ufactor(30);
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust test.mgraph partition")
@@ -459,11 +453,9 @@ fn gpmetis_copter2_quality_smoke() {
     let k = 8;
     let seed = 42;
     let c_assignment = run_gpmetis(&gpmetis, &graph_path, k, seed);
-    let params = MetisParams {
-        seed: Some(seed as u64),
-        ufactor: 30,
-        ..MetisParams::default()
-    };
+    let params = MetisParams::default()
+        .with_seed(seed as u64)
+        .with_ufactor(30);
     let rust_assignment = MetisPartitioner::with_params(params, k)
         .split(&g, k, None)
         .expect("rust copter2 partition")

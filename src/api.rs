@@ -131,48 +131,48 @@ pub trait Partitioner: Send + Sync {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MetisParams {
-    pub ufactor: u32,
-    pub niter: u32,
-    pub seed: Option<u64>,
-    pub coarsen_to: u32,
+    pub(crate) ufactor: u32,
+    pub(crate) niter: u32,
+    pub(crate) seed: Option<u64>,
+    pub(crate) coarsen_to: u32,
     /// Number of independent partition trials; the one with the lowest edge cut
     /// is returned.  Mirrors the METIS `-ncuts` option (kway default = 1;
     /// pmetis default = 4).  Each trial uses a deterministically derived seed
     /// so results remain reproducible given the same base seed.
-    pub ncuts: u32,
+    pub(crate) ncuts: u32,
     /// Target partition weights (one `f32` per part, summing to 1.0).
     /// `None` = equal weight (each part gets `1/k` of total population).
     /// Set by `split_weighted` from the caller's proportional `fracs` array.
-    pub tpwgts: Option<Vec<f32>>,
+    pub(crate) tpwgts: Option<Vec<f32>>,
     /// Check contiguity before each FM move: skip moves that would disconnect
     /// the source part (IsConnectedSubdomain check). Default: `false`, matching
     /// METIS `METIS_OPTION_CONTIG`.
-    pub contig_fm: bool,
+    pub(crate) contig_fm: bool,
     /// Use multilevel recursive bisection (MlevelRecursiveBisection) for k > 2.
     /// When `true`, the graph is bisected and each half is recursively partitioned
     /// into `k/2` and `k - k/2` parts respectively — mirrors METIS_PartGraphRecursive.
     /// When `false` (default), the direct k-way multilevel pipeline is used.
-    pub use_recursive: bool,
+    pub(crate) use_recursive: bool,
     /// Objective function for FM refinement.
     /// `ObjectiveType::Cut` (default) minimises edge cut.
     /// `ObjectiveType::Volume` minimises communication volume (number of distinct
     /// adjacent parts per vertex), matching `METIS_OBJTYPE_VOL`.
-    pub objective: ObjectiveType,
+    pub(crate) objective: ObjectiveType,
     /// Minimize subdomain connectivity after partitioning (default: `false`).
     /// Mirrors the C METIS `METIS_OPTION_MINCONN` option.
     /// When enabled, iteratively moves boundary vertices to reduce the number of
     /// distinct communication partners each part has (subdomain degree).
-    pub min_conn: bool,
+    pub(crate) min_conn: bool,
     /// Run a label-propagation balance pass before FM refinement (default: `true`).
     /// Mirrors METIS `BalanceAndRefineLP`.  Particularly helpful when the initial
     /// partition is very unbalanced (e.g. when GrowKway seeds distribute poorly).
-    pub lp_refine: bool,
+    pub(crate) lp_refine: bool,
     /// Maximum number of LP balance iterations (default: 10).
     /// Ignored when `lp_refine` is `false`.
-    pub lp_iter: u32,
+    pub(crate) lp_iter: u32,
     /// Coarsening algorithm (default: `Shem`).
     /// Mirrors the METIS `-ctype` option.
-    pub coarsen_method: CoarseningMethod,
+    pub(crate) coarsen_method: CoarseningMethod,
 }
 
 impl Default for MetisParams {
@@ -232,6 +232,18 @@ impl MetisParams {
         self
     }
 
+    /// Set the number of FM refinement iterations.
+    pub fn with_niter(mut self, niter: u32) -> Self {
+        self.niter = niter;
+        self
+    }
+
+    /// Set the coarsening stop factor used to derive the coarsest graph size.
+    pub fn with_coarsen_to(mut self, coarsen_to: u32) -> Self {
+        self.coarsen_to = coarsen_to;
+        self
+    }
+
     /// Set the number of independent trials. `0` is accepted and treated as
     /// one trial during partitioning, matching the historical crate behavior.
     pub fn with_ncuts(mut self, ncuts: u32) -> Self {
@@ -251,9 +263,36 @@ impl MetisParams {
         self
     }
 
+    /// Select direct k-way partitioning or recursive bisection.
+    pub fn with_recursive(mut self, enabled: bool) -> Self {
+        self.use_recursive = enabled;
+        if enabled && self.ncuts == Self::default().ncuts {
+            self.ncuts = Self::recursive().ncuts;
+        }
+        self
+    }
+
     /// Enable or disable minimum-connectivity post-processing.
     pub fn with_min_connectivity(mut self, enabled: bool) -> Self {
         self.min_conn = enabled;
+        self
+    }
+
+    /// Select the refinement objective.
+    pub fn with_objective(mut self, objective: ObjectiveType) -> Self {
+        self.objective = objective;
+        self
+    }
+
+    /// Enable or disable label-propagation pre-balance refinement.
+    pub fn with_lp_refine(mut self, enabled: bool) -> Self {
+        self.lp_refine = enabled;
+        self
+    }
+
+    /// Set the maximum number of label-propagation balance iterations.
+    pub fn with_lp_iter(mut self, lp_iter: u32) -> Self {
+        self.lp_iter = lp_iter;
         self
     }
 
@@ -287,6 +326,58 @@ impl MetisParams {
             }
         }
         Ok(())
+    }
+
+    pub fn ufactor(&self) -> u32 {
+        self.ufactor
+    }
+
+    pub fn niter(&self) -> u32 {
+        self.niter
+    }
+
+    pub fn seed(&self) -> Option<u64> {
+        self.seed
+    }
+
+    pub fn coarsen_to(&self) -> u32 {
+        self.coarsen_to
+    }
+
+    pub fn ncuts(&self) -> u32 {
+        self.ncuts
+    }
+
+    pub fn target_weights(&self) -> Option<&[f32]> {
+        self.tpwgts.as_deref()
+    }
+
+    pub fn contiguity(&self) -> bool {
+        self.contig_fm
+    }
+
+    pub fn use_recursive(&self) -> bool {
+        self.use_recursive
+    }
+
+    pub fn objective(&self) -> ObjectiveType {
+        self.objective
+    }
+
+    pub fn min_connectivity(&self) -> bool {
+        self.min_conn
+    }
+
+    pub fn lp_refine(&self) -> bool {
+        self.lp_refine
+    }
+
+    pub fn lp_iter(&self) -> u32 {
+        self.lp_iter
+    }
+
+    pub fn coarsening_method(&self) -> CoarseningMethod {
+        self.coarsen_method
     }
 }
 

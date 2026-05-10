@@ -422,7 +422,7 @@ fn trivial_k1_partition_has_zero_deviation() {
 fn metis_params_coarsening_method_default_is_shem() {
     let p = MetisParams::default();
     assert!(
-        matches!(p.coarsen_method, CoarseningMethod::Shem),
+        matches!(p.coarsening_method(), CoarseningMethod::Shem),
         "default coarsening method must be Shem"
     );
 }
@@ -431,7 +431,7 @@ fn metis_params_coarsening_method_default_is_shem() {
 fn metis_params_objective_default_is_cut() {
     let p = MetisParams::default();
     assert!(
-        matches!(p.objective, ObjectiveType::Cut),
+        matches!(p.objective(), ObjectiveType::Cut),
         "default objective must be Cut"
     );
 }
@@ -439,6 +439,6 @@ fn metis_params_objective_default_is_cut() {
 #[test]
 fn metis_params_ufactor_5_and_niter_10() {
     let p = MetisParams::default();
-    assert_eq!(p.ufactor, 5, "default ufactor must be 5");
-    assert_eq!(p.niter, 10, "default niter must be 10");
+    assert_eq!(p.ufactor(), 5, "default ufactor must be 5");
+    assert_eq!(p.niter(), 10, "default niter must be 10");
 }

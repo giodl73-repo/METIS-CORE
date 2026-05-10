@@ -36,10 +36,7 @@ fn public_partitioning_types_are_send_sync() {
 fn partitioner_can_be_shared_across_threads() {
     let graph = Arc::new(path_graph(96));
     let partitioner = Arc::new(MetisPartitioner::with_params(
-        MetisParams {
-            seed: Some(1234),
-            ..MetisParams::default()
-        },
+        MetisParams::default().with_seed(1234),
         4,
     ));
 

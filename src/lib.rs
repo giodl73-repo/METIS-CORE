@@ -147,18 +147,15 @@ mod tests {
     #[test]
     fn metis_params_recursive_defaults_match_pmetis() {
         let params = api::MetisParams::recursive();
-        assert!(params.use_recursive);
-        assert_eq!(params.ncuts, 4);
+        assert!(params.use_recursive());
+        assert_eq!(params.ncuts(), 4);
     }
 
     #[test]
     fn part_recursive_promotes_default_ncuts_even_with_seed() {
-        let params = api::MetisParams {
-            seed: Some(7),
-            ..api::MetisParams::default()
-        };
+        let params = api::MetisParams::default().with_seed(7);
         let defaults = api::MetisParams::default();
-        assert_eq!(params.ncuts, defaults.ncuts);
+        assert_eq!(params.ncuts(), defaults.ncuts());
 
         let (xadj, adjncy) = path_xadj_adjncy(10);
         let assignment = part_recursive(&xadj, &adjncy, &[], &[], 2, params)
@@ -169,7 +166,7 @@ mod tests {
     #[test]
     fn metis_params_kway_defaults_match_kmetis() {
         let params = api::MetisParams::kway();
-        assert!(!params.use_recursive);
-        assert_eq!(params.ncuts, 1);
+        assert!(!params.use_recursive());
+        assert_eq!(params.ncuts(), 1);
     }
 }

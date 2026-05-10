@@ -3,7 +3,17 @@ use crate::graph::{CsrGraph, Partition};
 use crate::refine::Refiner;
 
 pub struct GreedyKWay {
-    pub niter: u32,
+    niter: u32,
+}
+
+impl GreedyKWay {
+    pub fn new(niter: u32) -> Self {
+        Self { niter }
+    }
+
+    pub fn niter(&self) -> u32 {
+        self.niter
+    }
 }
 
 impl Refiner for GreedyKWay {
@@ -66,7 +76,7 @@ mod tests {
             tpwgts: None,
         };
         let cut_before = edge_cut(&g, &p_bad.assignment);
-        let p_ref = GreedyKWay { niter: 10 }.refine(&g, p_bad);
+        let p_ref = GreedyKWay::new(10).refine(&g, p_bad);
         let cut_after = edge_cut(&g, &p_ref.assignment);
         assert!(
             cut_after <= cut_before,
@@ -82,7 +92,7 @@ mod tests {
             k: 4,
             tpwgts: None,
         };
-        let p = GreedyKWay { niter: 10 }.refine(&g, p_init);
+        let p = GreedyKWay::new(10).refine(&g, p_init);
         assert_eq!(p.assignment.len(), 12);
         assert!(
             p.assignment.iter().all(|&a| a < 4),

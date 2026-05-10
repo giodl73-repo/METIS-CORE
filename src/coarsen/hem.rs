@@ -48,8 +48,22 @@ fn path5() -> CsrGraph {
 
 pub struct HeavyEdgeMatch;
 pub struct HeavyEdgeMatchWithParams {
-    pub coarsen_to: u32,
-    pub k: u32,
+    pub(crate) coarsen_to: u32,
+    pub(crate) k: u32,
+}
+
+impl HeavyEdgeMatchWithParams {
+    pub fn new(coarsen_to: u32, k: u32) -> Self {
+        Self { coarsen_to, k }
+    }
+
+    pub fn coarsen_to(&self) -> u32 {
+        self.coarsen_to
+    }
+
+    pub fn k(&self) -> u32 {
+        self.k
+    }
 }
 
 #[cfg(test)]
@@ -79,20 +93,14 @@ mod tests {
 
     #[test]
     fn should_stop_small_graph() {
-        let hem = HeavyEdgeMatchWithParams {
-            coarsen_to: 20,
-            k: 2,
-        };
+        let hem = HeavyEdgeMatchWithParams::new(20, 2);
         // path5 has 5 vertices; threshold = max(20*2, 40) = 40; 5 < 40 → should stop
         assert!(hem.should_stop(&path5()));
     }
 
     #[test]
     fn should_stop_large_graph() {
-        let hem = HeavyEdgeMatchWithParams {
-            coarsen_to: 20,
-            k: 53,
-        };
+        let hem = HeavyEdgeMatchWithParams::new(20, 53);
         // threshold = max(20*53, 40) = 1060; path5 has 5 vertices → should stop
         assert!(hem.should_stop(&path5()));
     }

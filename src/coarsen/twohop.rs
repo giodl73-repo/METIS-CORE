@@ -13,8 +13,22 @@ use crate::graph::{CoarseMap, CsrGraph};
 /// Mirrors the `MATCH_2HOPALL` / `MATCH_2HOP` variants in METIS `coarsen.c`.
 pub struct TwoHopMatch;
 pub struct TwoHopMatchWithParams {
-    pub coarsen_to: u32,
-    pub k: u32,
+    pub(crate) coarsen_to: u32,
+    pub(crate) k: u32,
+}
+
+impl TwoHopMatchWithParams {
+    pub fn new(coarsen_to: u32, k: u32) -> Self {
+        Self { coarsen_to, k }
+    }
+
+    pub fn coarsen_to(&self) -> u32 {
+        self.coarsen_to
+    }
+
+    pub fn k(&self) -> u32 {
+        self.k
+    }
 }
 
 impl Coarsener for TwoHopMatch {
@@ -200,10 +214,7 @@ mod tests {
 
     #[test]
     fn twohop_with_params_should_stop() {
-        let c = TwoHopMatchWithParams {
-            coarsen_to: 20,
-            k: 2,
-        };
+        let c = TwoHopMatchWithParams::new(20, 2);
         assert!(c.should_stop(&path_graph(5)));
     }
 

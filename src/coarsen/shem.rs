@@ -6,8 +6,22 @@ use crate::graph::{CoarseMap, CsrGraph};
 
 pub struct SortedHeavyEdgeMatch;
 pub struct SortedHeavyEdgeMatchWithParams {
-    pub coarsen_to: u32,
-    pub k: u32,
+    pub(crate) coarsen_to: u32,
+    pub(crate) k: u32,
+}
+
+impl SortedHeavyEdgeMatchWithParams {
+    pub fn new(coarsen_to: u32, k: u32) -> Self {
+        Self { coarsen_to, k }
+    }
+
+    pub fn coarsen_to(&self) -> u32 {
+        self.coarsen_to
+    }
+
+    pub fn k(&self) -> u32 {
+        self.k
+    }
 }
 
 // ── test helpers ──────────────────────────────────────────────────────────
@@ -105,10 +119,7 @@ mod tests {
 
     #[test]
     fn shem_with_params_should_stop() {
-        let shem = SortedHeavyEdgeMatchWithParams {
-            coarsen_to: 20,
-            k: 2,
-        };
+        let shem = SortedHeavyEdgeMatchWithParams::new(20, 2);
         assert!(
             shem.should_stop(&path5()),
             "path5 (5 vertices) < threshold max(40, 20*2)=40 → should stop"

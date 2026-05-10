@@ -316,10 +316,7 @@ fn heavy_edge_match_path4_builds_valid_smaller_graph() {
 #[test]
 fn hierarchy_depth_at_least_1_for_large_graph() {
     let g = path_graph(100);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 2,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     assert!(
         h.depth() >= 1,
@@ -330,10 +327,7 @@ fn hierarchy_depth_at_least_1_for_large_graph() {
 #[test]
 fn hierarchy_coarsest_satisfies_should_stop() {
     let g = path_graph(50);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 2,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     // threshold = max(coarsen_to * k, 40) = max(40, 40) = 40
     assert!(
@@ -346,10 +340,7 @@ fn hierarchy_coarsest_satisfies_should_stop() {
 #[test]
 fn hierarchy_all_intermediate_levels_valid() {
     let g = path_graph(60);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 2,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 2);
     let h = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     for (i, level) in h.levels().iter().enumerate() {
         assert!(

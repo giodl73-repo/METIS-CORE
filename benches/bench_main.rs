@@ -113,10 +113,7 @@ fn bench_ca_kway(c: &mut Criterion) {
 
 fn bench_ca_coarsen_only(c: &mut Criterion) {
     let g = grid_graph(96, 95); // 9120 vertices ≈ CA 9129 tracts
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 53,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     c.bench_function("ca_coarsen_only_n9120", |b| {
         b.iter(|| CoarseningHierarchy::build(&g, &coarsener).unwrap());
     });
@@ -126,10 +123,7 @@ fn bench_ca_coarsen_only(c: &mut Criterion) {
 
 fn bench_ca_init_only(c: &mut Criterion) {
     let g = grid_graph(96, 95);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 53,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     let init = GrowBisect;
 
@@ -142,10 +136,7 @@ fn bench_ca_init_only(c: &mut Criterion) {
 
 fn bench_ca_projection_only(c: &mut Criterion) {
     let g = grid_graph(96, 95);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 53,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     let init = GrowBisect;
     let coarse = init.partition(hierarchy.coarsest(), 53, 42);
@@ -165,20 +156,11 @@ fn bench_ca_projection_only(c: &mut Criterion) {
 
 fn bench_ca_refine_project_only(c: &mut Criterion) {
     let g = grid_graph(96, 95);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 53,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 53);
     let hierarchy = CoarseningHierarchy::build(&g, &coarsener).unwrap();
     let init = GrowBisect;
     let coarse = init.partition(hierarchy.coarsest(), 53, 42);
-    let refiner = FiducciaMattheyses {
-        niter: 10,
-        contig_fm: false,
-        objective: ObjectiveType::Cut,
-        lp_iter: 10,
-        ufactor: 5,
-    };
+    let refiner = FiducciaMattheyses::new(10, false, ObjectiveType::Cut, 10, 5);
 
     c.bench_function("ca_refine_project_only_k53_n9120", |b| {
         b.iter(|| refine_and_project(&hierarchy, coarse.clone(), &refiner));

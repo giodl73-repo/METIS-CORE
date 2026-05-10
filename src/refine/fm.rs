@@ -4,17 +4,17 @@ use crate::graph::{CsrGraph, Partition};
 use crate::refine::Refiner;
 
 pub struct FiducciaMattheyses {
-    pub niter: u32,
+    pub(crate) niter: u32,
     /// Skip moves that would disconnect the source part (IsConnectedSubdomain).
     /// Default: `true`.
-    pub contig_fm: bool,
+    pub(crate) contig_fm: bool,
     /// Objective function: edge cut (default) or communication volume.
-    pub objective: ObjectiveType,
+    pub(crate) objective: ObjectiveType,
     /// Number of label-propagation balance iterations to run before the FM
     /// passes.  0 = disabled (default).  Mirrors METIS `BalanceAndRefineLP`.
-    pub lp_iter: u32,
+    pub(crate) lp_iter: u32,
     /// Allowed imbalance in METIS units: `x` means `1 + x/1000`.
-    pub ufactor: u32,
+    pub(crate) ufactor: u32,
 }
 
 impl Default for FiducciaMattheyses {
@@ -26,6 +26,44 @@ impl Default for FiducciaMattheyses {
             lp_iter: 0,
             ufactor: 5,
         }
+    }
+}
+
+impl FiducciaMattheyses {
+    pub fn new(
+        niter: u32,
+        contig_fm: bool,
+        objective: ObjectiveType,
+        lp_iter: u32,
+        ufactor: u32,
+    ) -> Self {
+        Self {
+            niter,
+            contig_fm,
+            objective,
+            lp_iter,
+            ufactor,
+        }
+    }
+
+    pub fn niter(&self) -> u32 {
+        self.niter
+    }
+
+    pub fn contiguity(&self) -> bool {
+        self.contig_fm
+    }
+
+    pub fn objective(&self) -> ObjectiveType {
+        self.objective
+    }
+
+    pub fn lp_iter(&self) -> u32 {
+        self.lp_iter
+    }
+
+    pub fn ufactor(&self) -> u32 {
+        self.ufactor
     }
 }
 

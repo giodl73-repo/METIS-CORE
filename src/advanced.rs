@@ -4,7 +4,7 @@
 //! lower-level algorithm components available intentionally, without exposing
 //! the implementation module layout as the public API.
 
-pub use crate::coarsen::hem::HeavyEdgeMatch;
+pub use crate::coarsen::hem::{HeavyEdgeMatch, HeavyEdgeMatchWithParams};
 pub use crate::coarsen::mindegree::MinDegreeMatch;
 pub use crate::coarsen::shem::{SortedHeavyEdgeMatch, SortedHeavyEdgeMatchWithParams};
 pub use crate::coarsen::twohop::{TwoHopMatch, TwoHopMatchWithParams};

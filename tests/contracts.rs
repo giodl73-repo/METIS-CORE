@@ -175,10 +175,7 @@ use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatchWithParams};
 #[test]
 fn coarsening_terminates_path255() {
     let g = make_path(255);
-    let coarsener = SortedHeavyEdgeMatchWithParams {
-        coarsen_to: 20,
-        k: 1,
-    };
+    let coarsener = SortedHeavyEdgeMatchWithParams::new(20, 1);
     let mut current = g;
     for level in 0..50usize {
         if coarsener.should_stop(&current) {

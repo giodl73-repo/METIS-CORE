@@ -23,7 +23,7 @@ impl CoarseningHierarchy {
         let mut cmaps = Vec::new();
 
         for _ in 0..MAX_LEVELS {
-            let current = levels.last().unwrap();
+            let current = &levels[levels.len() - 1];
             if coarsener.should_stop(current) {
                 break;
             }
@@ -37,7 +37,7 @@ impl CoarseningHierarchy {
 
         // If should_stop is still false on the last level we either hit the
         // n<=1 guard or exhausted MAX_LEVELS without stopping — both are stalls.
-        if !coarsener.should_stop(levels.last().unwrap()) {
+        if !coarsener.should_stop(&levels[levels.len() - 1]) {
             return Err(PartitionError::CoarseningStalled);
         }
 
@@ -46,7 +46,7 @@ impl CoarseningHierarchy {
 
     /// Return a reference to the coarsest (deepest) level.
     pub fn coarsest(&self) -> &CsrGraph {
-        self.levels.last().unwrap()
+        &self.levels[self.depth()]
     }
 
     /// Return all hierarchy levels, ordered from original graph to coarsest.

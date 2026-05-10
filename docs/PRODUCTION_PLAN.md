@@ -125,6 +125,7 @@ Deliverables:
 - Done: `cargo fmt --check`
 - Done: `cargo doc --no-deps`
 - Done: unsafe scan
+- Done: crate root now forbids unsafe code.
 - Done: package check
 - Done: README examples
 - Done: API decision: this crate is unreleased, so `CsrGraph` construction now

@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 #![allow(clippy::items_after_test_module)]
 //! Pure Rust multilevel graph partitioning with METIS-style entry points.
 //!

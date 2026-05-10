@@ -575,10 +575,12 @@ fn spread_seed_prefix(g: &CsrGraph, k: usize, first_seed: usize) -> (Vec<usize>,
     let mut min_dist = bfs_distances(g, seeds[0]);
 
     while seeds.len() < spread_limit && seeds.len() < n {
-        let next = (0..n)
+        let Some(next) = (0..n)
             .filter(|&v| !selected[v])
             .max_by_key(|&v| (min_dist[v], std::cmp::Reverse(v)))
-            .expect("unselected vertex must exist while seeds.len() < n");
+        else {
+            break;
+        };
         seeds.push(next);
         selected[next] = true;
 

@@ -168,6 +168,7 @@ impl GainTable {
         Some((v, g))
     }
 
+    #[cfg(test)]
     pub fn is_empty(&self) -> bool {
         self.peek_max().is_none()
     }

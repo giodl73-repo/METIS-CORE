@@ -562,6 +562,7 @@ impl<'g> FmState<'g> {
 /// Gain = `external_degree_to_destination - internal_degree`. For k-way
 /// partitioning the destination must be a single part, so using total external
 /// degree across all neighboring parts overstates the true move gain.
+#[cfg(kani)]
 pub fn compute_gain(g: &CsrGraph, assignment: &[u32], v: usize) -> i32 {
     compute_cut_gain_with_buffer(g, assignment, v, &mut Vec::new())
 }

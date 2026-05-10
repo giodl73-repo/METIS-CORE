@@ -676,7 +676,8 @@ fn weight_balanced(_p: &Partition, _g: &CsrGraph, _k: u32) -> bool {
 /// Returns true iff max deviation from target per part is ≤ epsilon.
 /// epsilon = (total_wgt * 5 + 999) / 1000  (ceiling of 0.5%, integer arithmetic).
 #[cfg(any(test, doc))]
-pub fn weight_balance_check(p: &Partition, g: &CsrGraph) -> bool {
+#[cfg(prusti)]
+fn weight_balance_check(p: &Partition, g: &CsrGraph) -> bool {
     let total_wgt: i64 = g.vwgt.iter().map(|&w| w as i64).sum();
     let target = total_wgt / p.k as i64;
     let epsilon = (total_wgt * 5 + 999) / 1000;

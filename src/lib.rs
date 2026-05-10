@@ -1,12 +1,13 @@
 #![allow(clippy::items_after_test_module)]
 
-pub mod api;
-pub mod coarsen;
+pub mod advanced;
+mod api;
+mod coarsen;
 pub mod error;
 pub mod graph;
-pub mod init;
-pub mod multilevel;
-pub mod refine;
+mod init;
+mod multilevel;
+mod refine;
 
 pub use api::{CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
 pub use error::PartitionError;
@@ -25,7 +26,7 @@ pub use graph::{
 /// - `vwgt`: vertex weights (length n); pass `&[]` for unit weights
 /// - `adjwgt`: edge weights (length adjncy.len()); pass `&[]` for unit weights
 /// - `nparts`: number of parts k
-/// - `params`: partitioning parameters (see [`api::MetisParams`])
+/// - `params`: partitioning parameters (see [`MetisParams`])
 ///
 /// # Returns
 /// Partition assignment vector (length n), each value in `0..nparts`

@@ -1,7 +1,7 @@
 //! L1/L0 integration tests — correctness oracle, RNG golden pin, termination.
 
-use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::CsrGraph;
+use metis_core::{MetisParams, MetisPartitioner, Partitioner};
 
 // ── graph helpers ──────────────────────────────────────────────────────────
 
@@ -171,8 +171,7 @@ fn oracle_weighted_path_respects_weights() {
 }
 
 // L1: termination (from earlier task — kept here as part of oracle suite)
-use metis_core::coarsen::shem::SortedHeavyEdgeMatchWithParams;
-use metis_core::coarsen::Coarsener;
+use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatchWithParams};
 
 #[test]
 fn coarsening_terminates_path255() {

@@ -1,10 +1,10 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
-use metis_core::coarsen::shem::SortedHeavyEdgeMatchWithParams;
+use metis_core::advanced::{
+    rebalance_to_ufactor, CoarseningHierarchy, FiducciaMattheyses, GrowBisect, InitialPartitioner,
+    Refiner, SortedHeavyEdgeMatchWithParams,
+};
 use metis_core::graph::{CsrGraph, Partition};
-use metis_core::init::{grow::GrowBisect, InitialPartitioner};
-use metis_core::multilevel::hierarchy::CoarseningHierarchy;
-use metis_core::refine::{fm::FiducciaMattheyses, Refiner};
+use metis_core::{MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
 
 /// Build a `rows × cols` grid graph (connected, no self-loops).
 ///
@@ -176,7 +176,7 @@ fn bench_ca_refine_project_only(c: &mut Criterion) {
     let refiner = FiducciaMattheyses {
         niter: 10,
         contig_fm: false,
-        objective: metis_core::api::ObjectiveType::Cut,
+        objective: ObjectiveType::Cut,
         lp_iter: 10,
         ufactor: 5,
     };
@@ -204,7 +204,7 @@ fn bench_ca_rebalance_only(c: &mut Criterion) {
     c.bench_function("ca_rebalance_only_k53_n9120", |b| {
         b.iter(|| {
             let mut trial = partition.clone();
-            metis_core::refine::lp::rebalance_to_ufactor(&g, &mut trial, 5);
+            rebalance_to_ufactor(&g, &mut trial, 5);
             trial
         });
     });

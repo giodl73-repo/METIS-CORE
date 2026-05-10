@@ -143,6 +143,9 @@ Deliverables:
   external callers configure partitioning through the validated API surface.
 - Done: `CoarseMap` construction now validates length, target range, and
   surjectivity while exposing maps through read-only slices.
+- Done: raw implementation modules are crate-private; lower-level extension
+  points now live under the explicit `advanced` module instead of leaking the
+  internal source layout.
 - Done: `part_recursive` now forces recursive-bisection semantics and promotes
   default `ncuts` to the METIS pmetis-style value of 4, even when callers set
   unrelated options such as seed.

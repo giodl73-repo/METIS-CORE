@@ -23,6 +23,7 @@ impl BoundarySet {
         Self { inner }
     }
 
+    #[cfg(test)]
     pub fn contains(&self, v: u32) -> bool {
         self.inner[v as usize]
     }
@@ -42,10 +43,12 @@ impl BoundarySet {
             .filter_map(|(i, &b)| if b { Some(i as u32) } else { None })
     }
 
+    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.inner.iter().filter(|&&b| b).count()
     }
 
+    #[cfg(test)]
     pub fn is_empty(&self) -> bool {
         !self.inner.iter().any(|&b| b)
     }

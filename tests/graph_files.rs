@@ -37,8 +37,8 @@
 //!   fmt=11            — vertex weight + edge weights
 //!   fmt=010 ncon=2    — TWO vertex weights per line prefix (e.g. test.mgraph)
 
-use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::{check_contiguity, CsrGraph};
+use metis_core::{MetisParams, MetisPartitioner, Partitioner};
 
 // ── .graph parser ─────────────────────────────────────────────────────────────
 

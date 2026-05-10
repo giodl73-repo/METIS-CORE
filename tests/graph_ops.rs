@@ -10,16 +10,14 @@
 //!   - Balance / population checks (3)
 //!   - MetisParams / pure math (3)
 
-use metis_core::api::{
-    CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner,
+use metis_core::advanced::{
+    Coarsener, CoarseningHierarchy, HeavyEdgeMatch, SortedHeavyEdgeMatch,
+    SortedHeavyEdgeMatchWithParams,
 };
-use metis_core::coarsen::hem::{build_coarse_graph, HeavyEdgeMatch};
-use metis_core::coarsen::shem::{SortedHeavyEdgeMatch, SortedHeavyEdgeMatchWithParams};
-use metis_core::coarsen::Coarsener;
 use metis_core::graph::{
     check_contiguity, extract_subgraph, repair_contiguity, CsrGraph, Partition,
 };
-use metis_core::multilevel::hierarchy::CoarseningHierarchy;
+use metis_core::{CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, Partitioner};
 
 // ─── shared graph helpers ───────────────────────────────────────────────────
 
@@ -305,21 +303,12 @@ fn coarsening_preserves_total_vertex_weight() {
 }
 
 #[test]
-fn build_coarse_graph_correct_supervertex_count() {
-    // Merge adjacent pairs: 0+1 -> supervertex 0, 2+3 -> supervertex 1
+fn heavy_edge_match_path4_builds_valid_smaller_graph() {
     let g = path_graph(4);
-    let cmap = vec![0u32, 0, 1, 1];
-    let (c, cmap_out) = build_coarse_graph(&g, &cmap, 2);
-    assert_eq!(
-        c.n(),
-        2,
-        "build_coarse_graph with 2 supervertices must produce n=2"
-    );
-    assert_eq!(
-        cmap_out.len(),
-        4,
-        "cmap must retain length of original graph"
-    );
+    let (c, cmap) = HeavyEdgeMatch.coarsen(&g);
+    assert!(c.n() < g.n(), "path4 should coarsen to fewer vertices");
+    assert_eq!(cmap.len(), 4, "cmap must retain length of original graph");
+    assert!(c.is_valid(), "coarse graph must be valid");
 }
 
 // ─── Bisection hierarchy (3 tests) ────────────────────────────────────────

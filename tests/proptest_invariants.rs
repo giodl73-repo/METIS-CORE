@@ -1,7 +1,6 @@
 //! L0 property-based tests — CsrGraph invariants through coarsening.
 
-use metis_core::coarsen::shem::SortedHeavyEdgeMatch;
-use metis_core::coarsen::Coarsener;
+use metis_core::advanced::{Coarsener, SortedHeavyEdgeMatch};
 use metis_core::graph::CsrGraph;
 use proptest::prelude::*;
 

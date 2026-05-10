@@ -2,8 +2,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use metis_core::api::{MetisParams, MetisPartitioner, Partitioner};
 use metis_core::graph::CsrGraph;
+use metis_core::{MetisParams, MetisPartitioner, Partitioner};
 
 fn find_gpmetis() -> Option<PathBuf> {
     for key in ["METIS_GPMETIS", "METIS_CORE_GPMETIS"] {

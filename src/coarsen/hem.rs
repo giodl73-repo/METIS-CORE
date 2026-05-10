@@ -6,7 +6,8 @@ use rand_pcg::Pcg64;
 
 // ── test helpers ──────────────────────────────────────────────────────────
 
-pub fn path_graph(n: usize) -> CsrGraph {
+#[cfg(test)]
+fn path_graph(n: usize) -> CsrGraph {
     let mut xadj = vec![0u32];
     let mut adjncy = Vec::new();
     for i in 0..n {
@@ -27,7 +28,8 @@ pub fn path_graph(n: usize) -> CsrGraph {
     }
 }
 
-pub fn triangle() -> CsrGraph {
+#[cfg(test)]
+fn triangle() -> CsrGraph {
     CsrGraph {
         xadj: vec![0, 2, 4, 6],
         adjncy: vec![1, 2, 0, 2, 0, 1],
@@ -37,7 +39,8 @@ pub fn triangle() -> CsrGraph {
     }
 }
 
-pub fn path5() -> CsrGraph {
+#[cfg(test)]
+fn path5() -> CsrGraph {
     path_graph(5)
 }
 

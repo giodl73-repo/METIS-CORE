@@ -66,6 +66,8 @@ Deliverables:
   instead of silently ignoring it.
 - Done: direct target weights and split-weight fractions now reject zero-weight
   parts instead of accepting impossible partition targets.
+- Done: equal-weight post-rebalance now chooses the best legal move across all
+  overweight parts instead of only the most overweight source part.
 - Done: recursive bisection rejects `tpwgts` until asymmetric recursive targets
   are implemented.
 - Ensure post-rebalance does not destroy cut unnecessarily.

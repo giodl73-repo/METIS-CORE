@@ -91,7 +91,8 @@ fn balance_targets(total_wgt: i64, k: usize, tpwgts: Option<&[f32]>) -> Vec<i64>
 /// This is intentionally conservative: it only moves boundary vertices from
 /// parts above the METIS `ufactor` limit into adjacent parts that can accept the
 /// vertex without exceeding their own limit. Among legal moves it chooses the
-/// smallest edge-cut penalty, with vertex id as the tie-breaker.
+/// smallest edge-cut penalty across all overweight parts, with deterministic
+/// tie-breakers on source part and vertex id.
 pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u32) {
     let k = partition.k as usize;
     if k <= 1 || g.n() == 0 {
@@ -108,22 +109,34 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
         pwgts[partition.assignment[v] as usize] += g.vwgt[v] as i64;
     }
 
-    let mut seen_parts = vec![0u32; k];
-    let mut adjacent_parts = Vec::new();
-    let mut visit_mark = 1u32;
-
     for _ in 0..g.n().saturating_mul(k) {
-        let Some(from) = pwgts
-            .iter()
-            .enumerate()
-            .filter(|&(_, &wgt)| wgt > max_wgt)
-            .max_by_key(|&(_, &wgt)| wgt)
-            .map(|(part, _)| part)
-        else {
+        let Some((from, v, to)) = best_rebalance_move(g, partition, &pwgts, max_wgt) else {
             break;
         };
 
-        let mut best: Option<(i64, usize, usize)> = None;
+        let v_wgt = g.vwgt[v] as i64;
+        partition.assignment[v] = to as u32;
+        pwgts[from] -= v_wgt;
+        pwgts[to] += v_wgt;
+    }
+}
+
+fn best_rebalance_move(
+    g: &CsrGraph,
+    partition: &Partition,
+    pwgts: &[i64],
+    max_wgt: i64,
+) -> Option<(usize, usize, usize)> {
+    let k = partition.k as usize;
+    let mut seen_parts = vec![0u32; k];
+    let mut adjacent_parts = Vec::new();
+    let mut visit_mark = 1u32;
+    let mut best: Option<(i64, usize, usize, usize)> = None;
+
+    for from in 0..k {
+        if pwgts[from] <= max_wgt {
+            continue;
+        }
 
         for v in 0..g.n() {
             if partition.assignment[v] as usize != from {
@@ -152,22 +165,15 @@ pub fn rebalance_to_ufactor(g: &CsrGraph, partition: &mut Partition, ufactor: u3
                     continue;
                 }
                 let delta = move_cut_delta(g, &partition.assignment, v, to as u32);
-                let candidate = (delta, v, to);
+                let candidate = (delta, from, v, to);
                 if best.is_none_or(|current| candidate < current) {
                     best = Some(candidate);
                 }
             }
         }
-
-        let Some((_delta, v, to)) = best else {
-            break;
-        };
-
-        let v_wgt = g.vwgt[v] as i64;
-        partition.assignment[v] = to as u32;
-        pwgts[from] -= v_wgt;
-        pwgts[to] += v_wgt;
     }
+
+    best.map(|(_, from, v, to)| (from, v, to))
 }
 
 fn move_cut_delta(g: &CsrGraph, assignment: &[u32], v: usize, to_part: u32) -> i64 {
@@ -448,5 +454,31 @@ mod tests {
             &[0, 0, 1],
             "rebalance must not move vertices into non-adjacent empty parts"
         );
+    }
+
+    #[test]
+    fn rebalance_prefers_global_best_move_across_overweight_parts() {
+        let g = CsrGraph {
+            xadj: vec![0, 3, 5, 8, 10, 12, 14, 15, 16, 18],
+            adjncy: vec![
+                1, 2, 6, // 0
+                0, 2, // 1
+                0, 1, 8, // 2
+                4, 8, // 3
+                3, 5, // 4
+                4, 7, // 5
+                0, // 6
+                5, // 7
+                2, 3, // 8
+            ],
+            ncon: 1,
+            vwgt: vec![1i32; 9],
+            adjwgt: None,
+        };
+        let partition = Partition::new(vec![0, 0, 0, 1, 1, 1, 0, 1, 2], 3).unwrap();
+        let pwgts = vec![4, 4, 1];
+
+        let candidate = best_rebalance_move(&g, &partition, &pwgts, 3).unwrap();
+        assert_eq!(candidate, (1, 3, 2));
     }
 }

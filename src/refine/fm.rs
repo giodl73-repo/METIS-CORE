@@ -573,18 +573,29 @@ fn compute_cut_gain_with_buffer(
     candidates: &mut Vec<(u32, i32)>,
 ) -> i32 {
     let from = assignment[v];
-    fill_cut_candidates(g, assignment, v, from, candidates);
+    candidates.clear();
+
+    let mut internal = 0i32;
+    for j in g.xadj[v] as usize..g.xadj[v + 1] as usize {
+        let ew = g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]);
+        let part = assignment[g.adjncy[j] as usize];
+        if part == from {
+            internal += ew;
+        } else if let Some((_, external)) = candidates
+            .iter_mut()
+            .find(|(candidate, _)| *candidate == part)
+        {
+            *external += ew;
+        } else {
+            candidates.push((part, ew));
+        }
+    }
+
     candidates
         .iter()
-        .map(|&(_, gain)| gain)
+        .map(|&(_, external)| external - internal)
         .max()
-        .unwrap_or_else(|| {
-            let internal: i32 = (g.xadj[v] as usize..g.xadj[v + 1] as usize)
-                .filter(|&j| assignment[g.adjncy[j] as usize] == from)
-                .map(|j| g.adjwgt.as_ref().map_or(1i32, |aw| aw[j]))
-                .sum();
-            -internal
-        })
+        .unwrap_or(-internal)
 }
 
 fn fill_cut_candidates(

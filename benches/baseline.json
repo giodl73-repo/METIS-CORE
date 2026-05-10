@@ -11,7 +11,7 @@
     "ca_coarsen_only_n9120":{ "median_ms": 3.831, "k": 53, "n": 9120 },
     "ca_init_only_k53_n9120":          { "median_ms": 0.881, "k": 53, "n": 9120 },
     "ca_projection_only_k53_n9120":    { "median_ms": 0.008, "k": 53, "n": 9120 },
-    "ca_refine_project_only_k53_n9120":{ "median_ms": 10.721, "k": 53, "n": 9120 },
+    "ca_refine_project_only_k53_n9120":{ "median_ms": 10.472, "k": 53, "n": 9120 },
     "ca_rebalance_only_k53_n9120":     { "median_ms": 1.039, "k": 53, "n": 9120 }
   }
 }

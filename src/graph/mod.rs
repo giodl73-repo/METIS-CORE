@@ -111,7 +111,11 @@ impl CsrGraph {
         if self.ncon < 1 {
             return Err(PartitionError::InvalidGraph("ncon must be at least one"));
         }
-        if self.vwgt.len() != n * self.ncon as usize {
+        let ncon = self.ncon as usize;
+        let expected_vwgt_len = n
+            .checked_mul(ncon)
+            .ok_or(PartitionError::InvalidGraph("n * ncon overflows"))?;
+        if self.vwgt.len() != expected_vwgt_len {
             return Err(PartitionError::InvalidGraph(
                 "vwgt length must equal n * ncon",
             ));
@@ -476,7 +480,7 @@ pub fn repair_contiguity(g: &CsrGraph, partition: &mut Partition) -> usize {
     // Each iteration reassigns at least one secondary component, reducing the total
     // component count across all parts by ≥1, so convergence is guaranteed.
     let k = partition.k as usize;
-    for _ in 0..n * k {
+    for _ in 0..n.saturating_mul(k) {
         if check_contiguity(g, partition).is_ok() {
             break;
         }

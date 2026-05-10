@@ -107,6 +107,12 @@ mod tests {
     }
 
     #[test]
+    fn should_stop_threshold_saturates_on_overflow() {
+        let hem = HeavyEdgeMatchWithParams::new(u32::MAX, u32::MAX);
+        assert!(hem.should_stop(&path5()));
+    }
+
+    #[test]
     fn triangle_coarsens_to_at_most_2() {
         let (c, _) = HeavyEdgeMatch.coarsen(&triangle()).unwrap();
         assert!(c.n() <= 2, "triangle must coarsen to <= 2 vertices");
@@ -155,6 +161,21 @@ mod tests {
         let cmap = vec![0, 0, 1];
 
         let result = build_coarse_graph(&g, &cmap, 2);
+
+        assert!(matches!(result, Err(PartitionError::WeightOverflow)));
+    }
+
+    #[test]
+    fn coarse_graph_reports_size_overflow() {
+        let g = CsrGraph {
+            xadj: vec![0],
+            adjncy: Vec::new(),
+            ncon: 2,
+            vwgt: Vec::new(),
+            adjwgt: None,
+        };
+
+        let result = build_coarse_graph(&g, &[], usize::MAX);
 
         assert!(matches!(result, Err(PartitionError::WeightOverflow)));
     }
@@ -216,7 +237,7 @@ impl Coarsener for HeavyEdgeMatchWithParams {
         hem_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
-        let threshold = (self.coarsen_to * self.k).max(40);
+        let threshold = self.coarsen_to.saturating_mul(self.k).max(40);
         g.n() <= threshold as usize
     }
 }
@@ -274,7 +295,8 @@ pub(crate) fn build_coarse_graph(
     let ncon = g.ncon as usize;
 
     // Accumulate in i64 to prevent overflow when summing many large vertex weights
-    let mut cvwgt = vec![0i64; cn * ncon];
+    let cvwgt_len = cn.checked_mul(ncon).ok_or(PartitionError::WeightOverflow)?;
+    let mut cvwgt = vec![0i64; cvwgt_len];
     for (v, &cv) in cmap.iter().enumerate().take(n) {
         let cv = cv as usize;
         for c in 0..ncon {

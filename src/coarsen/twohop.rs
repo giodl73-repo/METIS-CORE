@@ -46,7 +46,7 @@ impl Coarsener for TwoHopMatchWithParams {
         twohop_coarsen(g, 0x1234_5678_9ABC_DEF0)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
-        g.n() <= (self.coarsen_to * self.k).max(40) as usize
+        g.n() <= self.coarsen_to.saturating_mul(self.k).max(40) as usize
     }
 }
 
@@ -216,6 +216,12 @@ mod tests {
     #[test]
     fn twohop_with_params_should_stop() {
         let c = TwoHopMatchWithParams::new(20, 2);
+        assert!(c.should_stop(&path_graph(5)));
+    }
+
+    #[test]
+    fn should_stop_threshold_saturates_on_overflow() {
+        let c = TwoHopMatchWithParams::new(u32::MAX, u32::MAX);
         assert!(c.should_stop(&path_graph(5)));
     }
 

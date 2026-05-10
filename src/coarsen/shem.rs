@@ -93,6 +93,12 @@ mod tests {
     }
 
     #[test]
+    fn should_stop_threshold_saturates_on_overflow() {
+        let shem = SortedHeavyEdgeMatchWithParams::new(u32::MAX, u32::MAX);
+        assert!(shem.should_stop(&path5()));
+    }
+
+    #[test]
     fn shem_unweighted_valid() {
         let (c, cmap) = SortedHeavyEdgeMatch.coarsen(&path5()).unwrap();
         assert!(c.is_valid());
@@ -192,7 +198,7 @@ impl Coarsener for SortedHeavyEdgeMatchWithParams {
         shem_coarsen(g)
     }
     fn should_stop(&self, g: &CsrGraph) -> bool {
-        let threshold = (self.coarsen_to * self.k).max(40);
+        let threshold = self.coarsen_to.saturating_mul(self.k).max(40);
         g.n() <= threshold as usize
     }
 }

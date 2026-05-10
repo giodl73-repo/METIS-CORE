@@ -172,6 +172,8 @@ Deliverables:
 - Done: `Coarsener::coarsen` now returns `Result`, so vertex/edge weight
   overflow and invalid coarse graphs are reported instead of silently
   truncating weights.
+- Done: graph validation and coarsening thresholds now use checked/saturating
+  size arithmetic, keeping overflow behavior identical in debug and release.
 - Done: raw implementation modules are crate-private; lower-level extension
   points now live under the explicit `advanced` module instead of leaking the
   internal source layout.

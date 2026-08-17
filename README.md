@@ -228,6 +228,10 @@ cargo test --test contracts   # algorithm contracts
 cargo bench                   # criterion benchmarks, including pipeline phase timings
 ```
 
+Shared-foundation changes must also follow
+[`docs/compatibility.md`](docs/compatibility.md), which defines the pre-1.0
+versioning rules and the required ROUTE downstream breakage rehearsal.
+
 The optional `tests/metis_parity.rs` harness compares against `gpmetis` when
 available. Set `METIS_GPMETIS=C:\path\to\gpmetis.exe` to force a specific
 binary; the test checks structural invariants plus cut and balance quality

@@ -138,6 +138,19 @@ fn main() -> Result<(), metis_core::PartitionError> {
 }
 ```
 
+### Focused proof
+
+Run the smallest accepted/rejected contract pair with:
+
+```bash
+cargo test --test proof_surface
+```
+
+`strict_csr_partition_is_accepted` partitions a reciprocal four-vertex cycle
+and validates the result against the source graph.
+`asymmetric_csr_is_rejected_with_typed_error` supplies a one-way edge and
+records the structured `PartitionError::AsymmetricAdjacency` failure.
+
 Advanced components are available for experiments and proofs. These extension
 traits are fallible, so custom code can report invalid inputs or internal
 contract failures without panicking:

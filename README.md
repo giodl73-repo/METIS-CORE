@@ -258,4 +258,10 @@ smoke test.
 
 ## License
 
-[MIT](LICENSE) — © 2026 Gio Della-Libera.
+[Apache-2.0](LICENSE). METIS-CORE is a Rust adaptation of
+[METIS](https://github.com/KarypisLab/METIS); see [NOTICE](NOTICE) for upstream
+and contributor attribution.
+
+Earlier METIS-CORE revisions carried an MIT notice. That notice did not
+supersede the Apache-2.0 terms applicable to the upstream-derived code. This
+revision makes the governing upstream license explicit.

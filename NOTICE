@@ -1,0 +1,9 @@
+METIS-CORE
+Copyright 1995-2013, Regents of the University of Minnesota
+Copyright 2026, Gio Della-Libera and METIS-CORE contributors
+
+This product contains a Rust adaptation of METIS:
+https://github.com/KarypisLab/METIS
+
+The METIS algorithms and the initial Rust port were translated and subsequently
+modified for deterministic execution, verification, and model-checking use.

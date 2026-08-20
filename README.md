@@ -63,6 +63,11 @@ metis-core = { git = "https://github.com/giodl73-repo/METIS-CORE.git" }
 This crate is not published to crates.io yet; repository metadata intentionally
 blocks accidental publishing until release policy is decided.
 
+METIS-CORE commits `Cargo.lock` to pin repository-owned tests, benchmarks, and
+verification builds. Use `cargo check --locked` for a reproducible repository
+check. As a library, METIS-CORE does not impose this lockfile on consumers;
+downstream manifests and lockfiles remain authoritative for their resolution.
+
 ---
 
 ## Usage
@@ -150,6 +155,10 @@ cargo test --test proof_surface
 and validates the result against the source graph.
 `asymmetric_csr_is_rejected_with_typed_error` supplies a one-way edge and
 records the structured `PartitionError::AsymmetricAdjacency` failure.
+
+The separate `metis_parity` integration suite invokes a native `gpmetis`
+reference executable and therefore requires that tool on `PATH`. It is not
+part of the pure-Rust focused proof above.
 
 Advanced components are available for experiments and proofs. These extension
 traits are fallible, so custom code can report invalid inputs or internal

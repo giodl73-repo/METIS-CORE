@@ -2,7 +2,7 @@
 
 ## METIS-PF-01: Structural Pass Becomes Quality Parity
 
-**Status:** OPEN
+**Status:** MITIGATED
 
 **Pattern:** A structurally valid partition is promoted as METIS-quality parity
 or production performance without cut, balance, and benchmark envelope evidence.
@@ -34,16 +34,18 @@ can look sufficient unless parity/performance review names the missing quality
 claim.
 
 **Structural solution:** Require Parity Performance Reviewer evidence before
-upgrading quality or speed claims.
+upgrading quality or speed claims, with machine-readable blocked claims for
+parity and production-performance overreach.
 
-**Evidence:** `.roles/parliament/parity-performance-reviewer.md`,
+**Evidence:** `docs/pitfall-boundaries.v1.json`,
+`.roles/parliament/parity-performance-reviewer.md`, `.roles/ROLE.md`,
 `docs/PRODUCTION_PLAN.md`, and `tests/metis_parity.rs`.
 
 **Test:** `cargo test --test pitfall_policy`.
 
 ## METIS-PF-02: Prusti Gap Becomes Full Formal Verification Claim
 
-**Status:** OPEN
+**Status:** MITIGATED
 
 **Pattern:** Kani harnesses, zero unsafe blocks, and Prusti annotations are
 described as full formal verification even though one Prusti balance proof is
@@ -73,17 +75,18 @@ proof statements, and future paper evidence.
 **Detection difficulty:** The verification surface is real and broad, so it is
 easy to omit the remaining proof gap in summary language.
 
-**Structural solution:** Keep `verify/prusti/GAPS.md` and `verify/kani/BOUNDS.md`
-cited whenever formal-verification claims are made.
+**Structural solution:** Keep `verify/prusti/GAPS.md` and
+`verify/kani/BOUNDS.md` cited whenever formal-verification claims are made, and
+block full-formal-verification language until the documented proof gaps close.
 
-**Evidence:** `verify/prusti/GAPS.md`, `verify/kani/BOUNDS.md`, and
-`verify/kani/README.md`.
+**Evidence:** `docs/pitfall-boundaries.v1.json`, `verify/prusti/GAPS.md`,
+`verify/kani/BOUNDS.md`, `verify/kani/README.md`, and `.roles/ROLE.md`.
 
 **Test:** `cargo test --test pitfall_policy`.
 
 ## METIS-PF-03: ROUTE Rehearsal Is Skipped
 
-**Status:** OPEN
+**Status:** MITIGATED
 
 **Pattern:** A public API, default, validation, error, deterministic-output, or
 quality-envelope change is accepted after METIS-CORE-local tests only, without
@@ -116,9 +119,12 @@ so downstream breakage can look unlikely until ROUTE compiles and verifies its
 service graph fixtures.
 
 **Structural solution:** Treat the ROUTE rehearsal in `docs/compatibility.md`
-as a release gate for affected foundation changes.
+as a release gate for affected foundation changes and block downstream,
+release, or portfolio-snapshot readiness claims when affected changes have not
+rehearsed ROUTE.
 
-**Evidence:** `docs/compatibility.md`.
+**Evidence:** `docs/pitfall-boundaries.v1.json`, `docs/compatibility.md`, and
+`.roles/ROLE.md`.
 
 **Test:** `cargo test --test pitfall_policy`.
 

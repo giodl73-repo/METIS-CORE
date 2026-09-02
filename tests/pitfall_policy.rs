@@ -21,6 +21,34 @@ fn open_pitfalls_are_use_case_first_and_test_backed() {
     ] {
         assert_contains(pitfalls, field, ".pitfall/metis-core-pitfalls.md");
     }
+    assert_contains(pitfalls, "MITIGATED", ".pitfall/metis-core-pitfalls.md");
+
+    let boundaries = include_str!("../docs/pitfall-boundaries.v1.json");
+    for phrase in [
+        "METIS-PF-01",
+        "METIS-PF-02",
+        "METIS-PF-03",
+        "gpmetis cut-quality parity",
+        "fully formally verified",
+        "downstream readiness without ROUTE",
+        "benchmark envelope",
+        "verify/prusti/GAPS.md",
+        "ROUTE downstream rehearsal",
+    ] {
+        assert_contains(boundaries, phrase, "docs/pitfall-boundaries.v1.json");
+    }
+
+    let roles = include_str!("../.roles/ROLE.md");
+    for phrase in [
+        "PITFALL gate routing",
+        "Parity Performance Reviewer",
+        "Partition Correctness Steward",
+        "API Contract Auditor",
+        "fully formally verified",
+        "portfolio-snapshot ready",
+    ] {
+        assert_contains(roles, phrase, ".roles/ROLE.md");
+    }
 }
 
 #[test]

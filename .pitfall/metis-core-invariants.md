@@ -81,3 +81,27 @@ without permitting accidental publication.
 
 **Evidence:** `README.md`, `docs/PRODUCTION_PLAN.md`, and
 `cargo package --allow-dirty --no-verify`.
+
+## METIS-INV-06: Parity, Verification, And ROUTE Boundaries Are Machine-Readable
+
+**Status:** VERIFIED
+
+**Claim:** METIS-CORE keeps quality-parity, formal-verification, and ROUTE
+rehearsal boundaries in a machine-readable manifest that is also routed through
+roles, README, production, compatibility, and focused pitfall tests.
+
+**Why it matters:** A pure-Rust partitioner can look production-ready when
+structural tests pass, verification artifacts exist, or local tests are green,
+even though quality envelopes, proof gaps, and downstream rehearsal still
+matter.
+
+**Enforcement:** `tests/pitfall_policy.rs` asserts the boundary manifest, role
+routing, README claim limits, production-plan parity evidence, Prusti/Kani
+limits, and ROUTE compatibility gate.
+
+**Evidence:** `docs/pitfall-boundaries.v1.json`, `.roles/ROLE.md`,
+`README.md`, `docs/PRODUCTION_PLAN.md`, `docs/compatibility.md`,
+`verify/prusti/GAPS.md`, `verify/kani/BOUNDS.md`, and
+`tests/pitfall_policy.rs`.
+
+**Test:** `cargo test --test pitfall_policy`.

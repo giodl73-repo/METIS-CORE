@@ -1,0 +1,105 @@
+{
+  "$schema": "metis-core.pitfall-boundaries.v1",
+  "owner": "METIS-CORE maintainer",
+  "purpose": "Machine-readable boundaries for parity, formal verification, and ROUTE rehearsal claims.",
+  "authority": {
+    "structural_validity": "accepted CSR input, valid assignments, deterministic seeds, and local contract tests",
+    "quality_parity": "requires cut, balance, benchmark envelope, and parity reviewer evidence",
+    "formal_verification": "bounded Kani harnesses, unsafe inventory, Prusti postcondition stubs, documented gaps, and runtime fallbacks",
+    "downstream_readiness": "requires affected METIS-CORE tests plus ROUTE consumer rehearsal",
+    "route_rehearsal": "first downstream compile and service-graph fixture gate for foundation changes"
+  },
+  "pitfall_boundaries": [
+    {
+      "entryId": "METIS-PF-01",
+      "requiredOwners": [
+        "Parity Performance Reviewer",
+        "Partition Correctness Steward"
+      ],
+      "sourceLayer": "README claims, optional gpmetis parity, benchmark baselines, ROUTE adoption, and release notes",
+      "maySupport": [
+        "structural validity",
+        "deterministic seed behavior",
+        "valid assignment evidence",
+        "benchmark hypothesis",
+        "quality-envelope candidate"
+      ],
+      "blockedClaims": [
+        "gpmetis cut-quality parity",
+        "METIS-quality parity",
+        "production performance",
+        "broad graph-family quality claim",
+        "speed promise",
+        "downstream ROUTE readiness"
+      ],
+      "requiredEvidence": [
+        "cut metric",
+        "balance metric",
+        "benchmark envelope",
+        "representative graph family",
+        "parity performance review",
+        "production plan citation"
+      ]
+    },
+    {
+      "entryId": "METIS-PF-02",
+      "requiredOwners": [
+        "Partition Correctness Steward",
+        "API Contract Auditor"
+      ],
+      "sourceLayer": "verification docs, release claims, README badges, customer-facing proof statements, and future paper evidence",
+      "maySupport": [
+        "bounded Kani coverage",
+        "zero unsafe inventory",
+        "Prusti postcondition documentation",
+        "runtime fallback test evidence",
+        "proof-gap tracking"
+      ],
+      "blockedClaims": [
+        "fully formally verified",
+        "complete Prusti proof",
+        "unbounded model checking",
+        "native METIS assurance parity",
+        "proof gap closed",
+        "customer-grade formal proof"
+      ],
+      "requiredEvidence": [
+        "verify/prusti/GAPS.md",
+        "verify/kani/BOUNDS.md",
+        "verify/kani/README.md",
+        "unsafe inventory",
+        "runtime fallback test",
+        "claim wording review"
+      ]
+    },
+    {
+      "entryId": "METIS-PF-03",
+      "requiredOwners": [
+        "METIS-CORE maintainer",
+        "ROUTE owner"
+      ],
+      "sourceLayer": "public APIs, defaults, validation behavior, errors, deterministic outputs, quality envelopes, dependency adoption, and portfolio snapshots",
+      "maySupport": [
+        "METIS-CORE-local readiness",
+        "structural test pass",
+        "public API compatibility candidate",
+        "parity smoke candidate",
+        "snapshot candidate"
+      ],
+      "blockedClaims": [
+        "downstream readiness without ROUTE",
+        "portfolio pointer advancement",
+        "release readiness for affected foundation change",
+        "service-graph behavior unchanged",
+        "consumer compatibility by local tests only"
+      ],
+      "requiredEvidence": [
+        "METIS-CORE contract tests",
+        "ROUTE downstream rehearsal",
+        "service graph fixture verification",
+        "compatibility policy citation",
+        "affected change scope"
+      ]
+    }
+  ]
+}

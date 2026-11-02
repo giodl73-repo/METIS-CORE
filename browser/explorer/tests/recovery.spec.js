@@ -33,6 +33,7 @@ async function intercept(page) {
         if (!window.__hold) this.actual.postMessage(data);
       }
       terminate() {
+        this.terminated = true;
         this.actual.terminate();
       }
     };
@@ -149,6 +150,8 @@ test("wrong IDs, stale revisions and terminated generations cannot publish", asy
   await page.evaluate(() => (window.__hold = true));
   await page.locator("#run").click();
   await page.locator("#seed").fill("123");
+  expect(await page.evaluate(() => window.__workers[0].terminated)).toBe(true);
+  await expect(page.locator("#run")).toBeEnabled();
   await page.evaluate((result) => {
     const sent = window.__sent.at(-1);
     window.__workers.at(-1).onmessage({ data: { ...sent, result } });

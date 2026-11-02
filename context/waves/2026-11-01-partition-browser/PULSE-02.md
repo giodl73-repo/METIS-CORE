@@ -26,3 +26,9 @@ locally and hosted. Replays pass 258 native / 4 adapter / 13 browser checks and 
 reproduce 60 native and 60 WASM target responses separately, retaining 35-assignment/
 four-cut differences. Native three-OS CI passes. See RELEASE.md for dated evidence;
 final review revision/default/live proof must qualify before pointer advancement.
+
+Final runtime review found that editing a pending computation canceled its timer
+while leaving the old worker running. Edits now terminate that worker and start
+a fresh instance; the stale-message test asserts actual termination. This keeps
+superseded CPU work bounded as well as preventing stale publication. Inputs and
+native algorithms remain unchanged; final exact hosted/live gates must repeat.

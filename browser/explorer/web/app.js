@@ -26,11 +26,16 @@ function clear() {
   $("metrics").textContent = "";
 }
 function changed() {
+  const wasComputing = pending !== null;
   revision++;
   readToken++;
   pending = null;
   clearTimeout(deadline);
   clear();
+  if (wasComputing) {
+    start();
+    return;
+  }
   $("run").disabled = !ready;
   if (ready) status("Inputs changed. Partition again.");
 }

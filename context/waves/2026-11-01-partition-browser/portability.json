@@ -1,0 +1,84 @@
+{
+  "status": "local prototype only, no hosted or live qualification",
+  "checked_at_utc": "2026-11-02T03:34:20.382204+00:00",
+  "source_entry": "df08dec373b3daecd73313750766e397aa047e9f",
+  "public_default_entry": "b4dc9663243c26771112da3329f171fc5f28c098",
+  "native_foundation_all_protected_paths_unchanged": true,
+  "native_all_target_tests_passed": 258,
+  "native_preexisting_ignored": 1,
+  "native_benchmark_status": "Criterion test smokes pass; no new performance measurement/advantage claimed",
+  "enabled_local_gpmetis_reference_comparisons": 3,
+  "heavy_reference_comparison_executed": false,
+  "formal_kani_or_prusti_invoked": false,
+  "route_readiness_or_rehearsal_claimed": false,
+  "route_scope": "No native foundation/API/default/error/deterministic-output/quality change; no ROUTE promotion. Any later such change remains gated by compatibility policy.",
+  "adapter_tests": 4,
+  "strict_core_host_wasm_and_all_target_companion_lint": "pass",
+  "browser": {
+    "startTime": "2026-11-02T03:33:42.699Z",
+    "duration": 8329.812,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "cross_target": {
+    "scope": "Full observed native64 and WASM32 outcomes; repeated target-specific determinism and independently checked structure/cut/weight metrics. No cross-target or gpmetis quality guarantee.",
+    "cases": 60,
+    "equal_except_target": 25,
+    "assignment_differences": 35,
+    "cut_differences": 4
+  },
+  "full_cross_target_outcome_pin": {
+    "bytes": 1221321,
+    "sha256": "eebf5329cfe6d0ec55276eeaef68a567dc3c6a871d34866465a9bec2ae29ef49"
+  },
+  "wasm": {
+    "prototype_only": true,
+    "native_cases": 60,
+    "wasm_bytes": 370295,
+    "wasm_sha256": "80f504f27182d39e22b555df501a603f9f8b854a4e3229b500130f7ad2d928f9",
+    "native_pointer_bits": 64,
+    "cross_target_assignment_identity": "Must be measured; not assumed",
+    "core_source_checked_against_entry": true,
+    "publication_qualified": false
+  },
+  "initial_baseline_failure": {
+    "reason": "Three reference launches failed: protected gpmetis.exe transitive libsystre-0.dll dependency lacked libtre-5.dll; exit0xc0000135. No native assertion or algorithm failure established.",
+    "log": {
+      "bytes": 18384,
+      "sha256": "e071b867d60d41d8fd0b3ef0e09e498b5e7a5e1f1cb8dc763c33ff8b34f2a863"
+    },
+    "correction": "Hash-verified MSYS2 packages in session-owned tools folder, supplied only through subprocess PATH. No source/test/assertion or protected apportionment files changed.",
+    "packages": [
+      {
+        "name": "gettext-runtime",
+        "version": "1.0-1",
+        "url": "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-gettext-runtime-1.0-1-any.pkg.tar.zst",
+        "sha256": "be68d7f260633284b910c588c6d82ee304a81c8817a686d2cd9df83f872c27af"
+      },
+      {
+        "name": "libiconv",
+        "version": "1.19-1",
+        "url": "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-libiconv-1.19-1-any.pkg.tar.zst",
+        "sha256": "21e334d0911f25de75d3e18e0697648bcecfa9658256d600cad0827d719c2f35"
+      },
+      {
+        "name": "libtre",
+        "version": "0.9.0-2",
+        "url": "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-libtre-0.9.0-2-any.pkg.tar.zst",
+        "sha256": "c4051508d063258e1e02dd29615edb7d73c5c5f582ae42795fdd92e7ddce506b"
+      }
+    ],
+    "executable": {
+      "bytes": 796131,
+      "sha256": "273774de80132843fed4fe8f078039a3c3fbaa64244d16b597496aa2e2bb5066"
+    },
+    "corrected_log": {
+      "bytes": 18435,
+      "sha256": "fc06930c87c2d7c64b547ec32798285f05b4693d34c34687214c63c4a181eef7"
+    }
+  },
+  "initial_browser_launch": "Wrong helper-script path meant no tests had been written; no-tests log retained; path corrected and four real cases pass.",
+  "remaining": "Full recovery/resource/source/legal packaging, independent source replay, hosted/default and fresh live gates; no TRACKER pointer advance."
+}

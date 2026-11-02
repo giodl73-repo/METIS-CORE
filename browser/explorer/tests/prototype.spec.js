@@ -51,6 +51,13 @@ test("measure both targets honestly and validate every repeated WASM result", as
       return { first, second };
     });
   }, cases);
+  if (process.env.METIS_BASE_URL) {
+    const expected = JSON.parse(
+      fs.readFileSync(".cache/hosted-wasm-cases.json", "utf8"),
+    );
+    expect(expected.map((c) => c.request)).toEqual(cases.map((c) => c.request));
+    expect(outputs.map((c) => c.first)).toEqual(expected.map((c) => c.output));
+  }
   const records = [];
   for (let i = 0; i < cases.length; i++) {
     const c = cases[i],
@@ -137,15 +144,13 @@ test("real worker supports graph controls and renders exact native-derived data"
     JSON.parse(await page.locator("#report").textContent()).record.controls
       .seed,
   ).toBe("18446744073709551615");
-  const metrics = await page
-    .locator("#status")
-    .evaluate((n) => ({
-      measurements: { ...n.dataset },
-      user_agent: navigator.userAgent,
-      hardware_concurrency: navigator.hardwareConcurrency,
-      scope:
-        "Worker/query observations include JS/message/serialization overhead; no comparative speed claim.",
-    }));
+  const metrics = await page.locator("#status").evaluate((n) => ({
+    measurements: { ...n.dataset },
+    user_agent: navigator.userAgent,
+    hardware_concurrency: navigator.hardwareConcurrency,
+    scope:
+      "Worker/query observations include JS/message/serialization overhead; no comparative speed claim.",
+  }));
   fs.writeFileSync(
     ".cache/worker-timings.json",
     JSON.stringify(metrics, null, 2),
@@ -176,13 +181,11 @@ test("own original and request downloads plus mobile keyboard path", async ({
   await ready(page);
   const source = await page.locator("#graph").inputValue(),
     bytes = Buffer.from("\ufeff" + source.replaceAll("\n", "\r\n"));
-  await page
-    .locator("#file")
-    .setInputFiles({
-      name: "own.json",
-      mimeType: "application/json",
-      buffer: bytes,
-    });
+  await page.locator("#file").setInputFiles({
+    name: "own.json",
+    mimeType: "application/json",
+    buffer: bytes,
+  });
   await expect(page.locator("#original")).toBeEnabled();
   const event = page.waitForEvent("download");
   await page.locator("#original").click();

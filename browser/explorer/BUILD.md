@@ -46,3 +46,8 @@ no gpmetis quality, optimality, broad speed or ROUTE readiness assurance.
 Qualification uses a 64-bit native host and wasm32-unknown-unknown. Other native
 host widths are outside this replay recipe; the native library retains its own
 platform support and compatibility contract.
+
+Fresh live QA copies the hosted wasm-cases.json into private QA as
+hosted-wasm-cases.json and requires exact live WASM responses for every request.
+Source replay clears live-site overrides and serves the rebuilt local prototype;
+it cannot accidentally substitute the published site for the rebuild check.

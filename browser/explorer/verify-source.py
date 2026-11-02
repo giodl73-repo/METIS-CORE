@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='metis replay-',dir=work) as temporary:
  rebuilt=json.loads((consumer/'.cache/native-cases.json').read_text(encoding='utf-8'))
  assert rebuilt==original,'Independent native request/response drift'
  run([npm,'ci','--ignore-scripts'],consumer)
- env=dict(os.environ);env['METIS_SITE_DIR']='../../target/partition-prototype'
+ env=dict(os.environ);env.pop('METIS_BASE_URL',None);env.pop('METIS_EXPECTED_COMMIT',None);env['METIS_SITE_DIR']='../../target/partition-prototype'
  # Delivery is pinned to the original Git artifact; this replay checks rebuilt behavior.
  run([npm,'run','test:pages','--','--grep-invert','complete packaged delivery|independent source, build and legal routes'],consumer,env)
  browser=json.loads((consumer/'.cache/browser-results.json').read_text(encoding='utf-8'))

@@ -1,7 +1,7 @@
 # METIS-CORE partition explorer build and delivery
 
-Use Rust1.95.0 with wasm32-unknown-unknown, clippy, rustfmt and rust-docs;
-wasm-bindgen CLI0.2.127, Node22, Playwright1.61.1 and Python3.11+.
+Use Rust 1.95.0 with wasm32-unknown-unknown, clippy, rustfmt and rust-docs;
+wasm-bindgen CLI 0.2.127, Node 22, Playwright 1.61.1 and Python 3.11+.
 Source commands are in browser/explorer/README.md inside source.zip.
 CARGO_TARGET_DIR, when set, must be absolute. The prototype builder freshly
 builds native and WASM controls; generated packages are not source files.
@@ -24,15 +24,15 @@ python browser/explorer/verify-source.py --bindgen /absolute/path/to/wasm-bindge
 Read-only PR qualification precedes default-master-only publication of the tested
 artifact. Deployment verifies the exact source and all transferred hashes again.
 Fresh live bytes/browser checks are a separate gate. Initial runtime/source/site
-budgets are2/20/25MiB respectively; optional source does not load at startup.
+budgets are 2/20/25 MiB respectively; optional source does not load at startup.
 Original software, browser dependency and Rust library notices remain in force.
 Native source build dependencies are pinned in the full locks under upstream terms.
 
 Source replay extracts outside Git into a path with spaces, repeats native
 all-target and adapter tests, rebuilds both companions and repeats browser
-behavior checks. It must match the original native target's complete60responses
-and the original WASM32 target's complete60responses separately. It preserves
-observed native64/WASM32 differences (35assignments/four cuts in the60case set),
+behavior checks. It must match the original native target's complete 60 responses
+and the original WASM32 target's complete 60 responses separately. It preserves
+observed native64/WASM32 differences (35 assignments/four cuts in the 60-case set),
 never normalizes labels or selects favorable seeds. Cross-target identity and
 cross-directory WASM binary identity are not established.
 

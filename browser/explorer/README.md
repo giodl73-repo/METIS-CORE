@@ -80,7 +80,7 @@ contains the complete exact Git tree and both locks, preserving every native
 src/test/verify/bench/fixture/spec file plus the original Apache-2.0 LICENSE and
 NOTICE. Browser dependency/Rust notices accompany the distributed artifact;
 external reference EXE/DLLs and private QA data are excluded. Runtime/source/site
-budgets are separate2/20/25MiB. Optional source is not startup data. A source
+budgets are separate 2/20/25 MiB. Optional source is not startup data. A source
 rebuild must reproduce each target's complete responses separately; binary and
 cross-target output identity are not claimed. Native optional reference/fixture
 availability is recorded explicitly, so green counts are not quality proof.

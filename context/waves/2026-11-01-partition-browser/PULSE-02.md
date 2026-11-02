@@ -2,9 +2,9 @@
 
 Status: in progress. Thirteen local behavior cases pass, with60native and WASM
 requests repeated independently and measured cross-target differences retained.
-Whole-paste/edit/file/drop, actual5/12/10second read/startup/computation deadlines,
+Whole-paste/edit/file/drop, actual 5/12/10-second read/startup/computation deadlines,
 crash/restart, stale revisions/IDs/generations, request downloads, target-weight
-and u64 admission, inert diagnostics, maximum graph/weight bounds and64MiB memory
+and u64 admission, inert diagnostics, maximum graph/weight bounds and64 MiB memory
 are exercised. Core/Cargo/tests/verification/bench/doctrine/license bytes remain
 unchanged. Source replay will compare each target separately, not force identity.
 
@@ -20,3 +20,9 @@ The recovery fault is now a self-contained synthetic typed error, explicitly
 not a partition result or native/WASM golden oracle. The same stale-ID/revision/
 generation assertions remain; no runtime/native source or assertion is weakened.
 Both failed logs/artifacts remain retained; fresh clean qualification is required.
+
+Corrected candidate `2f443a8`passes 15 packaged cases and independent source replay
+locally and hosted. Replays pass 258 native / 4 adapter / 13 browser checks and exactly
+reproduce 60 native and 60 WASM target responses separately, retaining 35-assignment/
+four-cut differences. Native three-OS CI passes. See RELEASE.md for dated evidence;
+final review revision/default/live proof must qualify before pointer advancement.

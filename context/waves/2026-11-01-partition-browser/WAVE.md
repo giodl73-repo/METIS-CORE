@@ -1,6 +1,6 @@
 # Partition explorer
 
-Status: active, local portability experiment. No publication or pointer update.
+Status: candidate implementation qualified; see RELEASE.md and ROLES_REVIEW.md. Exact default/live gates still control publication and TRACKER advancement.
 
 Expose a useful graph partition task using byte-unchanged native METIS-CORE.
 Readers choose an authored connected graph or own strict CSR, adjust native

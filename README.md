@@ -8,7 +8,23 @@ repository-local review panels.
 
 Multilevel graph partitioning — sometimes called the METIS algorithm after Karypis and Kumar's 1995/1998 papers — is the standard approach for partitioning large irregular graphs in scientific computing, mesh decomposition, and combinatorial optimization. This crate implements the algorithm from scratch in safe Rust with no C compiler required and no dependency on any external METIS library.
 
+METIS-style compatibility is envelope-based. A structurally valid partition or
+green local test run is not a claim of `gpmetis` cut-quality parity, broad
+production performance, or downstream ROUTE readiness.
+
 ---
+
+## Browser partition explorer
+
+[Open the Rust/WASM explorer](https://giodl73-repo.github.io/METIS-CORE/): partition
+an authored or own connected, undirected CSR graph, inspect assignments/cut/part
+weights and retain original/current/LF-copy/request/report downloads. Controls
+invoke the unchanged native Rust API, without a C installation or server.
+Seed replay is target-specific: the same seed can produce different assignments
+and cuts on native64 and WASM32. No cross-target identity, browser/gpmetis quality
+parity, optimality, full formal verification, production speed or ROUTE readiness
+is established. See [build and scope](browser/explorer/README.md) and the
+[release wave](context/waves/2026-11-01-partition-browser/WAVE.md) for current gates.
 
 ## What It Does
 
@@ -203,7 +219,7 @@ fn main() -> Result<(), metis_core::PartitionError> {
 | **Deterministic** | Seeded RNG (`rand_pcg`) — same seed and parameters, same partition |
 | **Thread safe** | Public partitioners and algorithm traits are `Send + Sync`; no global RNG or mutable global state |
 | **Validated API** | Public graph, partition, coarsening, initialization, refinement, repair, and subgraph operations return `Result` |
-| **Verified** | Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs in `verify/prusti/` |
+| **Verified** | Bounded Kani model-checker harnesses in `verify/kani/`; Prusti postcondition stubs and documented gaps in `verify/prusti/` |
 | **Tested** | Unit, integration, proptest invariant, graph-file, and benchmark smoke suites |
 | **No unsafe** | All partitioning code is safe Rust |
 

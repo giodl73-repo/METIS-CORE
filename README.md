@@ -14,6 +14,18 @@ production performance, or downstream ROUTE readiness.
 
 ---
 
+## Browser partition explorer
+
+[Open the Rust/WASM explorer](https://giodl73-repo.github.io/METIS-CORE/): partition
+an authored or own connected, undirected CSR graph, inspect assignments/cut/part
+weights and retain original/current/LF-copy/request/report downloads. Controls
+invoke the unchanged native Rust API, without a C installation or server.
+Seed replay is target-specific: the same seed can produce different assignments
+and cuts on native64 and WASM32. No cross-target identity, browser/gpmetis quality
+parity, optimality, full formal verification, production speed or ROUTE readiness
+is established. See [build and scope](browser/explorer/README.md) and the
+[release wave](context/waves/2026-11-01-partition-browser/WAVE.md) for current gates.
+
 ## What It Does
 
 Takes a graph in compressed-sparse-row (CSR) format and partitions its vertices into *k* balanced parts while minimizing the edge cut between parts. Two entry points:

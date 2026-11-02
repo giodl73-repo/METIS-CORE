@@ -1,7 +1,8 @@
-# METIS-CORE partition explorer — local prototype
+# METIS-CORE partition explorer
 
-This standalone companion calls the byte-unchanged native Rust kernel. No public
-Pages release, TRACKER pointer update, formal proof or ROUTE readiness is claimed.
+This standalone companion calls the byte-unchanged native Rust kernel. Release
+status and dated evidence live in the wave; source implementation/local checks
+alone are not live qualification. No formal proof or ROUTE readiness follows.
 Readers edit a synthetic/own single-constraint CSR graph, choose native k-way or
 recursive mode, part count, seed, coarsening and bounded controls, inspect the
 native assignment/cut and actual part weights/contiguity, and retain separate
@@ -46,12 +47,16 @@ npx playwright install chromium
 npm run test:pages
 ```
 
-The prototype is served under /METIS-CORE/. Four real Chromium cases cover 60
+The prototype is served under /METIS-CORE/. Fifteen packaged Chromium cases cover 60
 native/WASM requests, repeated outputs, independent structural/metric checks,
 worker controls/diagram, native malformed CSR, original/request downloads and
 mobile/keyboard. Private .cache/cross-target.json retains complete outcomes.
-Further deadline/stale/resource/failure, source/legal packaging, independent
-source replay and exact hosted/live gates remain in Pulse02 before publication.
+The suite also exercises exact worker/request replay, real file/startup/computation
+deadlines, stale read/revision/request/generation fencing, crash/restart, maximum
+graph/weight admission, memory ceiling, target-weight/seed errors and independent
+source/build/legal fallback. Source replay repeats thirteen behavior cases outside
+Git and compares all native64 and WASM32 outcomes separately. Exact hosted/default/
+live gates still determine the actual published revision.
 
 Browser admission: 1 MiB graph, 3 MiB request framing, 256 vertices, 4,096 adjacency entries,
 weight magnitude 1,000, 16 parts, 8 trials, 20 iterations, 16 target weights, 4 MiB report,
@@ -66,3 +71,20 @@ through subprocess PATH fixes the environment without source/test/assertion or
 protected-folder changes. The original full native suite then passes. Heavy
 reference parity remains gated off, and one pre-existing native test is ignored.
 See the wave's scoped evidence; no result establishes full formal verification.
+
+
+## Source and delivery
+
+BUILD.md documents clean-source packaging and independent source replay. source.zip
+contains the complete exact Git tree and both locks, preserving every native
+src/test/verify/bench/fixture/spec file plus the original Apache-2.0 LICENSE and
+NOTICE. Browser dependency/Rust notices accompany the distributed artifact;
+external reference EXE/DLLs and private QA data are excluded. Runtime/source/site
+budgets are separate2/20/25MiB. Optional source is not startup data. A source
+rebuild must reproduce each target's complete responses separately; binary and
+cross-target output identity are not claimed. Native optional reference/fixture
+availability is recorded explicitly, so green counts are not quality proof.
+
+Qualification uses a 64-bit native host and wasm32-unknown-unknown. Other native
+host widths are outside this replay recipe; the native library retains its own
+platform support and compatibility contract.

@@ -1,8 +1,15 @@
 import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 const cases = JSON.parse(fs.readFileSync(".cache/native-cases.json", "utf8")),
-  matrix = JSON.parse(fs.readFileSync(".cache/cross-target.json", "utf8")),
   example = JSON.parse(JSON.parse(cases[0].request).graph_json);
+// Synthetic lifecycle fault only; never a partition result or WASM golden oracle.
+const staleFault = JSON.stringify({
+  schema_version: "metis.browser-partition.v1",
+  result: "invalid_request",
+  error: "Injected stale response",
+  record: null,
+  target_pointer_bits: 32,
+});
 async function ready(page) {
   await page.goto("./");
   await expect(page.locator("#run")).toBeEnabled();
@@ -91,13 +98,11 @@ test("whole paste, edit, oversized file and dropped-file admission retain source
   });
   await expect(page.locator("#status")).toContainText("exceeds 1 MiB");
   expect(await page.locator("#graph").inputValue()).toBe(accepted);
-  await page
-    .locator("#file")
-    .setInputFiles({
-      name: "invalid-utf8.json",
-      mimeType: "application/json",
-      buffer: Buffer.from([255]),
-    });
+  await page.locator("#file").setInputFiles({
+    name: "invalid-utf8.json",
+    mimeType: "application/json",
+    buffer: Buffer.from([255]),
+  });
   await expect(page.locator("#status")).toContainText("retained");
   expect(await page.locator("#graph").inputValue()).toBe(accepted);
   const prevented = await page.locator("#graph").evaluate((field) => {
@@ -147,7 +152,7 @@ test("wrong IDs, stale revisions and terminated generations cannot publish", asy
   await page.evaluate((result) => {
     const sent = window.__sent.at(-1);
     window.__workers.at(-1).onmessage({ data: { ...sent, result } });
-  }, JSON.stringify(matrix.records[0].wasm));
+  }, staleFault);
   await expect(page.locator("#download")).toBeDisabled();
   await page.locator("#run").click();
   await page.evaluate((result) => {
@@ -155,7 +160,7 @@ test("wrong IDs, stale revisions and terminated generations cannot publish", asy
       w = window.__workers.at(-1);
     w.onmessage({ data: { ...sent, id: "wrong", result } });
     w.onmessage({ data: { ...sent, revision: sent.revision - 1, result } });
-  }, JSON.stringify(matrix.records[0].wasm));
+  }, staleFault);
   await expect(page.locator("#download")).toBeDisabled();
   await page.locator("#restart").click();
   await expect(page.locator("#run")).toBeEnabled();
@@ -165,7 +170,7 @@ test("wrong IDs, stale revisions and terminated generations cannot publish", asy
     w.onmessage({ data: { ready: true } });
     w.onmessage({ data: { ...sent, result } });
     w.onerror({ message: "old crash" });
-  }, JSON.stringify(matrix.records[0].wasm));
+  }, staleFault);
   await expect(page.locator("#download")).toBeDisabled();
   await expect(page.locator("#status")).toContainText("Rust ready");
   expect(await page.locator("#seed").inputValue()).toBe("123");

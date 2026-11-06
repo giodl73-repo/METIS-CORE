@@ -1,6 +1,6 @@
 # METIS-CORE partition explorer
 
-This standalone companion calls the byte-unchanged native Rust kernel. Release
+This standalone companion calls the native Rust kernel with legacy seed sampling. Release
 status and dated evidence live in the wave; source implementation/local checks
 alone are not live qualification. No formal proof or ROUTE readiness follows.
 Readers edit a synthetic/own single-constraint CSR graph, choose native k-way or
@@ -11,11 +11,12 @@ not a geographic or optimized embedding. Partitioning is Rust, not JavaScript.
 
 ## Target-specific seed contract
 
-Measured 60 requests across native 64-bit and WASM 32-bit: 25 reports match apart from target
+The original release measured 60 requests across native 64-bit and WASM 32-bit: 25 reports match apart from target
 label, 35 assignments differ and 4 cut values differ. Both targets repeat their own
 full response exactly. Source uses machine-sized random ranges; cross-target
-assignment/cut identity is not established. Native source/defaults/outputs are
-unchanged. The browser report includes target_pointer_bits. All successful test
+assignment/cut identity is not established. This companion keeps legacy defaults. The opt-in sampling transition is
+recorded in [the current wave](../../context/waves/2026-11-05-portable-seed-replay/WAVE.md);
+its source changes do not enable portable replay in this companion. The browser report includes target_pointer_bits. All successful test
 results pass independent coverage/range/occupancy/part-weight/cut arithmetic and
 native partition validation. This is not gpmetis quality-envelope or optimality
 certification; existing native proof/parity boundaries remain intact.
@@ -88,3 +89,12 @@ availability is recorded explicitly, so green counts are not quality proof.
 Qualification uses a 64-bit native host and wasm32-unknown-unknown. Other native
 host widths are outside this replay recipe; the native library retains its own
 platform support and compatibility contract.
+
+## Reviewed foundation transition
+
+`foundation-transition.json` enumerates every changed Git blob and mode from
+both historical entry anchors to the explicit opt-in candidate. The guard checks
+those exact transitions, then rejects further protected-source changes and
+untracked protected files. Both build and packaging use the same guard. The
+package provenance includes the transition; no byte-unchanged-core assertion
+is used for the new source. Its legacy defaults remain the browser contract.

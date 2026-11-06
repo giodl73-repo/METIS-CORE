@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\foundation-guard-probe\browser\explorer\verify-foundation.py", line 32, in <module>
+    assert not subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '--', *paths], cwd=R), 'Untracked protected source'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Untracked protected source

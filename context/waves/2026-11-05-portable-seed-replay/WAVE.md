@@ -72,3 +72,19 @@ service/dual-route fixtures, with no external research cache or local ignored
 configuration copied. ROUTE has not adopted the feature or a new source pin.
 Contract and consumer rehearsal gates pass for this scoped draft; promotion
 and any broader readiness claim remain separate.
+
+## Hosted qualification repairs
+
+First hosted run `42162503491` rejected the candidate at the old absolute
+unchanged-foundation guard. Retain that failure. Replace that assertion with an
+explicit transition manifest: exact changed blobs/modes from both original
+anchors to `0ad9f83`, followed by zero further protected drift. Build and package
+share the guard; package provenance carries the transition. A separate local
+clone accepts the reviewed transition and rejects changed source, changed grant
+and untracked protected source (three negative controls). The browser companion
+still uses legacy sampling, with its source wording corrected accordingly.
+
+The Pages runner is pinned to Ubuntu 24.04 for the installed Playwright version;
+TERRAIN's earlier hosted run failed on unsupported Ubuntu 26.04. Feature-enabled
+native tests and both native/WASM Clippy are added to METIS Pages qualification.
+No hosted replay success is claimed until the corrected workflow finishes.

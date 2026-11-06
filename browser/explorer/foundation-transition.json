@@ -1,0 +1,246 @@
+{
+  "schema": "metis.foundation-transition.v1",
+  "reviewed_commit": "0ad9f83d1ed41c1499d00233fefa0d4de6743aa8",
+  "protected_paths": [
+    "src",
+    "Cargo.toml",
+    "Cargo.lock",
+    "tests",
+    "verify",
+    "benches",
+    ".pitfall",
+    "docs",
+    ".roles",
+    ".github/ci.yml",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "anchors": [
+    {
+      "commit": "df08dec373b3daecd73313750766e397aa047e9f",
+      "changes": [
+        {
+          "path": "Cargo.toml",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "f973ee5d056c2b36b0a09d5d99891adf1cef597f"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "4ac60d223189a6eb5aba187ce1503cbc67e598d3"
+          }
+        },
+        {
+          "path": "docs/compatibility.md",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "e046034fccb74e91d9772b08756cf4ae2794afff"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "18b39626f67d60da0f27eae87f98b86db642f13d"
+          }
+        },
+        {
+          "path": "src/coarsen/hem.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "4c071ccd66ab07b321aebe3d43e536dc805fb85c"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "ae1fc4f3ea84020d3eaf5c71b242ca0cf0284d1d"
+          }
+        },
+        {
+          "path": "src/init/grow.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "29912bf4d5197ccce879242f07961be779dd5aaa"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "723148348937397f5408236bae18559c788ce52c"
+          }
+        },
+        {
+          "path": "src/lib.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "0f5c550f6f888662d6439e9c8b3d02d80892aa28"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "5ebf7072d882590d73018232dcdc702fb57672ca"
+          }
+        },
+        {
+          "path": "src/sampling.rs",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "5623beb7ed156ddcee1d002964c7e9253129a6f6"
+          }
+        }
+      ]
+    },
+    {
+      "commit": "b4dc9663243c26771112da3329f171fc5f28c098",
+      "changes": [
+        {
+          "path": ".pitfall/PITFALL.md",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "6aec6698d514a62175d7288a07f510c0f937d998"
+          }
+        },
+        {
+          "path": ".pitfall/metis-core-invariants.md",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "18ef0f0d15c3c81d9a7cd0fac9aa49e8871fc28e"
+          }
+        },
+        {
+          "path": ".pitfall/metis-core-pitfalls.md",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "5273579da7e5f1ff259e04d335d1e38727e29f64"
+          }
+        },
+        {
+          "path": ".pitfall/metis-core-principles.md",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "8274dd5a995ee074aa52ce96cbfdccc7276302b8"
+          }
+        },
+        {
+          "path": ".roles/ROLE.md",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "ad65e6a49fad8c604ee7fcfdfe643464e37355c7"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "9ee51de080912d9c008d67d9569c3e3d05ba3ed8"
+          }
+        },
+        {
+          "path": "Cargo.toml",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "f973ee5d056c2b36b0a09d5d99891adf1cef597f"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "4ac60d223189a6eb5aba187ce1503cbc67e598d3"
+          }
+        },
+        {
+          "path": "docs/compatibility.md",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "e046034fccb74e91d9772b08756cf4ae2794afff"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "18b39626f67d60da0f27eae87f98b86db642f13d"
+          }
+        },
+        {
+          "path": "docs/pitfall-boundaries.v1.json",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "56cb0d13cd203b122c954e4264b9e12f5a27768c"
+          }
+        },
+        {
+          "path": "src/coarsen/hem.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "4c071ccd66ab07b321aebe3d43e536dc805fb85c"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "ae1fc4f3ea84020d3eaf5c71b242ca0cf0284d1d"
+          }
+        },
+        {
+          "path": "src/init/grow.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "29912bf4d5197ccce879242f07961be779dd5aaa"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "723148348937397f5408236bae18559c788ce52c"
+          }
+        },
+        {
+          "path": "src/lib.rs",
+          "before": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "0f5c550f6f888662d6439e9c8b3d02d80892aa28"
+          },
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "5ebf7072d882590d73018232dcdc702fb57672ca"
+          }
+        },
+        {
+          "path": "src/sampling.rs",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "5623beb7ed156ddcee1d002964c7e9253129a6f6"
+          }
+        },
+        {
+          "path": "tests/pitfall_policy.rs",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "type": "blob",
+            "oid": "1f92f5d2455ed8e4e38cbe1981ca2613031e2340"
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Explicit opt-in index sampling transition; both historical anchors and every changed blob/mode remain checked. Legacy default/native64 output preservation and both ROUTE rehearsals are in the child wave. This is not a universal unchanged-core claim."
+}

@@ -640,6 +640,86 @@
       "original_bytes": 380,
       "original_sha256": "b3f34585b1ec0e9785a216fd8d6bdf7c8fd00f790feb53926f02c6086bbd9cb9",
       "compression": "none"
+    },
+    {
+      "path": "METIS-CORE-42162503491-failed.log.gz",
+      "bytes": 4449,
+      "sha256": "be634bdf33e147a9c72afb0709afd09e0d2da9c86455f7b19a3ea9369b6bfdd5",
+      "original_bytes": 25471,
+      "original_sha256": "8675cc27b382029976df551c414c048e49f07ccb0aefa30925e56acfdfd58dcc",
+      "compression": "lossless-gzip"
+    },
+    {
+      "path": "foundation-guard-controls.json",
+      "bytes": 443,
+      "sha256": "94c9ea568cca970597d05c2a9e2255cceb8648d9c20102610a3540b373d5a64d",
+      "original_bytes": 443,
+      "original_sha256": "94c9ea568cca970597d05c2a9e2255cceb8648d9c20102610a3540b373d5a64d",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-accepted-transition.stdout",
+      "bytes": 100,
+      "sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310",
+      "original_bytes": 100,
+      "original_sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-grant-drift.stdout",
+      "bytes": 315,
+      "sha256": "34ac784340974d5f074121b6c50a10517ef73e824e218f49c07f41d1e0d5dd69",
+      "original_bytes": 315,
+      "original_sha256": "34ac784340974d5f074121b6c50a10517ef73e824e218f49c07f41d1e0d5dd69",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-source-drift.stdout",
+      "bytes": 194,
+      "sha256": "a027f1d2a2991fd113b5ff10d83a25b773dd9430a90da32b46ce44a6ac08b1e8",
+      "original_bytes": 194,
+      "original_sha256": "a027f1d2a2991fd113b5ff10d83a25b773dd9430a90da32b46ce44a6ac08b1e8",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-untracked-source.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-accepted-transition.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-grant-drift.stderr",
+      "bytes": 929,
+      "sha256": "1eb3af6d1f8301bd46470e4ec0897dd8e88633ee67eac600b5696f7407b2b710",
+      "original_bytes": 929,
+      "original_sha256": "1eb3af6d1f8301bd46470e4ec0897dd8e88633ee67eac600b5696f7407b2b710",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-source-drift.stderr",
+      "bytes": 937,
+      "sha256": "7559d7f004b6093140f44b26a4dabdf494ccfc202a575d054d5c16c8d17dba43",
+      "original_bytes": 937,
+      "original_sha256": "7559d7f004b6093140f44b26a4dabdf494ccfc202a575d054d5c16c8d17dba43",
+      "compression": "none"
+    },
+    {
+      "path": "foundation-reject-untracked-source.stderr",
+      "bytes": 483,
+      "sha256": "ce64057eadcb2a04c4415177387286ad4ca151ac6cc79a7a682a31b620b1ba90",
+      "original_bytes": 483,
+      "original_sha256": "ce64057eadcb2a04c4415177387286ad4ca151ac6cc79a7a682a31b620b1ba90",
+      "compression": "none"
     }
   ],
   "scope": "Original byte streams retained, large results losslessly compressed. Controlled dirty-source candidate and tracked-file TERRAIN copy with explicit local Cargo patch, not immutable-pin adoption or delivery qualification. Unit-test reference comparison was strengthened during the probe; production sampling expressions/call sites did not change. Current candidate-source snapshot is for review; future adoption must qualify its immutable commit. Existing installed Cargo/toolchain/bindgen/Node prerequisites and shared compiled target reused. Original TERRAIN controls preserved at e98306ded98714e1c5ef8439d8e4a3361a8e0c31 in validation/parity-v1, same control stream SHA e99759bd56676fc46fbce503a706a5ce56d4436e3a79c0d4de638ffc30b3d30d.",

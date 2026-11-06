@@ -1,0 +1,22 @@
+[
+  {
+    "name": "foundation-accepted-transition",
+    "expected_accept": true,
+    "exit_code": 0
+  },
+  {
+    "name": "foundation-reject-source-drift",
+    "expected_accept": false,
+    "exit_code": 1
+  },
+  {
+    "name": "foundation-reject-grant-drift",
+    "expected_accept": false,
+    "exit_code": 1
+  },
+  {
+    "name": "foundation-reject-untracked-source",
+    "expected_accept": false,
+    "exit_code": 1
+  }
+]

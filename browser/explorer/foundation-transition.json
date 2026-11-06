@@ -1,5 +1,5 @@
 {
-  "schema": "metis.foundation-transition.v1",
+  "schema": "metis.foundation-transition.v2",
   "reviewed_commit": "0ad9f83d1ed41c1499d00233fefa0d4de6743aa8",
   "protected_paths": [
     "src",
@@ -242,5 +242,1577 @@
       ]
     }
   ],
-  "scope": "Explicit opt-in index sampling transition; both historical anchors and every changed blob/mode remain checked. Legacy default/native64 output preservation and both ROUTE rehearsals are in the child wave. This is not a universal unchanged-core claim."
+  "scope": "Explicit opt-in index sampling transition; both historical anchors and every changed blob/mode remain checked. Legacy default/native64 output preservation and both ROUTE rehearsals are in the child wave. This is not a universal unchanged-core claim.",
+  "snapshots": {
+    "0ad9f83d1ed41c1499d00233fefa0d4de6743aa8": {
+      "commit_bytes_hex": "7472656520353433333163353034633637666334373834386463633136316262326338623562383538383162370a706172656e7420346238386466633562613839353635663034343163653530393164616563373663303537646336610a617574686f722067696f646c37332d7265706f203c67696f646c373340676d61696c2e636f6d3e2031373933393339313537202d303830300a636f6d6d69747465722067696f646c37332d7265706f203c67696f646c373340676d61696c2e636f6d3e2031373933393339313537202d303830300a677067736967202d2d2d2d2d424547494e20535348205349474e41545552452d2d2d2d2d0a2055314e4955306c48414141414151414141444d414141414c63334e6f4c57566b4d6a55314d546b4141414167586f6a5838346436505345377475666b51616b6f7a69685163510a204f626a374a67553774654948393538756741414141445a326c30414141414141414141415a7a614745314d544941414142544141414143334e7a6143316c5a4449314e5445350a2041414141514b587a7433324a49317731556f7264334a4c45323868397a6835674e44503478512b4d4b5648744f59443764303062774567654947583467436b61754674724e750a203659792b6a784d475a715261426b524e69483251493d0a202d2d2d2d2d454e4420535348205349474e41545552452d2d2d2d2d0a0a416464206f70742d696e20706f727461626c6520696e6465782073616d706c696e672077697468205445525241494e20616e6420524f5554452065766964656e63650a",
+      "entries": {
+        ".gitattributes": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "05bf89d001ced4ff57d421d46bc7e554e039993b"
+        },
+        ".github/workflows/ci.yml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c7e1a539ba5483c9cc982db4b390eb12b2b52447"
+        },
+        ".github/workflows/pages.yml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1292c02230b167ea969d963361bcd914228bb361"
+        },
+        ".gitignore": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "cf2d4ec0c5d405f8cd29731a54cfa20d6da95a7e"
+        },
+        ".pitfall/PITFALL.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6aec6698d514a62175d7288a07f510c0f937d998"
+        },
+        ".pitfall/metis-core-invariants.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "18ef0f0d15c3c81d9a7cd0fac9aa49e8871fc28e"
+        },
+        ".pitfall/metis-core-pitfalls.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5273579da7e5f1ff259e04d335d1e38727e29f64"
+        },
+        ".pitfall/metis-core-principles.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8274dd5a995ee074aa52ce96cbfdccc7276302b8"
+        },
+        ".roles/ROLE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9ee51de080912d9c008d67d9569c3e3d05ba3ed8"
+        },
+        ".roles/parliament/api-contract-auditor.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "461b835da97c2d1077db512ee2922b70911d8141"
+        },
+        ".roles/parliament/parity-performance-reviewer.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "30af8f1eff66c97f27e37c7841b22286fa611a84"
+        },
+        ".roles/parliament/partition-correctness-steward.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dfe3c2d6a215f9e1244e6a773e0dbd5dae8efa4e"
+        },
+        "Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9122d98a825d86fe777aeae52985e2ad2a0458c0"
+        },
+        "Cargo.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4ac60d223189a6eb5aba187ce1503cbc67e598d3"
+        },
+        "LICENSE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8d968b6cb081a9917169ffda16e60e0f56e453f3"
+        },
+        "NOTICE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6ea424e3a40a204b3e9623c77cc821f3f950d7f2"
+        },
+        "README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78b2522e2f585154da2d81d51905276effea8698"
+        },
+        "benches/baseline.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5fdcf940f43d7528dfd3e942b65c543030547ce8"
+        },
+        "benches/bench_main.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "eedc32bee3258777d8fb5699996d79c21ba67126"
+        },
+        "browser/explorer/.gitignore": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5e624d9fb2d91e0033b1e222f74d43432e8bc8bf"
+        },
+        "browser/explorer/BUILD.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "bfe25caa8ee1d19f41ded51450a158510b984b57"
+        },
+        "browser/explorer/Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ce7ee4c3be9cd6e708a457015b93d960d81800b1"
+        },
+        "browser/explorer/Cargo.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f3d1566f6bd862272cb37aafe189b421ede3a645"
+        },
+        "browser/explorer/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5c68023b08fc46180800ecde99bcc4a0196b4268"
+        },
+        "browser/explorer/build-prototype.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f4e827ec5f15093bb202fbd1e75abe9c5ddc5b96"
+        },
+        "browser/explorer/native-environment.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4febe625c5d56481541da1433365187ccb9bb07b"
+        },
+        "browser/explorer/package-lock.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "14bdeac2040cb4d13b33b2f93a041000c47602d7"
+        },
+        "browser/explorer/package-site.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c48306e6555c76a86aad76a26281faa97359866a"
+        },
+        "browser/explorer/package.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "aefeeeb4f50143c9e21dea75a02b8af4f163be26"
+        },
+        "browser/explorer/playwright.config.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4d8cebfb650ea8b0d41ebe75929e7277071e64b5"
+        },
+        "browser/explorer/src/bin/metis-partition-explorer-cli.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "53e845d9374388066f9df14cafafd0f22be25b41"
+        },
+        "browser/explorer/src/lib.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b0d26ff901a048f1a5c844203b39b777ef2030fa"
+        },
+        "browser/explorer/tests/boundaries.spec.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1abd6dbbbaecd6d003665d590c0c6431697aea18"
+        },
+        "browser/explorer/tests/delivery.spec.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f0b60d7197fbcc9d95def121ca6f77dcdaad4bbb"
+        },
+        "browser/explorer/tests/prototype.spec.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "620037c9e1afb282c588a1aca8407529e2099ad4"
+        },
+        "browser/explorer/tests/recovery.spec.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9aa589c34b9c009f13428fb64babc617c1da44f9"
+        },
+        "browser/explorer/verify-foundation.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b5c39d5d0d1ca927736a07d2928354489c75582f"
+        },
+        "browser/explorer/verify-site.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "db7cdbb5fae9efc43837b210fbd24b3f8bee7c65"
+        },
+        "browser/explorer/verify-source.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e3a3953e009abcf026ad90e62754fdc380d68dc2"
+        },
+        "browser/explorer/web/app.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "df3066303f62c9357129592573a965a0cead65e5"
+        },
+        "browser/explorer/web/example.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "64986973b02a6227003b2bb5014f81e3835c4704"
+        },
+        "browser/explorer/web/index.html": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "10bb2d505dfbf711f61bdc43360f6dd8d4b6f25c"
+        },
+        "browser/explorer/web/style.css": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "307c968701b7e9c1a2c0addc32507d58fe88977e"
+        },
+        "browser/explorer/web/worker.js": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1474ab28cd480787f5984e2c1b8cf5a4a55dc084"
+        },
+        "context/waves/2026-08-29-pitfall-use-case-integration/pulse-01.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "df812babdc7bd7931d1d8a0a959e7c85ab009b24"
+        },
+        "context/waves/2026-11-01-partition-browser/PLAN-REVIEW.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "07df42684d3d20bdbe11272734f30e39cc6fe8b5"
+        },
+        "context/waves/2026-11-01-partition-browser/PULSE-01.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b8ced599ed706cae165794f32d25cfee47fb71fe"
+        },
+        "context/waves/2026-11-01-partition-browser/PULSE-02.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "0f4a14af73f26489df58156d682cdfa4f60e2b86"
+        },
+        "context/waves/2026-11-01-partition-browser/RELEASE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "683cedf93f92bb4b62cee2d57caac3b2407a96b2"
+        },
+        "context/waves/2026-11-01-partition-browser/ROLES_REVIEW.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3912e4c8293401648210efe32318eec457c37200"
+        },
+        "context/waves/2026-11-01-partition-browser/WAVE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "36c53bdc408b54750f64c15925a969044d83598d"
+        },
+        "context/waves/2026-11-01-partition-browser/portability.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e44260a411d72cb3e87060acfcf265825aca1e65"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/WAVE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1b4467f3dcf9234de53763440cc25f05a28d2a78"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/CUSTODY.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "48116db09764cd498803eb6b98a8d654f97f6ac9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/candidate-source/Cargo.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4ac60d223189a6eb5aba187ce1503cbc67e598d3"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/candidate-source/src/coarsen/hem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ae1fc4f3ea84020d3eaf5c71b242ca0cf0284d1d"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/candidate-source/src/init/grow.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "723148348937397f5408236bae18559c788ce52c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/candidate-source/src/lib.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5ebf7072d882590d73018232dcdc702fb57672ca"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/candidate-source/src/sampling.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5623beb7ed156ddcee1d002964c7e9253129a6f6"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "785837c6c873c88245b54237a1d76f086346459c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/doc.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ff08ed3d68c5a03c0111219b19961449dc80f4b3"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/doc.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/fmt-final.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/fmt-final.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/fmt.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/fmt.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/gpmetis-environment-observation.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "7fdad833e24ccefa899c8e3d32b6872b7541feae"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/gpmetis-help.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/gpmetis-help.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/internal-commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c864d58e9e8d6fa5c1afc34030b31fa5e7bd97c9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-clippy.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "535c7cdc643be540b0cd997f9de4fda0e86a4f1e"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-clippy.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-internal-tests.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "2f29f00aa22e5672b482fba04cd1931457e0c605"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-internal-tests.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3159aded694f4a6344ad9fcd105960d104e81c96"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-parity.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-parity.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "81709eacd4cf22bcfb9132f1d2d11310452fac5a"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-site.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "38d9d4598f41cb39f4c4ce029f4e404644fe2488"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-site.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1fee2639ebc3e042d08917f291233984e6a30663"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-tests.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6942a665c85e6726242508fa9ea0ee054db372b2"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy-tests.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "32c6f193a0850109d2c2f426d41489cd6b80f6da"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/build-native.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "05701efa0d672b3ab0f03e44654d3eeb27079e79"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/build-native.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "7dc77d2162c989200ddd5d35785a4beb289f235d"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/native.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/native.stdout.gz": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78dc6508108111a4e240ae0e807b87bbfbfdd6b2"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/raw-js-abi.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b2cfcf79f5d57c8057fdd16f98ef93cc91ef4830"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/receipt.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "90abb89f076fc9548e2864834b1ff86e0509778a"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/wasm.jsonl.gz": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c390adfe69db689dcf920b3f473cdf307e8cf57c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/wasm.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/legacy/wasm.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef2630e76f48e27f3526a68b0cb0d2c9ab627827"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-clippy.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b06227830a0a4dfe03bddbdd4a7d4cd38a909fba"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-clippy.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-internal-tests.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "97fd00d66c724a8742f17c188be844e4a58b62f0"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-internal-tests.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "add59749fa1767611178da60adc70c5d1abe030d"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-parity.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-parity.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9dca97986ea3fcd4f166049248e3f17a7b5e70b9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-site.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "bc18428b06790b19e7d6e9dd1939c96798dd4e8c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable-site.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "486db7db2a633c19ff567c90777e9614b430cd9f"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/build-native.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "147d88029f16c15dd9220c25e899f322b3ffb913"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/build-native.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ed58806c12038e40a2a6dd93b10a61b908a9201c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/native.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/native.stdout.gz": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78dc6508108111a4e240ae0e807b87bbfbfdd6b2"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/raw-js-abi.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "b2cfcf79f5d57c8057fdd16f98ef93cc91ef4830"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/receipt.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "10954178306b645c178e19d338df1981e27a8829"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/wasm.jsonl.gz": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78dc6508108111a4e240ae0e807b87bbfbfdd6b2"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/wasm.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/portable/wasm.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "65f341cba021fc8c177003704734204fbabf041d"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/probe-commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "fa3351c1f56960bf90fc1aca166964975386a8b1"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/probe-receipt.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "81e2b494c0cf1090c74a8568498063c7c3961ff3"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/probe-update.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "aa542da34fd0a8841ce0591ddcc1d988768e0171"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/probe-update.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-commands.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5cfbec7867533362ba632413af504ae44451d6ee"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-config.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-config.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "cec94dde28e21d9a402cbf9d4b52464387971e28"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-generated-cargo-config.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8ddaccb940f4ca2d0a8760b28d157917184fb10c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-legacy-metis_partitions_dual_route_graph_fixture.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4d4e2003f66d888cecb56fc03c6779168b627d62"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-legacy-metis_partitions_dual_route_graph_fixture.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a233fd782d6d4932a2ba8639b9ea594dff36fae9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-legacy-metis_partitions_service_graph_fixture.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "cd114b400c22d11d9b6d9b3479c01b187bbf42ab"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-legacy-metis_partitions_service_graph_fixture.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78db82ed2662cb0b028e160464441f186989f7e3"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-local-patch-Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "389e3beb4eef1ae945f916ae9538c51c01c3a720"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-original-Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "d9083d03e78b252c6ae9b934605b863e5bb34715"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-portable-metis_partitions_dual_route_graph_fixture.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "2e6ea63b607b7f98b39d66789e8bdfddf584c5d9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-portable-metis_partitions_dual_route_graph_fixture.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a233fd782d6d4932a2ba8639b9ea594dff36fae9"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-portable-metis_partitions_service_graph_fixture.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9d0e3638d2fb2afa0b6dc33fe01042452a44241c"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-portable-metis_partitions_service_graph_fixture.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78db82ed2662cb0b028e160464441f186989f7e3"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-source-copy.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "30ad58308328ed65522426a25bed65f4d6d8c046"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-update.stderr": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6d0adb8103e36d2a2f65833caa9e436a6e1837bb"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/route-update.stdout": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/terrain-harness/terrain-web/examples/planner-control.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "49155e2fa80ec501f534a6e9677f523c58aa4dff"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/terrain-harness/tools/check-planner.mjs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6eaf18e1c7fa26e61557e266f79ad697d3d291ae"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/terrain-harness/tools/check-planner.py": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1c755aad2104d5560f7d788784e521d39c8cc294"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/terrain-local-patch-Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4b020bcef73d20b68fe796f5e4990adc667baf5e"
+        },
+        "context/waves/2026-11-05-portable-seed-replay/validation/terrain-original-Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "73da39d67704ec4233613d69205e7376fb4ffb39"
+        },
+        "docs/PRODUCTION_PLAN.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "69a95f43089148632ecef0b04dbc9a1c7830eacf"
+        },
+        "docs/compatibility.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "18b39626f67d60da0f27eae87f98b86db642f13d"
+        },
+        "docs/pitfall-boundaries.v1.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "56cb0d13cd203b122c954e4264b9e12f5a27768c"
+        },
+        "src/advanced.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f5dcbe8d22eebae81db7e927f840998af9ddc1e5"
+        },
+        "src/api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "56713cb3110d4e702e2a1aba7ce3cf825eef3bbd"
+        },
+        "src/coarsen/hem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ae1fc4f3ea84020d3eaf5c71b242ca0cf0284d1d"
+        },
+        "src/coarsen/mindegree.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f08fafe55584371e0b10b6ed2b9ce6dd23618c93"
+        },
+        "src/coarsen/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "37ca0a24458e5be59d1017417cd163e78f19323a"
+        },
+        "src/coarsen/shem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "40d734fb4a77ec01e7847b139615cbe831e0ac55"
+        },
+        "src/coarsen/twohop.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78fb7d0f57f12ade542887d68b86fb62d1b9d588"
+        },
+        "src/error.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "150ce73d59ffec2b06282806ff101160d059cd9b"
+        },
+        "src/graph/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e9a91a00612f09d510076be247f1bd4cfe720922"
+        },
+        "src/init/grow.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "723148348937397f5408236bae18559c788ce52c"
+        },
+        "src/init/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c565f346a624c9b03f8bc103cf9f896cb34eaf4a"
+        },
+        "src/init/multiconstraint.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dadab44750722a94b683b07fdb89809a252c5efb"
+        },
+        "src/init/random.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "188c554a4673c9ec42c91af38acf828305115f4d"
+        },
+        "src/lib.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5ebf7072d882590d73018232dcdc702fb57672ca"
+        },
+        "src/multilevel/hierarchy.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a44c4f18f9c5c8f59309df1ec998a2aedc3b5daa"
+        },
+        "src/multilevel/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c6a7a57bec958936282a08767744ce731360fdba"
+        },
+        "src/multilevel/pipeline.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6cf0baefa5d12073da6a6291b4b64707a1671e85"
+        },
+        "src/refine/boundary.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f8024bd2d732df211f704f07075e3fdeca7c42ba"
+        },
+        "src/refine/fm.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a492618bc22ea57adb3c8940efe7c9031339edf5"
+        },
+        "src/refine/gain.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef20a385d5f26b3cef6883cb770d3cdf8156dbd3"
+        },
+        "src/refine/kway.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "666d785d1fe1dd7457f1f61ab0ab60e1f1872b5a"
+        },
+        "src/refine/lp.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "75cbe5e1d77fcf5e68c057356ee67954cbdc9faf"
+        },
+        "src/refine/minconn.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "bbaa7726a7c9831802e482f5fd0e5a42d3ee6076"
+        },
+        "src/refine/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5e9622dc9e80d47ad7b6b835ada07da0411e8132"
+        },
+        "src/sampling.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5623beb7ed156ddcee1d002964c7e9253129a6f6"
+        },
+        "tests/contracts.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "7bf4c4869521ff34c735c2ddcff105d03288a080"
+        },
+        "tests/golden/vt_seed42.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4f501a177035e1858f1503964ac0a8427192208a"
+        },
+        "tests/graph_files.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "477a7e9d4d603bdb3885cf915bf4ca7f3e42b47a"
+        },
+        "tests/graph_ops.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3efbd4934b9633e26ea6c80e473e3f27a16b5c15"
+        },
+        "tests/metis_parity.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3f348b2dcb257fdff6154c5161cec5313c01a41d"
+        },
+        "tests/pitfall_policy.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1f92f5d2455ed8e4e38cbe1981ca2613031e2340"
+        },
+        "tests/proof_surface.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c3fd9b8c7a6743a23b37d27ade361007df94ce6c"
+        },
+        "tests/proptest_invariants.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "98e1312647a914bc324cd1c1d4592fbf3f92ade3"
+        },
+        "tests/public_api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4bd65838c2f796aae3a7139be3ea1bf2784795e3"
+        },
+        "tests/thread_safety.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "08d681a920e6da507b5f0738a899b6ecb205a45c"
+        },
+        "verify/kani/BOUNDS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c5b5b1da9b27f0bee2d79803684cbbe809a23311"
+        },
+        "verify/kani/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a21994089e56223c32eb8985da040c3d51813079"
+        },
+        "verify/kani/UNSAFE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a1fadfa7d96e191bfae7dde260113fd3b03df00f"
+        },
+        "verify/kani/coarsen_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef69608e78e33304737d9b8dadeac990c780eed8"
+        },
+        "verify/kani/csr_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "12615f6f6637252e65ac901aa63b258d8768e372"
+        },
+        "verify/kani/init_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1af798bf150c7ce0fa638ced0d2dd0fc24785ef6"
+        },
+        "verify/kani/multilevel_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "73cf8f5e650bebc284452a0057b94b322376a0fc"
+        },
+        "verify/kani/refine_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "80fce907a19d274e4578789f159968f950160b1d"
+        },
+        "verify/prusti/GAPS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "2eb7c58cf4beaea15597ad15b7d8adcfe1e8cda9"
+        },
+        "verify/prusti/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1c8abd2ebb80c2513951c8b5fddd4c1b8070042b"
+        },
+        "verify/prusti/artifacts/.gitkeep": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "verify/prusti/postconditions.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5a51016f7c7b09b1c7e4f19c52eb6b08b8e0bee9"
+        }
+      }
+    },
+    "df08dec373b3daecd73313750766e397aa047e9f": {
+      "commit_bytes_hex": "7472656520393562646165313733323338626137643838376364393062643161343761396435663066633661380a706172656e7420663234323336623836383564623663633831303136366433343035306530323365306265636438660a617574686f722047696f2044656c6c612d4c6962657261203c67696f646c373340676d61696c2e636f6d3e2031373838333136323232202d303730300a636f6d6d69747465722047696f2044656c6c612d4c6962657261203c67696f646c373340676d61696c2e636f6d3e2031373838333136323232202d303730300a677067736967202d2d2d2d2d424547494e20535348205349474e41545552452d2d2d2d2d0a2055314e4955306c484141414141514141415263414141414863334e6f4c584a7a5951414141414d424141454141414542414a344b4d6a5263703439392b6d4d63556e506c79570a206b6d7756417933444a75576172786b584d6e625945754d6f4a2b70467850357344686f7a76656c7a624330673143473372642f324975535a6733396b76726345426a70786f380a20416d4d446a786d616f65456b67466b5974734f496964734e724e6950552f34414855326f444b4c4f327446684571576b513566633947396c4e573950355a53657a77384c4f620a204f59744f34716c7331376856474a30456e6c3334736f72734557386b36424b6e743563654872582b6c413979744642303266302b4b6950527a685965536777674a79456130580a204830754a6639686a6f5054544f664672516c4f59335061416f3238564f675776784535565934594f524b727249544b78782f69504a6c566f3059784a504a76576a444f3734310a206c2f364d2f743071364d48352b374a53565246784e754d68542f43323370537a54634a6a426176464541414141445a326c30414141414141414141415a7a614745314d5449410a20414145554141414144484a7a5953317a614745794c5455784d6741414151413373426a2f79772b776e61516b7135667a4f3743674e7a6d554e56796c723962626b56456b564d0a206564386c784e622b4d455a5a36615061773054744c713369347056537852337a616c6a5a37444b71516179615932774f5a6a7a58342f34483643354370486a72695861744d460a206539773374327a3641436669796e2f5a6f484c49524a6f655970576277326c6a336f7a637466676d49397a5649724b437737686b357864556f6841666c783474353172492b700a204847497753534c5667362b554c7a7378746c34506a716a364a7032644b4b6e414e58464654767937703447454d79635458525435424d70797979424e2b6e5932687577726d4d0a20505646416d6b552f375053373259352f726c696134413446656c79636e78636a32454c627962315a6642366845785879454d7843797237587a7849626e475250614e4f7475620a2033696f572f394e59534d38717769336e59737664752f0a202d2d2d2d2d454e4420535348205349474e41545552452d2d2d2d2d0a0a436c6f7365204d455449532d434f52452070726f6f6620626f756e646172792070697466616c6c730a",
+      "entries": {
+        ".github/workflows/ci.yml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c7e1a539ba5483c9cc982db4b390eb12b2b52447"
+        },
+        ".gitignore": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "cf2d4ec0c5d405f8cd29731a54cfa20d6da95a7e"
+        },
+        ".pitfall/PITFALL.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6aec6698d514a62175d7288a07f510c0f937d998"
+        },
+        ".pitfall/metis-core-invariants.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "18ef0f0d15c3c81d9a7cd0fac9aa49e8871fc28e"
+        },
+        ".pitfall/metis-core-pitfalls.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5273579da7e5f1ff259e04d335d1e38727e29f64"
+        },
+        ".pitfall/metis-core-principles.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8274dd5a995ee074aa52ce96cbfdccc7276302b8"
+        },
+        ".roles/ROLE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9ee51de080912d9c008d67d9569c3e3d05ba3ed8"
+        },
+        ".roles/parliament/api-contract-auditor.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "461b835da97c2d1077db512ee2922b70911d8141"
+        },
+        ".roles/parliament/parity-performance-reviewer.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "30af8f1eff66c97f27e37c7841b22286fa611a84"
+        },
+        ".roles/parliament/partition-correctness-steward.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dfe3c2d6a215f9e1244e6a773e0dbd5dae8efa4e"
+        },
+        "Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9122d98a825d86fe777aeae52985e2ad2a0458c0"
+        },
+        "Cargo.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f973ee5d056c2b36b0a09d5d99891adf1cef597f"
+        },
+        "LICENSE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8d968b6cb081a9917169ffda16e60e0f56e453f3"
+        },
+        "NOTICE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6ea424e3a40a204b3e9623c77cc821f3f950d7f2"
+        },
+        "README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "eb144a02bb612ecc03089311c21b1ebb308c0a3b"
+        },
+        "benches/baseline.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5fdcf940f43d7528dfd3e942b65c543030547ce8"
+        },
+        "benches/bench_main.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "eedc32bee3258777d8fb5699996d79c21ba67126"
+        },
+        "context/waves/2026-08-29-pitfall-use-case-integration/pulse-01.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "df812babdc7bd7931d1d8a0a959e7c85ab009b24"
+        },
+        "docs/PRODUCTION_PLAN.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "69a95f43089148632ecef0b04dbc9a1c7830eacf"
+        },
+        "docs/compatibility.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e046034fccb74e91d9772b08756cf4ae2794afff"
+        },
+        "docs/pitfall-boundaries.v1.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "56cb0d13cd203b122c954e4264b9e12f5a27768c"
+        },
+        "src/advanced.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f5dcbe8d22eebae81db7e927f840998af9ddc1e5"
+        },
+        "src/api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "56713cb3110d4e702e2a1aba7ce3cf825eef3bbd"
+        },
+        "src/coarsen/hem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4c071ccd66ab07b321aebe3d43e536dc805fb85c"
+        },
+        "src/coarsen/mindegree.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f08fafe55584371e0b10b6ed2b9ce6dd23618c93"
+        },
+        "src/coarsen/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "37ca0a24458e5be59d1017417cd163e78f19323a"
+        },
+        "src/coarsen/shem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "40d734fb4a77ec01e7847b139615cbe831e0ac55"
+        },
+        "src/coarsen/twohop.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78fb7d0f57f12ade542887d68b86fb62d1b9d588"
+        },
+        "src/error.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "150ce73d59ffec2b06282806ff101160d059cd9b"
+        },
+        "src/graph/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e9a91a00612f09d510076be247f1bd4cfe720922"
+        },
+        "src/init/grow.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "29912bf4d5197ccce879242f07961be779dd5aaa"
+        },
+        "src/init/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c565f346a624c9b03f8bc103cf9f896cb34eaf4a"
+        },
+        "src/init/multiconstraint.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dadab44750722a94b683b07fdb89809a252c5efb"
+        },
+        "src/init/random.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "188c554a4673c9ec42c91af38acf828305115f4d"
+        },
+        "src/lib.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "0f5c550f6f888662d6439e9c8b3d02d80892aa28"
+        },
+        "src/multilevel/hierarchy.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a44c4f18f9c5c8f59309df1ec998a2aedc3b5daa"
+        },
+        "src/multilevel/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c6a7a57bec958936282a08767744ce731360fdba"
+        },
+        "src/multilevel/pipeline.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6cf0baefa5d12073da6a6291b4b64707a1671e85"
+        },
+        "src/refine/boundary.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f8024bd2d732df211f704f07075e3fdeca7c42ba"
+        },
+        "src/refine/fm.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a492618bc22ea57adb3c8940efe7c9031339edf5"
+        },
+        "src/refine/gain.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef20a385d5f26b3cef6883cb770d3cdf8156dbd3"
+        },
+        "src/refine/kway.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "666d785d1fe1dd7457f1f61ab0ab60e1f1872b5a"
+        },
+        "src/refine/lp.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "75cbe5e1d77fcf5e68c057356ee67954cbdc9faf"
+        },
+        "src/refine/minconn.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "bbaa7726a7c9831802e482f5fd0e5a42d3ee6076"
+        },
+        "src/refine/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5e9622dc9e80d47ad7b6b835ada07da0411e8132"
+        },
+        "tests/contracts.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "7bf4c4869521ff34c735c2ddcff105d03288a080"
+        },
+        "tests/golden/vt_seed42.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4f501a177035e1858f1503964ac0a8427192208a"
+        },
+        "tests/graph_files.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "477a7e9d4d603bdb3885cf915bf4ca7f3e42b47a"
+        },
+        "tests/graph_ops.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3efbd4934b9633e26ea6c80e473e3f27a16b5c15"
+        },
+        "tests/metis_parity.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3f348b2dcb257fdff6154c5161cec5313c01a41d"
+        },
+        "tests/pitfall_policy.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1f92f5d2455ed8e4e38cbe1981ca2613031e2340"
+        },
+        "tests/proof_surface.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c3fd9b8c7a6743a23b37d27ade361007df94ce6c"
+        },
+        "tests/proptest_invariants.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "98e1312647a914bc324cd1c1d4592fbf3f92ade3"
+        },
+        "tests/public_api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4bd65838c2f796aae3a7139be3ea1bf2784795e3"
+        },
+        "tests/thread_safety.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "08d681a920e6da507b5f0738a899b6ecb205a45c"
+        },
+        "verify/kani/BOUNDS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c5b5b1da9b27f0bee2d79803684cbbe809a23311"
+        },
+        "verify/kani/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a21994089e56223c32eb8985da040c3d51813079"
+        },
+        "verify/kani/UNSAFE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a1fadfa7d96e191bfae7dde260113fd3b03df00f"
+        },
+        "verify/kani/coarsen_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef69608e78e33304737d9b8dadeac990c780eed8"
+        },
+        "verify/kani/csr_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "12615f6f6637252e65ac901aa63b258d8768e372"
+        },
+        "verify/kani/init_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1af798bf150c7ce0fa638ced0d2dd0fc24785ef6"
+        },
+        "verify/kani/multilevel_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "73cf8f5e650bebc284452a0057b94b322376a0fc"
+        },
+        "verify/kani/refine_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "80fce907a19d274e4578789f159968f950160b1d"
+        },
+        "verify/prusti/GAPS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "2eb7c58cf4beaea15597ad15b7d8adcfe1e8cda9"
+        },
+        "verify/prusti/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1c8abd2ebb80c2513951c8b5fddd4c1b8070042b"
+        },
+        "verify/prusti/artifacts/.gitkeep": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "verify/prusti/postconditions.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5a51016f7c7b09b1c7e4f19c52eb6b08b8e0bee9"
+        }
+      }
+    },
+    "b4dc9663243c26771112da3329f171fc5f28c098": {
+      "commit_bytes_hex": "7472656520656166353839336461616166343930393764396333613366373762333834643537633634376637620a706172656e7420363733316635316163356135633231373032656166363231636636363664383136303465653331370a617574686f722047696f2044656c6c612d4c6962657261203c67696f646c406d6963726f736f66742e636f6d3e2031373837333331333633202d303730300a636f6d6d69747465722047696f2044656c6c612d4c6962657261203c67696f646c406d6963726f736f66742e636f6d3e2031373837333331333633202d303730300a677067736967202d2d2d2d2d424547494e20535348205349474e41545552452d2d2d2d2d0a2055314e4955306c484141414141514141415263414141414863334e6f4c584a7a5951414141414d424141454141414542414a344b4d6a5263703439392b6d4d63556e506c79570a206b6d7756417933444a75576172786b584d6e625945754d6f4a2b70467850357344686f7a76656c7a624330673143473372642f324975535a6733396b76726345426a70786f380a20416d4d446a786d616f65456b67466b5974734f496964734e724e6950552f34414855326f444b4c4f327446684571576b513566633947396c4e573950355a53657a77384c4f620a204f59744f34716c7331376856474a30456e6c3334736f72734557386b36424b6e743563654872582b6c413979744642303266302b4b6950527a685965536777674a79456130580a204830754a6639686a6f5054544f664672516c4f59335061416f3238564f675776784535565934594f524b727249544b78782f69504a6c566f3059784a504a76576a444f3734310a206c2f364d2f743071364d48352b374a53565246784e754d68542f43323370537a54634a6a426176464541414141445a326c30414141414141414141415a7a614745314d5449410a20414145554141414144484a7a5953317a614745794c5455784d674141415143577172797256383878385672666e617568684630754d595a784b4a4a6757587465527a647543530a2039416134714a4e69705a366948332f562f69657576582b50346134366f61444877554d6f313058716374686a2b4d37796b5450347a655735467878424273777a7761563855560a204a2b4644594f797862386156763946504a696c687974346374576c6561517272784b5964636f377a6f7948477232424a5548693052713978686b733742736b6e796c71317a4c0a20364e704b636564425558354c32343059487575356e68355847654a2f505a743133474f45743432416d533239716e773648723174445769506a355937314d4a6d374d424b43790a20704b4f5037474974334445536d3069356a6b65485231743733345041476b793867527264725330356243696c5431664d55774735514753435a55503957386b7554702f6172670a20506f474f627a51762b753467726e67756e35633764310a202d2d2d2d2d454e4420535348205349474e41545552452d2d2d2d2d0a0a446f63756d656e742070726f6475637469766520726f6c652074656e73696f6e730a0a436f2d617574686f7265642d62793a20436f70696c6f74203c3232333535363231392b436f70696c6f744075736572732e6e6f7265706c792e6769746875622e636f6d3e0a436f70696c6f742d53657373696f6e3a2033633638643963332d396437352d343966662d393133632d6362393739623162306430650a",
+      "entries": {
+        ".github/workflows/ci.yml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c7e1a539ba5483c9cc982db4b390eb12b2b52447"
+        },
+        ".gitignore": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "cf2d4ec0c5d405f8cd29731a54cfa20d6da95a7e"
+        },
+        ".roles/ROLE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ad65e6a49fad8c604ee7fcfdfe643464e37355c7"
+        },
+        ".roles/parliament/api-contract-auditor.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "461b835da97c2d1077db512ee2922b70911d8141"
+        },
+        ".roles/parliament/parity-performance-reviewer.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "30af8f1eff66c97f27e37c7841b22286fa611a84"
+        },
+        ".roles/parliament/partition-correctness-steward.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dfe3c2d6a215f9e1244e6a773e0dbd5dae8efa4e"
+        },
+        "Cargo.lock": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "9122d98a825d86fe777aeae52985e2ad2a0458c0"
+        },
+        "Cargo.toml": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f973ee5d056c2b36b0a09d5d99891adf1cef597f"
+        },
+        "LICENSE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "8d968b6cb081a9917169ffda16e60e0f56e453f3"
+        },
+        "NOTICE": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6ea424e3a40a204b3e9623c77cc821f3f950d7f2"
+        },
+        "README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f84d2d0e15ea5006bf212074dbe74175fdf69867"
+        },
+        "benches/baseline.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5fdcf940f43d7528dfd3e942b65c543030547ce8"
+        },
+        "benches/bench_main.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "eedc32bee3258777d8fb5699996d79c21ba67126"
+        },
+        "docs/PRODUCTION_PLAN.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "69a95f43089148632ecef0b04dbc9a1c7830eacf"
+        },
+        "docs/compatibility.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e046034fccb74e91d9772b08756cf4ae2794afff"
+        },
+        "src/advanced.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f5dcbe8d22eebae81db7e927f840998af9ddc1e5"
+        },
+        "src/api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "56713cb3110d4e702e2a1aba7ce3cf825eef3bbd"
+        },
+        "src/coarsen/hem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4c071ccd66ab07b321aebe3d43e536dc805fb85c"
+        },
+        "src/coarsen/mindegree.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f08fafe55584371e0b10b6ed2b9ce6dd23618c93"
+        },
+        "src/coarsen/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "37ca0a24458e5be59d1017417cd163e78f19323a"
+        },
+        "src/coarsen/shem.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "40d734fb4a77ec01e7847b139615cbe831e0ac55"
+        },
+        "src/coarsen/twohop.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "78fb7d0f57f12ade542887d68b86fb62d1b9d588"
+        },
+        "src/error.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "150ce73d59ffec2b06282806ff101160d059cd9b"
+        },
+        "src/graph/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e9a91a00612f09d510076be247f1bd4cfe720922"
+        },
+        "src/init/grow.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "29912bf4d5197ccce879242f07961be779dd5aaa"
+        },
+        "src/init/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c565f346a624c9b03f8bc103cf9f896cb34eaf4a"
+        },
+        "src/init/multiconstraint.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "dadab44750722a94b683b07fdb89809a252c5efb"
+        },
+        "src/init/random.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "188c554a4673c9ec42c91af38acf828305115f4d"
+        },
+        "src/lib.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "0f5c550f6f888662d6439e9c8b3d02d80892aa28"
+        },
+        "src/multilevel/hierarchy.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a44c4f18f9c5c8f59309df1ec998a2aedc3b5daa"
+        },
+        "src/multilevel/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c6a7a57bec958936282a08767744ce731360fdba"
+        },
+        "src/multilevel/pipeline.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "6cf0baefa5d12073da6a6291b4b64707a1671e85"
+        },
+        "src/refine/boundary.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "f8024bd2d732df211f704f07075e3fdeca7c42ba"
+        },
+        "src/refine/fm.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a492618bc22ea57adb3c8940efe7c9031339edf5"
+        },
+        "src/refine/gain.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef20a385d5f26b3cef6883cb770d3cdf8156dbd3"
+        },
+        "src/refine/kway.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "666d785d1fe1dd7457f1f61ab0ab60e1f1872b5a"
+        },
+        "src/refine/lp.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "75cbe5e1d77fcf5e68c057356ee67954cbdc9faf"
+        },
+        "src/refine/minconn.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "bbaa7726a7c9831802e482f5fd0e5a42d3ee6076"
+        },
+        "src/refine/mod.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5e9622dc9e80d47ad7b6b835ada07da0411e8132"
+        },
+        "tests/contracts.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "7bf4c4869521ff34c735c2ddcff105d03288a080"
+        },
+        "tests/golden/vt_seed42.json": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4f501a177035e1858f1503964ac0a8427192208a"
+        },
+        "tests/graph_files.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "477a7e9d4d603bdb3885cf915bf4ca7f3e42b47a"
+        },
+        "tests/graph_ops.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3efbd4934b9633e26ea6c80e473e3f27a16b5c15"
+        },
+        "tests/metis_parity.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "3f348b2dcb257fdff6154c5161cec5313c01a41d"
+        },
+        "tests/proof_surface.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c3fd9b8c7a6743a23b37d27ade361007df94ce6c"
+        },
+        "tests/proptest_invariants.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "98e1312647a914bc324cd1c1d4592fbf3f92ade3"
+        },
+        "tests/public_api.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "4bd65838c2f796aae3a7139be3ea1bf2784795e3"
+        },
+        "tests/thread_safety.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "08d681a920e6da507b5f0738a899b6ecb205a45c"
+        },
+        "verify/kani/BOUNDS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "c5b5b1da9b27f0bee2d79803684cbbe809a23311"
+        },
+        "verify/kani/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a21994089e56223c32eb8985da040c3d51813079"
+        },
+        "verify/kani/UNSAFE.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "a1fadfa7d96e191bfae7dde260113fd3b03df00f"
+        },
+        "verify/kani/coarsen_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "ef69608e78e33304737d9b8dadeac990c780eed8"
+        },
+        "verify/kani/csr_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "12615f6f6637252e65ac901aa63b258d8768e372"
+        },
+        "verify/kani/init_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1af798bf150c7ce0fa638ced0d2dd0fc24785ef6"
+        },
+        "verify/kani/multilevel_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "73cf8f5e650bebc284452a0057b94b322376a0fc"
+        },
+        "verify/kani/refine_harness.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "80fce907a19d274e4578789f159968f950160b1d"
+        },
+        "verify/prusti/GAPS.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "2eb7c58cf4beaea15597ad15b7d8adcfe1e8cda9"
+        },
+        "verify/prusti/README.md": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "1c8abd2ebb80c2513951c8b5fddd4c1b8070042b"
+        },
+        "verify/prusti/artifacts/.gitkeep": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        "verify/prusti/postconditions.rs": {
+          "mode": "100644",
+          "type": "blob",
+          "oid": "5a51016f7c7b09b1c7e4f19c52eb6b08b8e0bee9"
+        }
+      }
+    }
+  }
 }

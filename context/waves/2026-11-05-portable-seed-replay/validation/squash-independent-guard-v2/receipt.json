@@ -1,0 +1,58 @@
+{
+  "schema": "metis.squash-independent-guard.v1",
+  "default_commit": "7082987c06a0a610e2acb244e45eabfda12d11fd",
+  "reviewed_and_original_anchor_objects_absent": true,
+  "commands": [
+    {
+      "name": "default-clone-without-original-objects",
+      "exit_code": 0,
+      "expected_success": true
+    },
+    {
+      "name": "reject-src-lib.rs",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-LICENSE",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-untracked",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-raw-commit",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-full-tree",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-scope-trimming",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-anchor-trimming",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "reject-historical-delta",
+      "exit_code": 1,
+      "expected_success": false
+    },
+    {
+      "name": "restored-positive",
+      "exit_code": 0,
+      "expected_success": true
+    }
+  ],
+  "scope": "Fresh single-default-branch clone, original protected inventory/commit identities checked from complete receipts; no native behavior or scope changes."
+}

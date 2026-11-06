@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 12, in <module>
+    assert paths == ['src', 'Cargo.toml', 'Cargo.lock', 'tests', 'verify', 'benches',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     '.pitfall', 'docs', '.roles', '.github/ci.yml', 'LICENSE', 'NOTICE']
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

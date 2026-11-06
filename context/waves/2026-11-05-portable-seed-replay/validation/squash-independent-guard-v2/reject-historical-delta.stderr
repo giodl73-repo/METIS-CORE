@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 72, in <module>
+    assert changes == anchor['changes'], 'Reviewed transition differs from historical anchor'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Reviewed transition differs from historical anchor

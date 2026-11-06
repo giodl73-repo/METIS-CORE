@@ -88,3 +88,37 @@ The Pages runner is pinned to Ubuntu 24.04 for the installed Playwright version;
 TERRAIN's earlier hosted run failed on unsupported Ubuntu 26.04. Feature-enabled
 native tests and both native/WASM Clippy are added to METIS Pages qualification.
 No hosted replay success is claimed until the corrected workflow finishes.
+
+## Default-branch anchor repair
+
+PR3 merged as7082987c06a0a610e2acb244e45eabfda12d11fd after all PR native OS,
+feature-mode and existing browser/source checks passed. First default Pages
+run42182125607 fails before Rust compilation: squash merging removed the reviewed
+0ad9 commit from fetched branch history. The df08 historical anchor is also
+outside default history. This is a source-guard packaging defect, not a native
+algorithm/test failure; the failed raw log is retained.
+
+The v2 transition retains the exact original reviewed/anchor commit IDs and all
+historical changed blob/mode records. Complete tree-entry inventories plus raw
+commit objects now prove each original Git identity using standard-library
+Git object hashing, without requiring old refs or fetching them. Protected path
+scope and anchor identities are pinned in the guard. Current HEAD must equal
+the reviewed protected inventory; staged/worktree and untracked protected drift
+still fail. Production Rust, Cargo, grants and original reference bytes remain
+unchanged. Build/package continue to invoke the same guard.
+
+A fresh single-default-branch clone has neither original reviewed nor df08
+commit objects and passes the guard. Source drift, grant drift, untracked source,
+changed raw commit, changed complete tree, scope trimming, anchor trimming and
+historical-delta trimming all fail; restored source passes. A permanent CI
+regression constructs a new unrelated Git history and runs the same10 controls.
+Windows fixture archive mode/line-ending observations are retained separately;
+no verifier identity checks are weakened. See validation/squash-independent-guard-v2.
+
+Implementing-agent maintainer and ROUTE-consumer role lenses are also recorded in
+PR3: additive disabled-by-default feature and public contracts retain legacy
+behavior; both required named synthetic ROUTE fixtures pass in both modes.
+These are role reviews, not independent human approval or contact. No ROUTE
+adoption, gpmetis cut quality, speed, broad production or full formal proof is
+promoted. Repair source must qualify through PR, default artifact and anonymous
+live browser/file checks before canonical METIS/TERRAIN pointers advance.

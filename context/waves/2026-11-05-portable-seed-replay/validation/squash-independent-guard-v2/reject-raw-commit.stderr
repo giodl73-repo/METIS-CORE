@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 66, in <module>
+    current = verify_snapshot(reviewed)
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 57, in verify_snapshot
+    assert object_id('commit', raw_commit) == commit, 'Original commit receipt differs'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Original commit receipt differs

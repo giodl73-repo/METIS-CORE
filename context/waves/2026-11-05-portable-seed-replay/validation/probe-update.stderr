@@ -1,0 +1,4 @@
+     Locking 1 package to latest compatible version
+      Adding metis-core v0.1.0 (C:\src\metis-seed-replay-20261105)
+    Removing metis-core v0.1.0 (https://github.com/giodl73-repo/METIS-CORE.git#78ae3409)
+note: pass `--verbose` to see 9 unchanged dependencies behind latest

@@ -1,0 +1,4 @@
+   Compiling metis-core v0.1.0 (C:\src\metis-seed-replay-20261105)
+   Compiling route-network v0.1.0 (C:\src\metis-seed-replay-qualification-20261105\route-probe\crates\route-network)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.90s
+     Running unittests src\lib.rs (C:/src/.tracker-cargo-target\debug\deps\route_network-7c2b778e04c29444.exe)

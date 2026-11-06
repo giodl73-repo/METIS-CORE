@@ -78,6 +78,7 @@ mod graph;
 mod init;
 mod multilevel;
 mod refine;
+mod sampling;
 
 pub use api::{
     CoarseningMethod, MetisParams, MetisPartitioner, ObjectiveType, PartitionResult, Partitioner,

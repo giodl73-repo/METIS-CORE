@@ -59,3 +59,14 @@ layouts.
 
 METIS-CORE foundation changes are not ready until both its contract tests and
 the ROUTE rehearsal pass.
+
+## Portable seed replay feature
+
+`portable-seed-replay` is additive and disabled by default. Legacy native64 and
+WASM32 outputs must remain unchanged without it; opting in must retain the old
+native64 sampling stream for the locked Rand/Pcg versions. Feature unification
+means an opt-in applies to every use of the same resolved package. Do not enable
+it transitively without documenting the change to consumers. No public Rust
+signature, parameter default, validation or error change is included. Required
+contract and ROUTE fixture rehearsals still apply; the original browser explorer
+keeps its default legacy behavior.

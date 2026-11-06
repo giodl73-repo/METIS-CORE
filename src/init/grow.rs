@@ -1,7 +1,7 @@
 use crate::error::PartitionError;
 use crate::graph::{CsrGraph, Partition};
 use crate::init::InitialPartitioner;
-use rand::{Rng, SeedableRng};
+use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use std::collections::VecDeque;
 
@@ -562,12 +562,12 @@ fn spread_seeds(g: &CsrGraph, k: usize, seed: u64) -> Vec<usize> {
         return Vec::new();
     }
 
-    let first_seed = rng.gen_range(0..n);
+    let first_seed = crate::sampling::index(&mut rng, n);
     let (mut seeds, mut selected) = spread_seed_prefix(g, k, first_seed);
 
     let mut attempts = 0usize;
     while seeds.len() < k && seeds.len() < n && attempts < n.saturating_mul(10) {
-        let v = rng.gen_range(0..n);
+        let v = crate::sampling::index(&mut rng, n);
         if !selected[v] {
             seeds.push(v);
             selected[v] = true;

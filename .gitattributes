@@ -1,3 +1,6 @@
 browser/explorer/** text eol=lf
 context/waves/2026-11-01-partition-browser/** text eol=lf
 .github/workflows/pages.yml text eol=lf
+
+# Preserve command observations and original serialized result bytes.
+context/waves/2026-11-05-portable-seed-replay/validation/** -text whitespace=cr-at-eol,-blank-at-eof

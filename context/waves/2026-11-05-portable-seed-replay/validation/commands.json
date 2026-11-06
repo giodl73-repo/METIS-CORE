@@ -1,0 +1,21 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "legacy-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline"
+    ],
+    "exit_code": 101
+  }
+]

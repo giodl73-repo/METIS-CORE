@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/target/cargo-inspector
     steps:
@@ -48,8 +48,11 @@ jobs:
           cargo +1.95.0 fmt --manifest-path browser/explorer/Cargo.toml -- --check
           python -B browser/explorer/native-environment.py
           cargo +1.95.0 test --all-targets --locked
+          cargo +1.95.0 test --locked --features portable-seed-replay
           cargo +1.95.0 clippy --all-targets --locked -- -D warnings
           cargo +1.95.0 clippy --lib --target wasm32-unknown-unknown --locked -- -D warnings
+          cargo +1.95.0 clippy --all-targets --locked --features portable-seed-replay -- -D warnings
+          cargo +1.95.0 clippy --lib --target wasm32-unknown-unknown --locked --features portable-seed-replay -- -D warnings
           cargo +1.95.0 test --manifest-path browser/explorer/Cargo.toml --locked
           cargo +1.95.0 clippy --manifest-path browser/explorer/Cargo.toml --locked --all-targets -- -D warnings
           cargo +1.95.0 clippy --manifest-path browser/explorer/Cargo.toml --locked --lib --target wasm32-unknown-unknown -- -D warnings
@@ -82,7 +85,7 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: write

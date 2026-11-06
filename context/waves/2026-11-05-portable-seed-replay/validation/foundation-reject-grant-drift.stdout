@@ -1,0 +1,10 @@
+diff --git a/LICENSE b/LICENSE
+index 8d968b6..e391fa7 100644
+--- a/LICENSE
++++ b/LICENSE
+@@ -199,3 +199,5 @@
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
++
++unauthorized drift

@@ -1,0 +1,45 @@
+{
+  "schema": "metis.portable-seed-probe.v1",
+  "checked_at": "2026-11-06T04:21:47.559532+00:00",
+  "terrain_head": "e98306ded98714e1c5ef8439d8e4a3361a8e0c31",
+  "kernel_base": "4b88dfc5ba89565f0441ce5091daec76c057dc6a",
+  "kernel_dirty": true,
+  "comparisons": {
+    "legacy_native_original": {
+      "equal": true,
+      "actual_bytes": 6651179,
+      "reference_bytes": 6651179,
+      "actual_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff",
+      "reference_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff"
+    },
+    "legacy_wasm_original": {
+      "equal": true,
+      "actual_bytes": 6651186,
+      "reference_bytes": 6651186,
+      "actual_sha256": "2fa292793297cc40f8b968cdc3c6334dad550c32066e8b62339d19435769c6f1",
+      "reference_sha256": "2fa292793297cc40f8b968cdc3c6334dad550c32066e8b62339d19435769c6f1"
+    },
+    "portable_native_original": {
+      "equal": true,
+      "actual_bytes": 6651179,
+      "reference_bytes": 6651179,
+      "actual_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff",
+      "reference_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff"
+    },
+    "portable_wasm_original_native": {
+      "equal": true,
+      "actual_bytes": 6651179,
+      "reference_bytes": 6651179,
+      "actual_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff",
+      "reference_sha256": "3f9dad04e6ba98ac6e2f7cfc447889cb56145c7e4aacc4fe496b2198f10e61ff"
+    },
+    "controls_original": {
+      "equal": true,
+      "actual_bytes": 3229509,
+      "reference_bytes": 3229509,
+      "actual_sha256": "e99759bd56676fc46fbce503a706a5ce56d4436e3a79c0d4de638ffc30b3d30d",
+      "reference_sha256": "e99759bd56676fc46fbce503a706a5ce56d4436e3a79c0d4de638ffc30b3d30d"
+    }
+  },
+  "scope": "Controlled local-path candidate experiment only. Explicit patch in disposable source copy, not adoption or owned source/input restore. No published runtime/default pin/global quality/ROUTE readiness claim."
+}

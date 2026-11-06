@@ -1,0 +1,13 @@
+   Compiling metis-core v0.1.0 (C:\src\metis-seed-replay-20261105)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.17s
+     Running unittests src\lib.rs (C:/src/.tracker-cargo-target\debug\deps\metis_core-5f3a7508b9357412.exe)
+     Running tests\contracts.rs (C:/src/.tracker-cargo-target\debug\deps\contracts-c17da94e13faa5c1.exe)
+     Running tests\graph_files.rs (C:/src/.tracker-cargo-target\debug\deps\graph_files-642389038279a1bc.exe)
+     Running tests\graph_ops.rs (C:/src/.tracker-cargo-target\debug\deps\graph_ops-9a16c21220607f9b.exe)
+     Running tests\metis_parity.rs (C:/src/.tracker-cargo-target\debug\deps\metis_parity-b5c9edc0fd358ac9.exe)
+     Running tests\pitfall_policy.rs (C:/src/.tracker-cargo-target\debug\deps\pitfall_policy-2fd86c647a9b6001.exe)
+     Running tests\proof_surface.rs (C:/src/.tracker-cargo-target\debug\deps\proof_surface-71ba5573dda2678c.exe)
+     Running tests\proptest_invariants.rs (C:/src/.tracker-cargo-target\debug\deps\proptest_invariants-717f398076e8de80.exe)
+     Running tests\public_api.rs (C:/src/.tracker-cargo-target\debug\deps\public_api-9cf9db22243b550a.exe)
+     Running tests\thread_safety.rs (C:/src/.tracker-cargo-target\debug\deps\thread_safety-9991701aabb0e63d.exe)
+   Doc-tests metis_core

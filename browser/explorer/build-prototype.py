@@ -1,9 +1,9 @@
-"""Build the unchanged Rust kernel for native control and executing browser experiments."""
+"""Build the reviewed legacy-default Rust kernel for native control and executing browser experiments."""
 import argparse,copy,hashlib,json,os,pathlib,shutil,subprocess
 p=argparse.ArgumentParser();p.add_argument('--bindgen',required=True);a=p.parse_args();R=pathlib.Path(__file__).resolve().parents[2];B=R/'browser/explorer';C=B/'.cache';C.mkdir(exist_ok=True)
 source_guard=False
 if (R/'.git').exists():
- subprocess.run(['git','diff','--exit-code','df08dec373b3daecd73313750766e397aa047e9f','--','src','Cargo.toml','Cargo.lock','tests','verify','benches','.pitfall','docs','.roles','.github/ci.yml','LICENSE','NOTICE'],cwd=R,check=True)
+ subprocess.run(['python','-B',str(B/'verify-foundation.py')],cwd=R,check=True)
  source_guard=True
 target=pathlib.Path(os.environ.get('CARGO_TARGET_DIR',R/'target')).resolve();env=dict(os.environ,CARGO_TARGET_DIR=str(target));suffix='.exe' if os.name=='nt' else ''
 def run(cmd,**kw):return subprocess.run(cmd,cwd=R,env=kw.pop('env',env),check=True,**kw)
@@ -38,4 +38,4 @@ for name,key,value in [('zero parts','k',0),('too many parts','k',16),('browser 
 for name,g in [('empty',dict(xadj=[0],adjncy=[])),('asymmetric',dict(xadj=[0,1,1],adjncy=[1])),('disconnected',dict(xadj=[0,0,0],adjncy=[])),('negative weight',dict(examples['path'],vwgt=[-1]*12)),('browser weight',dict(examples['path'],vwgt=[1001]*12)),('graph extension',dict(examples['path'],unknown=True))]:add(name,g)
 add('malformed graph',graph_json='{');add('oversized graph',graph_json=' '*(1048576+1));add('browser vertices',graph(257,[(i,i+1)for i in range(256)]))
 (C/'native-cases.json').write_text(json.dumps(cases,indent=2)+'\n',encoding='utf-8')
-wasm=(S/'pkg/metis_partition_explorer_bg.wasm').read_bytes();proof=dict(prototype_only=True,native_cases=len(cases),wasm_bytes=len(wasm),wasm_sha256=hashlib.sha256(wasm).hexdigest(),native_pointer_bits=json.loads(cases[0]['native_output'])['target_pointer_bits'],cross_target_assignment_identity='Must be measured; not assumed',core_source_checked_against_entry=source_guard,publication_qualified=False);(C/'prototype-build.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8');print(json.dumps(proof))
+wasm=(S/'pkg/metis_partition_explorer_bg.wasm').read_bytes();proof=dict(prototype_only=True,native_cases=len(cases),wasm_bytes=len(wasm),wasm_sha256=hashlib.sha256(wasm).hexdigest(),native_pointer_bits=json.loads(cases[0]['native_output'])['target_pointer_bits'],cross_target_assignment_identity='Must be measured; not assumed',foundation_transition_verified=source_guard,publication_qualified=False);(C/'prototype-build.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8');print(json.dumps(proof))

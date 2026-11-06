@@ -1,0 +1,7 @@
+     Locking 3 packages to latest compatible versions
+      Adding fletch-core v0.1.0 (C:\src\TRACKER\repos\tools-infra\fletch\crates\fletch-core)
+    Removing fletch-core v0.1.0 (https://github.com/giodl73-repo/FLETCH.git?rev=7c7aacd4fbc8753299e2fc3181368d2cc6d90337#7c7aacd4)
+      Adding fletch-registry v0.1.0 (C:\src\TRACKER\repos\tools-infra\fletch\crates\fletch-registry)
+      Adding metis-core v0.1.0 (C:\src\metis-seed-replay-20261105)
+    Removing metis-core v0.1.0 (https://github.com/giodl73-repo/METIS-CORE.git?rev=78ae34090e043e79a206f2daffaa3889389b4790#78ae3409)
+note: pass `--verbose` to see 83 unchanged dependencies behind latest

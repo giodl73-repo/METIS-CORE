@@ -1,0 +1,57 @@
+[
+  {
+    "name": "probe-update",
+    "command": [
+      "cargo",
+      "update",
+      "-p",
+      "metis-core",
+      "--offline"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "legacy-site",
+    "command": [
+      "python",
+      "tools/build-pages.py",
+      "--output",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\dist\\legacy\\TERRAIN"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "legacy-parity",
+    "command": [
+      "python",
+      "tools/check-planner.py",
+      "--site",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\dist\\legacy\\TERRAIN",
+      "--output",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\legacy-parity"
+    ],
+    "exit_code": 1
+  },
+  {
+    "name": "portable-site",
+    "command": [
+      "python",
+      "tools/build-pages.py",
+      "--output",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\dist\\portable\\TERRAIN"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "portable-parity",
+    "command": [
+      "python",
+      "tools/check-planner.py",
+      "--site",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\dist\\portable\\TERRAIN",
+      "--output",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\portable-parity"
+    ],
+    "exit_code": 0
+  }
+]

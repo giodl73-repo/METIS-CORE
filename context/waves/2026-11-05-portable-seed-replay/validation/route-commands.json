@@ -1,0 +1,78 @@
+[
+  {
+    "name": "route-config",
+    "command": [
+      "python",
+      "tools/repo_map.py",
+      "write-cargo-config"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "route-update",
+    "command": [
+      "cargo",
+      "update",
+      "--offline",
+      "-p",
+      "metis-core"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "route-legacy-metis_partitions_service_graph_fixture",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "route-network",
+      "metis_partitions_service_graph_fixture"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "route-legacy-metis_partitions_dual_route_graph_fixture",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "route-network",
+      "metis_partitions_dual_route_graph_fixture"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "route-portable-metis_partitions_service_graph_fixture",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "route-network",
+      "--features",
+      "metis-core/portable-seed-replay",
+      "metis_partitions_service_graph_fixture"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "route-portable-metis_partitions_dual_route_graph_fixture",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "route-network",
+      "--features",
+      "metis-core/portable-seed-replay",
+      "metis_partitions_dual_route_graph_fixture"
+    ],
+    "exit_code": 0
+  }
+]

@@ -24,6 +24,10 @@ all = "warn"
 [lints.rustdoc]
 broken_intra_doc_links = "deny"
 
+[features]
+# Preserve legacy target-specific replay unless a consumer explicitly opts in.
+portable-seed-replay = []
+
 [dependencies]
 rand_pcg  = "0.3"
 rand      = { version = "0.8", default-features = false, features = ["alloc"] }

@@ -20,7 +20,7 @@ production performance, or downstream ROUTE readiness.
 an authored or own connected, undirected CSR graph, inspect assignments/cut/part
 weights and retain original/current/LF-copy/request/report downloads. Controls
 invoke the unchanged native Rust API, without a C installation or server.
-Seed replay is target-specific: the same seed can produce different assignments
+By default, seed replay is target-specific: the same seed can produce different assignments
 and cuts on native64 and WASM32. No cross-target identity, browser/gpmetis quality
 parity, optimality, full formal verification, production speed or ROUTE readiness
 is established. See [build and scope](browser/explorer/README.md) and the
@@ -290,3 +290,25 @@ and contributor attribution.
 Earlier METIS-CORE revisions carried an MIT notice. That notice did not
 supersede the Apache-2.0 terms applicable to the upstream-derived code. This
 revision makes the governing upstream license explicit.
+
+## Opt-in portable seed replay
+
+Consumers may enable `portable-seed-replay` to sample the three randomized
+vertex-index draws as `u64` on both native64 and WASM32. The default remains the
+legacy `usize` policy. With the same locked dependencies, this preserves the
+native64 sampling stream while changing WASM32 replay only for consumers that
+explicitly opt in. It does not change public parameter defaults, validation,
+errors, balance policy or the existing `u32` random-part assignment draw.
+
+```toml
+metis-core = { git = "https://github.com/giodl73-repo/METIS-CORE.git", rev = "<reviewed commit>", features = ["portable-seed-replay"] }
+```
+
+Cargo unifies features for a package: enabling this changes index sampling for
+all uses of that resolved METIS-CORE package in the build. Pin the reviewed Git
+commit and Cargo.lock, and qualify downstream results before adoption. This is
+a sampling policy, not a promise of universal cross-platform output identity:
+other algorithms, floating-point behavior or dependency/toolchain changes can
+still affect results. The candidate's controlled TERRAIN comparison covers 69
+full serialized results; it is not gpmetis quality, ROUTE adoption or a complete
+Pages delivery qualification. See the [experiment record](context/waves/2026-11-05-portable-seed-replay/WAVE.md).

@@ -1,0 +1,36 @@
+[
+  {
+    "name": "build-native",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--release",
+      "-p",
+      "terrain-web",
+      "--example",
+      "planner-control"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "native",
+    "command": [
+      "C:\\src\\.tracker-cargo-target\\release\\examples\\planner-control.exe"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "wasm",
+    "command": [
+      "node",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\tools\\check-planner.mjs",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\terrain-probe\\dist\\portable\\TERRAIN",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\portable-parity\\controls.jsonl",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\portable-parity\\wasm.jsonl",
+      "C:\\src\\metis-seed-replay-qualification-20261105\\portable-parity\\raw-js-abi.json"
+    ],
+    "exit_code": 0
+  }
+]

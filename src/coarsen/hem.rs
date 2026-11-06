@@ -1,7 +1,6 @@
 use crate::coarsen::Coarsener;
 use crate::error::PartitionError;
 use crate::graph::{CoarseMap, CsrGraph};
-use rand::Rng;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
@@ -272,7 +271,7 @@ fn hem_coarsen(g: &CsrGraph, seed: u64) -> Result<(CsrGraph, CoarseMap), Partiti
     // Fisher-Yates shuffle for random visit order
     let mut order: Vec<usize> = (0..n).collect();
     for i in (1..n).rev() {
-        let j = rng.gen_range(0..=i);
+        let j = crate::sampling::index_inclusive(&mut rng, i);
         order.swap(i, j);
     }
 

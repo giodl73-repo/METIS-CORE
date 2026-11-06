@@ -1,0 +1,315 @@
+
+running 181 tests
+test api::tests::metis_params_default ... ok
+test api::tests::metis_params_with_target_weights_rejects_zero_weight ... ok
+test api::tests::direct_split_respects_params_tpwgts ... ok
+test api::tests::direct_split_rejects_invalid_tpwgts ... ok
+test api::tests::all_coarsen_methods_agree_on_coverage ... ok
+test api::tests::metis_params_builders_preserve_struct_literal_defaults ... ok
+test api::tests::metis_params_with_target_weights_rejects_bad_shape ... ok
+test api::tests::coarsen_method_mindegree_produces_valid_partition ... ok
+test api::tests::ncuts_four_split_weighted_valid ... ok
+test api::tests::coarsen_method_twohop_produces_valid_partition ... ok
+test api::tests::metis_params_with_target_weights_validates_for_k ... ok
+test api::tests::ncuts_four_cut_le_single_trial ... ok
+test api::tests::metis_partitioner_new_uses_default_params ... ok
+test api::tests::mock_traits_compile ... ok
+test api::tests::coarsen_method_hem_produces_valid_partition ... ok
+test api::tests::full_pipeline_path10_k2 ... ok
+test api::tests::ncuts_prefers_balanced_trial_before_cut_for_weighted_split ... ok
+test api::tests::ncuts_four_produces_valid_partition ... ok
+test api::tests::ncuts_zero_is_rejected ... ok
+test api::tests::metis_params_validate_for_k_rejects_recursive_target_weights ... ok
+test api::tests::recursive_bisect_grid_k4_valid ... ok
+test api::tests::metis_partitioner_with_params_works ... ok
+test api::tests::recursive_bisect_k2_works ... ok
+test api::tests::recursive_split_rejects_tpwgts_for_now ... ok
+test api::tests::split_too_many_parts_errors ... ok
+test api::tests::ncuts_deterministic_with_fixed_seed ... ok
+test api::tests::split_weighted_all_zero_fracs_errors ... ok
+test api::tests::metis_partitioner_threads_ufactor_into_refiner ... ok
+test api::tests::split_weighted_asymmetric_fracs ... ok
+test api::tests::split_weighted_empty_fracs_errors ... ok
+test api::tests::split_weighted_equal_fracs_produces_k2 ... ok
+test api::tests::split_weighted_proportional_balance ... ok
+test coarsen::hem::tests::cmap_targets_in_range ... ok
+test api::tests::split_weighted_zero_frac_errors ... ok
+test api::tests::split_weighted_fraction_sum_does_not_overflow ... ok
+test coarsen::hem::tests::cmap_length_equals_fine_n ... ok
+test coarsen::hem::tests::coarse_graph_reports_size_overflow ... ok
+test api::tests::split_zero_k_errors ... ok
+test coarsen::hem::tests::coarsened_strictly_smaller ... ok
+test coarsen::hem::tests::should_stop_small_graph ... ok
+test coarsen::hem::tests::coarsening_reports_vertex_weight_overflow ... ok
+test coarsen::hem::tests::should_stop_large_graph ... ok
+test coarsen::hem::tests::coarsening_reports_edge_weight_overflow ... ok
+test coarsen::hem::tests::should_stop_threshold_saturates_on_overflow ... ok
+test coarsen::hem::tests::unweighted_stays_unweighted ... ok
+test coarsen::hem::tests::triangle_coarsens_to_at_most_2 ... ok
+test coarsen::hem::tests::weighted_stays_weighted ... ok
+test coarsen::hem::tests::coarse_graph_rejects_u32_vertex_count_overflow ... ok
+test coarsen::mindegree::tests::mindegree_cmap_targets_in_range ... ok
+test coarsen::mindegree::tests::mindegree_strictly_smaller ... ok
+test coarsen::mindegree::tests::mindegree_unweighted_stays_unweighted ... ok
+test coarsen::mindegree::tests::mindegree_valid_output ... ok
+test coarsen::shem::tests::shem_handles_extreme_weight_range_without_huge_bucket_table ... ok
+test coarsen::shem::tests::shem_coarsened_valid ... ok
+test coarsen::shem::tests::shem_prefers_heavy_edges ... ok
+test coarsen::shem::tests::shem_strictly_smaller ... ok
+test coarsen::shem::tests::shem_unweighted_stays_unweighted ... ok
+test coarsen::shem::tests::shem_unweighted_valid ... ok
+test coarsen::shem::tests::shem_weighted_stays_weighted ... ok
+test coarsen::shem::tests::shem_with_params_should_stop ... ok
+test coarsen::shem::tests::should_stop_threshold_saturates_on_overflow ... ok
+test coarsen::twohop::tests::should_stop_threshold_saturates_on_overflow ... ok
+test coarsen::twohop::tests::twohop_better_ratio_than_shem_on_star ... ok
+test coarsen::twohop::tests::twohop_handles_extreme_weight_range_without_huge_bucket_table ... ok
+test coarsen::twohop::tests::twohop_strictly_smaller ... ok
+test coarsen::twohop::tests::twohop_unweighted_stays_unweighted ... ok
+test coarsen::twohop::tests::twohop_valid_output_path ... ok
+test coarsen::twohop::tests::twohop_valid_output_star ... ok
+test coarsen::twohop::tests::twohop_with_params_should_stop ... ok
+test graph::tests::check_contiguity_disconnected_returns_err_with_part_id ... ok
+test graph::tests::check_contiguity_path_bisect_is_ok ... ok
+test graph::tests::check_contiguity_rejects_invalid_partition_without_panic ... ok
+test graph::tests::coarse_map_new_accepts_surjective_in_range_map ... ok
+test graph::tests::coarse_map_new_rejects_malformed_maps ... ok
+test graph::tests::extract_subgraph_contains_correct_vertices ... ok
+test graph::tests::extract_subgraph_multiconstraint_weight_layout ... ok
+test graph::tests::extract_subgraph_preserves_edge_weights ... ok
+test graph::tests::extract_subgraph_rejects_short_assignment ... ok
+test graph::tests::extract_subgraph_single_vertex_no_edges ... ok
+test graph::tests::extract_subgraph_unweighted_stays_unweighted ... ok
+test graph::tests::from_csr_defaults_empty_weights_to_unit_weights ... ok
+test graph::tests::invalid_adjwgt_wrong_len ... ok
+test graph::tests::invalid_asymmetric_adjwgt ... ok
+test graph::tests::invalid_directed_adjncy ... ok
+test graph::tests::invalid_disconnected ... ok
+test graph::tests::invalid_negative_vwgt ... ok
+test graph::tests::invalid_out_of_bounds_adjncy ... ok
+test graph::tests::invalid_self_loop ... ok
+test graph::tests::invalid_trailing_adjncy ... ok
+test graph::tests::invalid_zero_adjwgt ... ok
+test graph::tests::invalid_zero_vwgt ... ok
+test graph::tests::new_accepts_valid_graph ... ok
+test graph::tests::new_rejects_invalid_graph ... ok
+test graph::tests::partition_validate_for_graph_rejects_out_of_range_part ... ok
+test graph::tests::partition_validate_for_graph_accepts_valid_partition ... ok
+test graph::tests::partition_validate_for_graph_rejects_short_assignment ... ok
+test graph::tests::repair_contiguity_fixes_disconnected_part ... ok
+test graph::tests::repair_contiguity_handles_k1 ... ok
+test graph::tests::repair_contiguity_noop_when_already_contiguous ... ok
+test graph::tests::repair_contiguity_rejects_invalid_partition_without_panic ... ok
+test graph::tests::valid_multi_constraint ... ok
+test graph::tests::valid_path_graph ... ok
+test init::grow::tests::grow_bisect_k1_all_zero ... ok
+test init::grow::tests::grow_bisect_rejects_zero_parts ... ok
+test init::grow::tests::grow_bisect_valid_partition ... ok
+test init::grow::tests::grow_kway_k1_all_zero ... ok
+test init::grow::tests::grow_kway_rejects_too_many_parts ... ok
+test init::grow::tests::grow_kway_valid_k4 ... ok
+test init::grow::tests::recursive_bisect_k1_all_zero ... ok
+test init::grow::tests::recursive_bisect_k2_same_validity_as_direct ... ok
+test init::grow::tests::recursive_bisect_grid_k4 ... ok
+test init::grow::tests::spread_seeds_are_unique_when_k_fits_graph ... ok
+test init::grow::tests::spread_seeds_bisection_chooses_path_extremes_after_first_seed ... ok
+test init::grow::tests::spread_seeds_is_deterministic ... ok
+test init::multiconstraint::tests::multi_constraint_k1_trivial ... ok
+test init::multiconstraint::tests::multi_constraint_respects_ncon ... ok
+test init::random::tests::random_bisect_all_parts_present ... ok
+test init::grow::tests::recursive_bisect_k8_valid ... ok
+test init::random::tests::random_bisect_deterministic ... ok
+test init::random::tests::random_bisect_k1_all_zero ... ok
+test multilevel::hierarchy::tests::hierarchy_builds_from_path ... ok
+test multilevel::hierarchy::tests::hierarchy_stalls_returns_error ... ok
+test multilevel::hierarchy::tests::project_up_correct ... ok
+test multilevel::pipeline::tests::pipeline_no_coarsening_still_works ... ok
+test multilevel::pipeline::tests::pipeline_path10_k2_produces_valid_partition ... ok
+test multilevel::pipeline::tests::pipeline_path100_k4_produces_valid_partition ... ok
+test multilevel::pipeline::tests::pipeline_rejects_invalid_initial_partition_output ... ok
+test refine::boundary::tests::boundary_all_same_part_empty ... ok
+test refine::boundary::tests::boundary_contains_cross_part_vertices ... ok
+test refine::boundary::tests::boundary_insert_and_remove ... ok
+test refine::boundary::tests::boundary_is_empty_and_len ... ok
+test refine::boundary::tests::boundary_iter_yields_all_boundary_vertices ... ok
+test refine::fm::tests::best_volume_gain_boundary_vertex ... ok
+test refine::fm::tests::compute_volume_gain_path_move_boundary ... ok
+test refine::fm::tests::contig_fm_preserves_contiguity_path ... ok
+test refine::fm::tests::fm_does_not_increase_cut ... ok
+test refine::fm::tests::fm_oracle_dumbbell_bisect ... ok
+test refine::fm::tests::fm_multi_constraint_balance ... ok
+test refine::fm::tests::fm_rejects_partition_with_wrong_length ... ok
+test refine::fm::tests::fm_preserves_population_balance ... ok
+test refine::fm::tests::fm_state_checkpoint_restore ... ok
+test refine::fm::tests::fm_state_cut_path3_split ... ok
+test refine::fm::tests::volume_objective_valid_bisection ... ok
+test refine::fm::tests::volume_objective_produces_valid_partition ... ok
+test refine::fm::tests::would_disconnect_endpoint_safe ... ok
+test refine::fm::tests::would_disconnect_path_interior_vertex ... ok
+test refine::fm::tests::would_disconnect_star_center ... ok
+test refine::fm::tests::would_disconnect_triangle_no_cut_vertex ... ok
+test refine::gain::tests::gain_table_empty_returns_none ... ok
+test refine::gain::tests::gain_table_large_range_uses_sparse_storage ... ok
+test refine::gain::tests::gain_table_max_is_correct ... ok
+test refine::gain::tests::gain_table_negative_gain ... ok
+test refine::gain::tests::gain_table_remove_max ... ok
+test refine::gain::tests::gain_table_update_gain ... ok
+test refine::kway::tests::greedy_kway_does_not_increase_cut ... ok
+test refine::kway::tests::greedy_kway_output_valid_k4 ... ok
+test refine::lp::tests::lp_assignment_stays_in_range ... ok
+test refine::lp::tests::lp_balanced_partition_unchanged ... ok
+test refine::lp::tests::lp_improves_imbalance_on_grid ... ok
+test refine::lp::tests::lp_k1_noop ... ok
+test refine::lp::tests::lp_respects_target_partition_weights ... ok
+test refine::lp::tests::lp_respects_ufactor_tolerance ... ok
+test refine::lp::tests::lp_total_wgt_conserved ... ok
+test refine::lp::tests::lp_zero_iter_is_noop ... ok
+test refine::lp::tests::rebalance_only_moves_to_adjacent_parts ... ok
+test refine::lp::tests::rebalance_prefers_global_best_move_across_overweight_parts ... ok
+test refine::lp::tests::rebalance_rejects_partition_with_wrong_length ... ok
+test refine::minconn::tests::min_conn_default_is_false_matching_metis ... ok
+test refine::minconn::tests::min_conn_false_skips_post_processing ... ok
+test refine::minconn::tests::min_conn_k1_noop ... ok
+test refine::minconn::tests::min_conn_produces_valid_partition ... ok
+test tests::metis_params_kway_defaults_match_kmetis ... ok
+test tests::metis_params_recursive_defaults_match_pmetis ... ok
+test refine::minconn::tests::min_conn_reduces_or_maintains_subdomain_count ... ok
+test tests::part_kway_four_parts_path ... ok
+test sampling::tests::preserves_selected_sampling_stream ... ok
+test tests::part_kway_with_edge_weights ... ok
+test tests::part_recursive_bisects_path ... ok
+test tests::part_recursive_k1_all_same_part ... ok
+test tests::part_recursive_promotes_default_ncuts_even_with_seed ... ok
+test tests::part_recursive_with_vertex_weights ... ok
+
+test result: ok. 181 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+
+running 13 tests
+test generate_golden ... ignored
+test split_weighted_asymmetric_fracs_errors_on_empty ... ok
+test oracle_dumbbell_cut_1 ... ok
+test oracle_path_bisect_cut_1 ... ok
+test oracle_grid_4x4_k4_coverage ... ok
+test oracle_k1_trivial ... ok
+test oracle_full_coverage_all_vertices ... ok
+test golden_rng_determinism ... ok
+test oracle_weighted_path_respects_weights ... ok
+test all_oracle_partitions_are_contiguous ... ok
+test split_weighted_produces_valid_partition ... ok
+test repair_contiguity_fixes_broken_partition ... ok
+test coarsening_terminates_path255 ... ok
+
+test result: ok. 12 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 13 tests
+test loader_returns_none_for_missing_file ... ok
+test loader_mgraph_ncon2_dropped_to_ncon1 ... ok
+test test_mgraph_k4 ... ok
+test loader_4elt_dimensions ... ok
+test test_4elt_k4 ... ok
+test test_4elt_k8 ... ok
+test test_4elt_k16 ... ok
+test test_4elt_k4_determinism ... ok
+test test_4elt_k8_ncuts4 ... ok
+test test_copter2_k4 ... ok
+test test_copter2_k8 ... ok
+test test_mdual_k4 ... ok
+test test_4elt_k8_contig_fm_comparison ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.06s
+
+
+running 30 tests
+test check_contiguity_ok_for_contiguous_bisection ... ok
+test check_contiguity_err_for_checkerboard_assignment ... ok
+test coarsening_preserves_total_vertex_weight ... ok
+test csr_adjncy_no_self_loops ... ok
+test extract_subgraph_size_equals_part_population ... ok
+test csr_all_vertex_weights_positive ... ok
+test csr_degree_grid_interior_is_4 ... ok
+test csr_degree_path_endpoints_is_1 ... ok
+test csr_total_edges_path_undirected ... ok
+test csr_is_valid_returns_true_for_well_formed_graph ... ok
+test csr_xadj_monotone_nondecreasing ... ok
+test csr_xadj_starts_at_zero ... ok
+test extract_subgraph_adjncy_in_range ... ok
+test extract_subgraph_parts_cover_all_vertices ... ok
+test csr_adjwgt_length_matches_adjncy ... ok
+test heavy_edge_match_path4_builds_valid_smaller_graph ... ok
+test hierarchy_all_intermediate_levels_valid ... ok
+test hierarchy_coarsest_satisfies_should_stop ... ok
+test manual_imbalanced_partition_exceeds_half_percent ... ok
+test hierarchy_depth_at_least_1_for_large_graph ... ok
+test metis_params_coarsening_method_default_is_shem ... ok
+test csr_xadj_length_is_n_plus_1 ... ok
+test metis_params_ufactor_5_and_niter_10 ... ok
+test metis_uniform_bisection_within_ufactor_tolerance ... ok
+test hem_preserves_adjwgt_none_invariant ... ok
+test repair_contiguity_fixes_disconnected_assignment ... ok
+test repair_contiguity_leaves_already_contiguous_unchanged ... ok
+test metis_params_objective_default_is_cut ... ok
+test trivial_k1_partition_has_zero_deviation ... ok
+test shem_coarsens_weighted_graph_to_fewer_vertices ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+
+running 3 tests
+test public_claims_stay_bounded_to_evidence ... ok
+test open_pitfalls_are_use_case_first_and_test_backed ... ok
+test verification_and_downstream_rehearsal_limits_remain_visible ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test asymmetric_csr_is_rejected_with_typed_error ... ok
+test strict_csr_partition_is_accepted ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test coarsen_grid_preserves_validity ... ok
+test coarsen_grid_cmap_surjective ... ok
+test coarsen_preserves_validity ... ok
+test coarsen_cmap_targets_in_range ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 8 tests
+test root_api_rejects_too_many_parts ... ok
+test advanced_api_exposes_intentional_algorithm_components ... ok
+test root_api_rejects_malformed_csr ... ok
+test root_api_rejects_empty_graph ... ok
+test root_api_rejects_zero_parts ... ok
+test root_api_result_reports_objective_value ... ok
+test root_api_supports_configured_partitioner ... ok
+test root_api_supports_metis_style_entry_points ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test public_partitioning_types_are_send_sync ... ok
+test partitioner_can_be_shared_across_threads ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test src\lib.rs - (line 69) - compile fail ... ok
+test src\lib.rs - (line 40) ... ok
+test src\advanced.rs - advanced (line 11) ... ok
+test src\lib.rs - (line 21) ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+

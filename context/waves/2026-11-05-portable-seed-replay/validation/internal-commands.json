@@ -1,0 +1,82 @@
+[
+  {
+    "name": "fmt-final",
+    "command": [
+      "cargo",
+      "fmt",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "legacy-internal-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--",
+      "--skip",
+      "gpmetis"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "portable-internal-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "--features",
+      "portable-seed-replay",
+      "--",
+      "--skip",
+      "gpmetis"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "legacy-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--offline",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "portable-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--offline",
+      "--all-targets",
+      "--features",
+      "portable-seed-replay",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--offline",
+      "--no-deps",
+      "--features",
+      "portable-seed-replay"
+    ],
+    "exit_code": 0
+  }
+]

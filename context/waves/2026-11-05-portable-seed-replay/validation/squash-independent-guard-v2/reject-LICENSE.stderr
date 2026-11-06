@@ -1,0 +1,9 @@
+warning: in the working copy of 'LICENSE', LF will be replaced by CRLF the next time Git touches it
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 74, in <module>
+    subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--', *paths], cwd=R, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', 'diff', '--exit-code', 'HEAD', '--', 'src', 'Cargo.toml', 'Cargo.lock', 'tests', 'verify', 'benches', '.pitfall', 'docs', '.roles', '.github/ci.yml', 'LICENSE', 'NOTICE']' returned non-zero exit status 1.

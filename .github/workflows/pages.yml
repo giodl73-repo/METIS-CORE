@@ -43,6 +43,7 @@ jobs:
           echo "${install_dir}" >> "${GITHUB_PATH}"
       - name: Protect foundation and qualify native/WASM
         run: |
+          python -B browser/explorer/test-foundation.py
           python -B browser/explorer/verify-foundation.py
           cargo +1.95.0 fmt -- --check
           cargo +1.95.0 fmt --manifest-path browser/explorer/Cargo.toml -- --check

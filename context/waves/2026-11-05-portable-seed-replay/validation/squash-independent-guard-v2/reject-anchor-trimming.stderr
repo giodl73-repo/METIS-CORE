@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\src\metis-seed-replay-qualification-20261105\default-guard-v2\repo\browser\explorer\verify-foundation.py", line 15, in <module>
+    assert [a['commit'] for a in transition['anchors']] == [
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        'df08dec373b3daecd73313750766e397aa047e9f', 'b4dc9663243c26771112da3329f171fc5f28c098']
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,141 @@
+{
+  "files": [
+    {
+      "file": "42182125607-default-failed.log.gz",
+      "raw_bytes": 9179,
+      "raw_sha256": "d4b5e82086490f439d9c594f77ee5d960b8ffa1a41f221ff7d604dda4b8deadf",
+      "stored_sha256": "0f721c065347371ddd581c7f5d7fe2091b8ea1e4a05a8bd8402e106b8fbc6330"
+    },
+    {
+      "file": "default-clone-without-original-objects.stdout",
+      "raw_bytes": 100,
+      "raw_sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310",
+      "stored_sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310"
+    },
+    {
+      "file": "reject-anchor-trimming.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-full-tree.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-historical-delta.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-LICENSE.stdout",
+      "raw_bytes": 304,
+      "raw_sha256": "9fb509f31c84eb555773dbbb9d4d249d124fa81b55a30ab9159664553c242122",
+      "stored_sha256": "9fb509f31c84eb555773dbbb9d4d249d124fa81b55a30ab9159664553c242122"
+    },
+    {
+      "file": "reject-raw-commit.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-scope-trimming.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-src-lib.rs.stdout",
+      "raw_bytes": 194,
+      "raw_sha256": "c7a15682b9fb143fabb4a6a0244fe4fcc50748a5b9b73c8d84c4d2ac5eb2d4f9",
+      "stored_sha256": "c7a15682b9fb143fabb4a6a0244fe4fcc50748a5b9b73c8d84c4d2ac5eb2d4f9"
+    },
+    {
+      "file": "reject-untracked.stdout",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "restored-positive.stdout",
+      "raw_bytes": 100,
+      "raw_sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310",
+      "stored_sha256": "e0f4dbdf1141202ad80b41412db2ebc36064f8654ae38788582c8dada1948310"
+    },
+    {
+      "file": "default-clone-without-original-objects.stderr",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "reject-anchor-trimming.stderr",
+      "raw_bytes": 510,
+      "raw_sha256": "2c88cea7ff41a69558d90e15f9dc1e8c26da217e04af832b3a2b4be7ce086cfb",
+      "stored_sha256": "2c88cea7ff41a69558d90e15f9dc1e8c26da217e04af832b3a2b4be7ce086cfb"
+    },
+    {
+      "file": "reject-full-tree.stderr",
+      "raw_bytes": 618,
+      "raw_sha256": "d468286173a3c2c69229ebb5361c8aad0d41a8eb0f70d238e21d9009823f3284",
+      "stored_sha256": "d468286173a3c2c69229ebb5361c8aad0d41a8eb0f70d238e21d9009823f3284"
+    },
+    {
+      "file": "reject-historical-delta.stderr",
+      "raw_bytes": 380,
+      "raw_sha256": "6209264ba268c912b5940d48ad33312e727b2c22062d0dae001f942d4f7c5275",
+      "stored_sha256": "6209264ba268c912b5940d48ad33312e727b2c22062d0dae001f942d4f7c5275"
+    },
+    {
+      "file": "reject-LICENSE.stderr",
+      "raw_bytes": 888,
+      "raw_sha256": "5e505b239dc3186b421a8ba1c907b049be809ab7e47dd69a1ae149eabb7ce07c",
+      "stored_sha256": "5e505b239dc3186b421a8ba1c907b049be809ab7e47dd69a1ae149eabb7ce07c"
+    },
+    {
+      "file": "reject-raw-commit.stderr",
+      "raw_bytes": 556,
+      "raw_sha256": "d7cef217fc40fc538bb454578306371606dfe843c01572794d2df16d8078710f",
+      "stored_sha256": "d7cef217fc40fc538bb454578306371606dfe843c01572794d2df16d8078710f"
+    },
+    {
+      "file": "reject-scope-trimming.stderr",
+      "raw_bytes": 548,
+      "raw_sha256": "79c9b4e482ee53c756fe32303484ded0a238ada740af3b0bb009c2c51453d2b3",
+      "stored_sha256": "79c9b4e482ee53c756fe32303484ded0a238ada740af3b0bb009c2c51453d2b3"
+    },
+    {
+      "file": "reject-src-lib.rs.stderr",
+      "raw_bytes": 891,
+      "raw_sha256": "25b0a8943d26a9b41944671097804fd2b878205f425c56c8b4c4900afb2f09e2",
+      "stored_sha256": "25b0a8943d26a9b41944671097804fd2b878205f425c56c8b4c4900afb2f09e2"
+    },
+    {
+      "file": "reject-untracked.stderr",
+      "raw_bytes": 482,
+      "raw_sha256": "02f75c5772dba959c80bbe7e957dd018b6aa80db72f61f8ea06b77ab66381edd",
+      "stored_sha256": "02f75c5772dba959c80bbe7e957dd018b6aa80db72f61f8ea06b77ab66381edd"
+    },
+    {
+      "file": "restored-positive.stderr",
+      "raw_bytes": 0,
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "receipt.json",
+      "raw_bytes": 1463,
+      "raw_sha256": "fd996065066a9dc62a52c68d588c09ae8fbf4260d6c3f6631a1a8dec39686f69",
+      "stored_sha256": "fd996065066a9dc62a52c68d588c09ae8fbf4260d6c3f6631a1a8dec39686f69"
+    }
+  ],
+  "initial_fixture_observations": [
+    "Windows Git archive ZIP omits Unix mode attributes; regression uses Git tree modes instead.",
+    "Windows default autocrlf made synthetic fixture blobs differ; fixture explicitly disables conversion during Git archive. No original bytes were rewritten or verifier check weakened."
+  ],
+  "scope": "Default-source failure retained; fresh single-branch clone lacks reviewed/original objects; all10 positive/negative controls pass; standalone CI regression uses an unrelated new Git history."
+}

@@ -1,0 +1,10 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 5ebf707..c9fb1f0 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -276,3 +276,5 @@ mod tests {
+         assert_eq!(params.ncuts(), 1);
+     }
+ }
++
++changed
